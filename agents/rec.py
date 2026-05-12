@@ -21,7 +21,7 @@ def classify_user(rev):
     phase_variance = np.var([early, mid, recent])
     
     # observer — few reviews, long history, high influence
-    if total_reviews <= 3 and time_span >= 20 and avg_useful >= 20:
+    if total_reviews <= 8 and time_span >= 3 and avg_useful >= 2:
         return 'observer'
     
     # critical and harsh — low ratings, high useful votes
@@ -29,17 +29,14 @@ def classify_user(rev):
         return 'critical'
     
     # off and on — uneven across phases
-    if phase_variance > (total_reviews * 0.8):
-        return 'incosistent'
+    if phase_variance > 0.5:
+        return 'inconsistent'
     
     # fully committed — consistent, long term
     return 'fully_committed'
 
 def build_segment_report(reviews_df):
-    """
-    Groups all 200 users into behavioral segments.
-    Returns a summary of each segment — who they are and what they signal for a business.
-    """
+   # groups all shortlisted users into behavioral segments and returns a summary of who they are and what they signal for a business.
     users = reviews_df['user_id'].unique()
     
     segments = defaultdict(list)
@@ -79,14 +76,11 @@ def build_segment_report(reviews_df):
 
 
 def describe_segments(report):
-    """
-    Translates segment data into plain English for the business owner.
-    """
     descriptions = {
-        'fully_committed': "Your most loyal reviewers. Consistent, long-term, and engaged across all phases. These are the customers worth investing in.",
-        'off_and_on': "Inconsistent engagers. They show up in bursts then disappear. Usually triggered by strong experiences — good or bad.",
-        'critical': "Your harshest judges. Low ratings, high useful votes — meaning people trust their criticism. One bad experience from them is costly.",
-        'observer': "Quiet but influential. Rarely review, but when they do, people listen. Their silence is not loyalty — it is patience running out."
+        'fully_committed': "Your most loyal reviewers. Consistent, long term, and engaged across all phases. These are the customers worth investing in.",
+        'Inconsistent': "Inconsistent engagers. They show up in bursts then disappear. Usually triggered by strong experiences; good or bad.",
+        'critical': "Your harshest judges. Low ratings, high useful votes: meaning people trust their criticism. One bad experience from them is costly.",
+        'observer': "Quiet but influential. Rarely review, but when they do, people listen. Their silence is not loyalty, it's patience running out."
     }
     
     output = []

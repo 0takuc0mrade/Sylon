@@ -2,40 +2,34 @@ import os
 import json
 import pandas as pd
 import numpy as np
-from google import genai
+import os
+from cerebras.cloud.sdk import Cerebras
 from dotenv import load_dotenv
 from collections import defaultdict
 
 load_dotenv()
-client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
+client = Cerebras(api_key=os.environ.get("CEREBRAS_API_KEY"))
 
+def split_into_phases(user_history):
+    # Split a user's review history into three life phases: early, middle, recent.
 
-def split_into_phases(reviews_df):
-    """
-    Split a user's review history into three life phases:
-    early, middle, recent.
-    Not equal splits, weighted toward recency.
-    """
-    reviews_df = reviews_df.sort_values('date').reset_index(drop=True)
-    n = len(reviews_df)
+    user_history = user_history.sort_values('date').reset_index(drop=True)
+    n = len(user_history)
 
-    early = reviews_df.iloc[:n//3]
-    middle = reviews_df.iloc[n//3: 2*n//3]
-    recent = reviews_df.iloc[2*n//3:]
+    early = user_history.iloc[:n//3]
+    middle = user_history.iloc[n//3: 2*n//3]
+    recent = user_history.iloc[2*n//3:]
 
     return early, middle, recent
 
 
-def extract_phase_signal(phase_df):
-    """
-    For a given phase, extracts the raw signals that's necessary:
-    average rating, rating variance, most used words, sample texts.
-    """
-    if phase_df.empty:
+def extract_phase_signal(phase_reviews):
+    # finds only the important signals that's necessary for any given phase: the average rating, rating variance, most used words, sample texts.
+    if phase_reviews.empty:
         return None
 
-    ratings = phase_df['stars'].tolist()
-    texts = phase_df['text'].tolist()
+    ratings = phase_reviews['stars'].tolist()
+    texts = phase_reviews['text'].tolist()
 
     # word frequency, skip short words
     word_counts = defaultdict(int)
@@ -47,17 +41,17 @@ def extract_phase_signal(phase_df):
     top_words = sorted(word_counts, key=word_counts.get, reverse=True)[:15]
 
     # find the reviews with the biggest gap between text length and rating
-    phase_df = phase_df.copy()
-    phase_df['text_length'] = phase_df['text'].apply(lambda x: len(x.split()))
-    phase_df['normalized_rating'] = (phase_df['stars'] - 1) / 4
-    phase_df['gap'] = phase_df['text_length'] * abs(phase_df['normalized_rating'] - 0.5)
-    gap_reviews = phase_df.nlargest(2, 'gap')[['stars', 'text']].to_dict('records')
+    phase_reviews = phase_reviews.copy()
+    phase_reviews['text_length'] = phase_reviews['text'].apply(lambda x: len(x.split()))
+    phase_reviews['normalized_rating'] = (phase_reviews['stars'] - 1) / 4
+    phase_reviews['gap'] = phase_reviews['text_length'] * abs(phase_reviews['normalized_rating'] - 0.5)
+    gap_reviews = phase_reviews.nlargest(2, 'gap')[['stars', 'text']].to_dict('records')
 
     # sample texts for LLM context, to pick the longest ones
-    sample_texts = phase_df.nlargest(3, 'text_length')['text'].tolist()
+    sample_texts = phase_reviews.nlargest(3, 'text_length')['text'].tolist()
 
     return {
-        'review_count': len(phase_df),
+        'review_count': len(phase_reviews),
         'avg_rating': round(np.mean(ratings), 2),
         'rating_variance': round(np.var(ratings), 2),
         'top_words': top_words,
@@ -67,10 +61,7 @@ def extract_phase_signal(phase_df):
 
 
 def detect_drift(early_signal, middle_signal, recent_signal):
-    """
-    Compares signals across phases to find what changed.
-    Returns a plain description of the drift.
-    """
+    # Compare signals across phases to find what changed over time.
     drifts = []
 
     if early_signal and recent_signal:
@@ -94,10 +85,6 @@ def detect_drift(early_signal, middle_signal, recent_signal):
 
 
 def build_structured_persona(user_id, early, middle, recent, drifts):
-    """
-    Assembles the structured part of the persona,
-    the labeled sections the rest of the pipeline reads.
-    """
     return {
         'user_id': user_id,
         'phases': {
@@ -119,10 +106,7 @@ def build_structured_persona(user_id, early, middle, recent, drifts):
 
 
 def build_narrative_persona(structured_persona, user_id):
-    """
-    Feeds the structured persona into Gemini and asks it to write
-    a character description; the human readable section.
-    """
+    # Feed the structured persona into the llm and asks it to write a character description; the human readable section.
     prompt = f"""
 You are reading the behavioral data of a real person extracted from their Yelp review history.
 Your job is to write a sharp, on point and specific character portrait of this reviewer.
@@ -151,20 +135,24 @@ Write a 150-200 word character portrait. Be specific. Be sharp. No fluff.
 End with one sentence that captures what this person would never forgive in a bad experience.
 """
 
-    response =client.models.generate_content(
-        model="gemini-2.0-flash",
-        contents=prompt
-    )
-    return response.text
+    response = client.chat.completions.create(
+      messages=[{"role": "user", "content": prompt}],
+      model="llama3.1-8b",
+      max_completion_tokens=1024,
+      temperature=0.2,
+      stream=False
+      )
+    return response.choices[0].message.content
 
 
-def excavate_user(user_id, reviews_df):
-    """
-    Main function. Takes a user ID and their reviews,
-    returns both their structured and narrative persona.
-    """
-    user_reviews = reviews_df[reviews_df['user_id'] == user_id].copy()
+def excavate_user(user_id,user_history):
+   # Takes a user ID and their reviews and returns both their structured and narrative analysis.
+    user_reviews =user_history[user_history['user_id'] == user_id].copy()
     user_reviews['date'] = pd.to_datetime(user_reviews['date'])
+
+    if len(user_reviews) < 20:
+        print(f"Skipping{user_id} - not enough review history")
+        return None
 
     early, middle, recent = split_into_phases(user_reviews)
 
@@ -184,22 +172,16 @@ def excavate_user(user_id, reviews_df):
 
 
 if __name__ == "__main__":
-    df = pd.read_csv('data/sampled_reviews.csv')
+    all_reviews = pd.read_csv('data/sampled_reviews.csv')
+    all_reviews['date'] = pd.to_datetime(all_reviews['date'])
 
-    # to test on the highest scored user
-    top_user = df.sort_values('richness_score', ascending=False).iloc[0]['user_id']
-    print(f"Excavating user: {top_user}\n")
+    qualified = all_reviews['user_id'].value_counts()
+    top_user = qualified[qualified >= 20].index[0]
 
-    persona = excavate_user(top_user, df)
+    persona = excavate_user(top_user, all_reviews)
 
-    print("STRUCTURED PERSONA")
-    print(json.dumps(persona['structured'], indent=2, default=str))
-    print("\n NARRATIVE PERSONA")
-    print(persona['narrative'])
-
-    # to save it
-    os.makedirs('outputs', exist_ok=True)
-    with open(f'outputs/{top_user}_persona.json', 'w') as f:
-        json.dump(persona, f, indent=2, default=str)
-
-    print(f"\nSaved to outputs{top_user}_persona.json")
+    if persona:
+        os.makedirs('outputs', exist_ok=True)
+        with open(f'outputs/{top_user}_persona.json', 'w') as f:
+            json.dump(persona, f, indent=2, default=str)
+        print(json.dumps(persona, indent=2, default=str))
