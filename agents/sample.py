@@ -64,10 +64,7 @@ def score_user(reviews):
     return score
 
 def load_and_score_users(review_path, min_reviews=3, top_n=1000):
-    """
-    Reads the review file, scores every user,
-    returns the most archaeologically rich ones.
-    """
+    # reads the review file, scores every user.
     user_reviews = defaultdict(list)
 
     print("Reading reviews...")

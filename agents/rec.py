@@ -2,17 +2,19 @@ import pandas as pd
 import numpy as np
 import os
 from collections import defaultdict
+from dotenv import load_dotenv
+from agents.llm_client import call_cerebras
 
 DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+load_dotenv(os.path.join(DIR, '.env'))
 categories_path = os.path.join(DIR, 'data', 'business_categories.csv')
-categories = pd.read_csv(categories_path)
 _user_names = None
 
 def get_user_name(user_id):
     global _user_names
     if _user_names is None:
-            _user_names = pd.read_csv('data/user_names.csv', index_col='user_id')['name'].to_dict()
-            return  _user_names.get(user_id, f"User {user_id[:6]}")
+            _user_names = pd.read_csv(os.path.join(DIR, 'data', 'user_names.csv'), index_col='user_id')['name'].to_dict()
+    return  _user_names.get(user_id, f"User {user_id[:6]}")
 
 def classify_user(rev):
     rev = rev.sort_values('date').reset_index(drop=True)
@@ -124,21 +126,8 @@ def detect_drift_alerts(all_reviews, personas):
     return alerts
 
 def find_revenue_opportunities(reviews, personas):
-    categories = pd.read_csv('data/business_categories.csv')
-    
-    print("REVIEWS COLUMNS:" ,reviews.columns.tolist())
-    print("CATEGORY COLUMNS:", categories.columns.tolist())
-    reviews = reviews.merge(categories[['business_id', 'primary_category']], on='business_id', how='left')
-    print("AFTER MERGE:", reviews.columns.tolist())
-    for user_id, persona in personas.items():
-        if 'structured' not in persona:
-            continue
-        
-    recent = persona['structured']['phases']['recent']['signal']
-    early = persona['structured']['phases']['early']['signal']
-
     opportunities = []
-    
+
     experience_words = {
         'atmosphere', 'ambiance', 'experience', 'kitchen',
         'service', 'quality', 'perfect', 'excellent', 'refined',
@@ -146,9 +135,12 @@ def find_revenue_opportunities(reviews, personas):
     }
     
     for user_id, persona in personas.items():
+        if 'structured' not in persona:
+            continue
+        
         recent = persona['structured']['phases']['recent']['signal']
         early = persona['structured']['phases']['early']['signal']
-        
+
         if not recent or not early:
             continue
         
@@ -164,14 +156,14 @@ def find_revenue_opportunities(reviews, personas):
         avg_review_length = user_reviews['text'].apply(lambda x: len(x.split())).mean()
         depth_score = 1 if avg_review_length > 150 else 0
         
-        # third signal high useful votes (community validates their judgment)
+    # third signal high useful votes (community validates their judgment)
         avg_useful = user_reviews['useful'].mean()
         influence_score = 1 if avg_useful >= 2 else 0
         
-        # fourth signal rating generosity: high but not serial 5 star rater
+    # fourth signal rating generosity: high but not serial 5 star rater
         rating_quality = 1 if 3.5 <= recent['avg_rating'] <= 4.5 else 0
         
-        # fifth signal reviewed same category repeatedly
+    # fifth signal reviewed same category repeatedly
         category_counts = user_reviews['primary_category'].value_counts()
         loyal_categories = category_counts[category_counts >= 5].index.tolist()
         loyalty_score = len(loyal_categories)
@@ -183,7 +175,7 @@ def find_revenue_opportunities(reviews, personas):
             influence_score * 2 +
             rating_quality * 1 +
             loyalty_score * 1
-        )
+            )
         
         if premium_score >= 4:
             opportunities.append({
@@ -196,10 +188,64 @@ def find_revenue_opportunities(reviews, personas):
                 'experience_signals': list(experience_overlap),
                 'opportunity': 'High value experience seeker with strong community influence.',
                 'recommended_action': 'Introduce premium offerings, exclusive experiences, or loyalty recognition to convert engagement into higher spend.'
-            })
+                })
     
     opportunities.sort(key=lambda x: x['premium_score'], reverse=True)
     return opportunities
+
+def clairvoyance(user_id, all_reviews):
+    # reads the user's most recent reviews and infers their current emotional state
+    
+    user_history = all_reviews[all_reviews['user_id'] == user_id].copy()
+    user_history['date'] = pd.to_datetime(user_history['date'])
+    user_history = user_history.sort_values('date', ascending=False)
+    
+    # take only the 5 most recent reviews
+    recent = user_history.head(7)
+    
+    if len(recent) == 0:
+        return None
+    
+    recent_texts = "\n\n---\n\n".join([
+        f"Stars: {row['stars']}\n{row['text'][:500]}"
+        for _, row in recent.iterrows()
+    ])
+    
+    # get their historical average for comparison
+    historical_avg = user_history['stars'].mean()
+    recent_avg = recent['stars'].mean()
+    trajectory = round(recent_avg - historical_avg, 2)
+    
+    prompt = f"""
+You are analyzing a customer's most recent reviews to detect their current emotional state.
+This is not sentiment analysis. You are detecting specific emotions and what triggered them.
+
+HISTORICAL AVERAGE RATING: {round(historical_avg, 2)}
+RECENT AVERAGE RATING: {round(recent_avg, 2)}
+TRAJECTORY: {'improving' if trajectory > 0 else 'declining' if trajectory < 0 else 'stable'} ({trajectory:+.2f})
+
+THEIR 5 MOST RECENT REVIEWS:
+{recent_texts}
+
+Analyze and respond in exactly this format:
+
+CURRENT EMOTION: [one word — joy/satisfaction/frustration/disappointment/anger/resignation/neutral]
+INTENSITY: [low/medium/high]
+PRIMARY TRIGGER: [what specifically is causing this emotion — be precise, one sentence]
+TRAJECTORY NOTE: [is this emotion new or has it been building — one sentence]
+BUSINESS ALERT: [one specific action the business should take before this customer's next visit]
+"""
+
+    output = call_cerebras(prompt)
+    
+    return {
+        'user_id': user_id,
+        'customer_name': get_user_name(user_id),
+        'historical_avg': round(historical_avg, 2),
+        'recent_avg': round(recent_avg, 2),
+        'trajectory': trajectory,
+        'analysis': output
+    }
 
 def describe_segments(report):
     descriptions = {
@@ -223,11 +269,49 @@ def describe_segments(report):
     return "\n".join(output)
 
 
+def recommend_businesses(user_id, all_reviews, business_df, top_n=5):
+    # ranks businesses specifically for a user's behavior,
+    persona_path = os.path.join(ROOT, 'outputs', f'{user_id}_persona.json')
+    
+    if not os.path.exists(persona_path):
+        # if no history, return top rated in category
+        return handle_cold_start(business_df, top_n)
+
+    with open(persona_path) as f:
+        persona = json.load(f)
+
+    # filter for businesses the user hasn't reviewed yet.
+    user_visited = all_reviews[all_reviews['user_id'] == user_id]['business_id'].unique()
+    candidates = business_df[~business_df['business_id'].isin(user_visited)].copy()
+
+# behavioral scoring
+    def calculate_compatibility(biz_row):
+        score = biz_row['stars'] * 10  # Base score from stars
+        
+        # if user values experience and business has high price range but good service...
+        if 'luxury' in str(biz_row['categories']).lower() and persona.get('is_premium_seeker'):
+            score += 15
+            
+        # if user is a critical segment, avoid low rated service businesses
+        return score
+
+    candidates['match_score'] = candidates.apply(calculate_compatibility, axis=1)
+    
+    # return ranked list
+    recommendations = candidates.sort_values('match_score', ascending=False).head(top_n)
+    
+    return recommendations[['name', 'match_score', 'stars', 'city']].to_dict('records')
+
+def handle_cold_start(business_df, top_n=5):
+    # recommend businesses with the most useful community feedback as they are the safest bets for a new user.
+    return business_df.sort_values(['stars', 'review_count'], ascending=False).head(top_n).to_dict('records')
+
+
 if __name__ == "__main__":
     import json
 
-    all_reviews = pd.read_csv('data/sampled_reviews.csv')
-    categories = pd.read_csv('data/business_categories.csv')[['business_id', 'primary_category']]
+    all_reviews = pd.read_csv(os.path.join(DIR, 'data', 'sampled_reviews.csv'))
+    categories = pd.read_csv(os.path.join(DIR, 'data', 'business_categories.csv'))[['business_id', 'primary_category']]
     all_reviews = all_reviews.merge(categories, on='business_id', how='left')
     all_reviews['date'] = pd.to_datetime(all_reviews['date'])
 
@@ -254,3 +338,11 @@ if __name__ == "__main__":
         print(f"\nUser: {opp['customer_name']}")
         print(f"Premium score: {opp['premium_score']}")
         print(f"Action: {opp['recommended_action']}")
+
+    print("\n CLAIRVOYANCE ")
+    result = clairvoyance('-G7Zkl1wIWBBmD0KRy_sCw', all_reviews)
+    
+    if result:
+        print(f"\nCustomer: {result['customer_name']}")
+        print(f"Trajectory: {result['trajectory']:+.2f}")
+        print(result['analysis'])

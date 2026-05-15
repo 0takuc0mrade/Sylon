@@ -1,12 +1,10 @@
 import os
 import json
 import pandas as pd
-from cerebras.cloud.sdk import Cerebras
 from dotenv import load_dotenv
-
+from agents.llm_client import call_cerebras
 
 load_dotenv()
-client = Cerebras(api_key=os.environ.get("CEREBRAS_API_KEY"))
 
 def load_business(business_path, business_id):
     # finds a specific business by ID from the Yelp business file and reads it line by line
@@ -101,7 +99,7 @@ CUSTOMER PROFILE:
 {persona['narrative']}
 {grounding_context}
 DRIFT OBSERVED:
-{chr(10).join(persona['structured']['drifts']) if persona['structured']['drifts'] else 'No significant drift'}
+{chr(10).join(persona.get('structured', {}).get('drifts', persona.get('drifts', []))) or 'No significant drift'}
 
 REAL CUSTOMER EVIDENCE:
 {chr(10).join(f'- "{q}"' for q in grounding_quotes) if grounding_quotes else 'No grounding quotes available.'}
@@ -110,8 +108,8 @@ KNOWN PAINPOINTS:
 {chr(10).join(f'- {c["theme"]} (severity: {c.get("severity","?")} )' for c in painpoints.get("complaints", [])[:3]) if painpoints else 'No painpoints extracted yet.'}
 
 RECENT BEHAVIOR:
-- Average recent rating: {persona['structured']['phases']['recent']['signal']['avg_rating']}
-- What they keep talking about: {', '.join(persona['structured']['phases']['recent']['signal']['top_words'][:8])}
+- Average recent rating: {recent_rating_val}
+- What they keep talking about: {', '.join(persona.get('structured', {}).get('phases', {}).get('recent', {}).get('signal', {}).get('top_words', persona.get('top_words', []))[:8])}
 
 BUSINESS:
 - Name: {business_profile['name']}
@@ -140,14 +138,7 @@ FIX THIS:
 - [one action the business should take]
 """
 
-    response = client.chat.completions.create(
-        messages=[{"role": "user", "content": prompt}],
-        model="qwen-3-235b-a22b-instruct-2507",
-        max_completion_tokens=1024,
-        temperature=0.2,
-        stream=False
-    )
-    return response.choices[0].message.content
+    return call_cerebras(prompt)
 
 def extract_voice_signature(sample_reviews):
     # reads actual reviews and extracts writing patterns
@@ -163,26 +154,20 @@ REVIEWS:
 
 Write 5 bullet points describing exactly how this person writes.
 """
-    response = client.chat.completions.create(
-        messages=[{"role": "user", "content": prompt}],
-        model="qwen-3-235b-a22b-instruct-2507",
-        max_completion_tokens=300,
-        temperature=0.1,
-        stream=False
-    )
-    return response.choices[0].message.content
+    
+    return call_cerebras(prompt)
 
 def build_character_card(persona):
-    phases = persona['structured']['phases']    
-    early = phases['early']['signal']
-    recent = phases['recent']['signal']
-    drifts = persona['structured'].get('drifts',[])
+    phases = persona.get('structured', {}).get('phases', {})    
+    early = phases.get('early', {}).get('signal', {})
+    recent = phases.get('recent', {}).get('signal', {})
+    drifts = persona.get('structured', {}).get('drifts',[])
     
     return f"""CHARACTER CARD:
-    - Rating trajectory:{early['avg_rating']} early to {recent['avg_rating']} recent
+    - Rating trajectory:{early.get('avg_rating', 'N/A')} early to {recent.get('avg_rating', 'N/A')} recent
     - Vocabulary shift: {'; '.join(drifts) if drifts else 'stable'}
-    - Current obsessions: {'; '.join(recent['top_words'][:5])}
-    - Review length tendency: {'detailed' if recent['avg_rating'] <3.5 else 'moderate'}
+    - Current obsessions: {'; '.join(recent.get('top_words', [])[:5])}
+    - Review length tendency: {'detailed' if recent.get('avg_rating', 5.0) <3.5 else 'moderate'}
     - Praise style: specific details, names exact dishes or moments
     - Complaint style: states the principle being violated, not just the surface issue
     - Reader address: direct, uses asides, self corrections, parenthetical humor"""
@@ -233,14 +218,7 @@ EARLY WARNING TO BUSINESS OWNER:
 [two sharp specific sentences]
 """
 
-    response = client.chat.completions.create(
-      messages=[{"role": "user", "content": prompt}],
-      model="qwen-3-235b-a22b-instruct-2507",
-      max_completion_tokens=1024,
-      temperature=0.2,
-      stream=False
-      )
-    return response.choices[0].message.content
+    return call_cerebras(prompt)
 
 def run(persona, business_path, business_id=None, category=None, segment='fully_committed'):
     if business_id:

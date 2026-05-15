@@ -16,11 +16,17 @@ cerebras_client = Cerebras(api_key=os.environ.get("CEREBRAS_API_KEY"))
 
 
 CEREBRAS_MODEL = os.environ.get("CEREBRAS_MODEL", "qwen-3-235b-a22b-instruct-2507")
-GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash-exp")
 
 # Retry logic (shared)
 MAX_RETRIES = 4
 BASE_DELAY = 3  # seconds
+
+def call_llm(prompt, system_prompt):
+    if os.environ.get("SYLON_DEBUG_MODE") == "True":
+        return "DEBUG: This is a fast mock response for testing."
+    
+    return call_cerebras(prompt, system_prompt)
 
 def call_cerebras_mode(mode, prompt, system_prompt="", max_tokens=500):
     if mode == "persona":
@@ -60,10 +66,7 @@ def retry_with_backoff(func):
                     raise
     return wrapper
 
-
-# ---------------------------------------------------------------------------
-# Cerebras (primary — used for everything except Router)
-# ---------------------------------------------------------------------------
+# Cerebras (primary model: used for everything except Router)
 @retry_with_backoff
 def call_cerebras(
     prompt: str,
@@ -71,18 +74,9 @@ def call_cerebras(
     temperature: float = 0.7,
     max_tokens: int = 2000,
 ) -> str:
-    """
-    Single function for all Cerebras calls.
-
-    Args:
-        prompt: User/content prompt.
-        system_prompt: Optional system instruction.
-        temperature: Sampling temperature.
-        max_tokens: Max output tokens.
-
-    Returns:
-        The model's text response.
-    """
+    # single function for all Cerebras calls
+    if os.environ.get("SYLON_DEBUG_MODE") == "True":
+        return f"DEBUG (Cerebras): Mock response for prompt: {prompt[:50]}."
     messages = []
     if system_prompt:
         messages.append({"role": "system", "content": system_prompt})
@@ -104,10 +98,7 @@ def call_cerebras_json(
     temperature: float = 0.4,
     max_tokens: int = 4000,
 ) -> dict | list:
-    """
-    Cerebras call that forces JSON output and parses it.
-    Falls back to extracting JSON from markdown fences if needed.
-    """
+    # cerebras call that forces JSON output and parses it.
     messages = []
     if system_prompt:
         messages.append({"role": "system", "content": system_prompt})
@@ -137,21 +128,13 @@ def call_cerebras_json(
     raise ValueError(f"Could not parse JSON from Cerebras response: {raw[:200]}")
 
 
-# ---------------------------------------------------------------------------
 # Gemini (Router only — structured enum output)
-# ---------------------------------------------------------------------------
 @retry_with_backoff
 def call_gemini_structured(prompt: str, response_schema) -> str:
-    """
-    For Router enum classification. Uses Gemini's structured output.
+    # use Gemini's structured output.
+    if os.environ.get("SYLON_DEBUG_MODE") == "True":
+        return "CHAT"
 
-    Args:
-        prompt: The classification prompt.
-        response_schema: An enum class for structured output.
-
-    Returns:
-        The enum value as a string.
-    """
     response = gemini_client.models.generate_content(
         model=GEMINI_MODEL,
         contents=prompt,
@@ -165,16 +148,7 @@ def call_gemini_structured(prompt: str, response_schema) -> str:
 
 @retry_with_backoff
 def call_gemini(prompt: str, json_mode: bool = False) -> str:
-    """
-    General Gemini call (fallback if Cerebras is down).
-
-    Args:
-        prompt: The prompt text.
-        json_mode: If True, request JSON output.
-
-    Returns:
-        The model's text response.
-    """
+    # alternative for cerebras
     config = {}
     if json_mode:
         config["response_mime_type"] = "application/json"

@@ -1,15 +1,7 @@
-"""
-Phase 2: Google Places Review Fetcher
-
-Pulls real customer reviews from Google Maps for competitor businesses
-near the owner's location, then excavates behavioral personas from them.
-"""
 import os
 import json
 import requests
-# pyrefly: ignore [missing-import]
 from google import genai    
-# pyrefly: ignore [missing-import]
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -19,17 +11,6 @@ PLACES_API_KEY = os.environ.get("GOOGLE_PLACES_API_KEY", "")
 
 
 def search_nearby_competitors(query: str, location: str = "", limit: int = 3) -> list:
-    """
-    Uses Google Places Text Search to find competitor businesses.
-
-    Args:
-        query: Business type to search (e.g., "cafe", "restaurant")
-        location: Location string (e.g., "Lagos, Nigeria")
-        limit: Max number of places to return
-
-    Returns:
-        List of dicts with 'place_id', 'name', 'rating', 'user_ratings_total'.
-    """
     if not PLACES_API_KEY:
         print("[Google Places] No GOOGLE_PLACES_API_KEY set. Skipping competitor search.")
         return []
@@ -67,16 +48,6 @@ def search_nearby_competitors(query: str, location: str = "", limit: int = 3) ->
 
 
 def fetch_place_reviews(place_id: str) -> list:
-    """
-    Fetches reviews for a specific place using Google Places Details API.
-    Google returns up to 5 most relevant reviews per place.
-
-    Args:
-        place_id: The Google Places ID.
-
-    Returns:
-        List of review dicts with 'author', 'rating', 'text', 'time'.
-    """
     if not PLACES_API_KEY:
         return []
 
@@ -113,17 +84,6 @@ def fetch_place_reviews(place_id: str) -> list:
 
 
 def excavate_from_reviews(reviews: list, business_name: str) -> list:
-    """
-    Takes raw Google reviews and uses LLM to extract behavioral personas.
-    Groups reviews by sentiment pattern and generates archetypal personas.
-
-    Args:
-        reviews: List of review dicts from fetch_place_reviews.
-        business_name: Name of the competitor business.
-
-    Returns:
-        List of persona dicts compatible with the Simulator pipeline.
-    """
     if not reviews:
         return []
 
@@ -178,17 +138,6 @@ Return ONLY a valid JSON array. No markdown, no explanation.
 
 
 def fetch_competitor_personas(business_category: str, location: str = "", limit: int = 2) -> list:
-    """
-    Full pipeline: Search competitors -> Fetch their reviews -> Excavate personas.
-
-    Args:
-        business_category: Type of business (e.g., "cafe", "restaurant")
-        location: Where to search (e.g., "Lagos, Nigeria")
-        limit: Number of competitor businesses to analyze
-
-    Returns:
-        Flat list of all personas excavated from competitor reviews.
-    """
     competitors = search_nearby_competitors(business_category, location, limit)
 
     if not competitors:
@@ -206,7 +155,7 @@ def fetch_competitor_personas(business_category: str, location: str = "", limit:
 
 
 if __name__ == "__main__":
-    # Quick test
+    # testing testing
     results = search_nearby_competitors("cafe", "Lagos, Nigeria", limit=2)
     print(json.dumps(results, indent=2))
 

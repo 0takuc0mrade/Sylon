@@ -5,6 +5,13 @@ from dotenv import load_dotenv
 from cerebras.cloud.sdk import Cerebras
 
 import sys
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if ROOT not in sys.path:
+    sys.path.insert(0, ROOT)
+
+# NOW you can import your agents normally
+from agents.llm_client import call_cerebras
+from agents.review_ingest import load_reviews
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'utilities'))
 from sample import load_and_score_users
 from persona import excavate_user
@@ -68,15 +75,8 @@ BIGGEST RISK RIGHT NOW:
 Be sharp. Be specific to {business_type}. No generic consulting language.
 """
 
-    response = client.chat.completions.create(
-        messages=[{"role": "user", "content": prompt}],
-        model="qwen-3-235b-a22b-instruct-2507",
-        max_completion_tokens=1024,
-        temperature=0.2,
-        stream=False
-    )
-
-    return response.choices[0].message.content
+    response = call_cerebras(prompt)
+    return response
 
 
 def run_sylon(business_type, business_path, category=None, business_id=None):
@@ -86,8 +86,8 @@ def run_sylon(business_type, business_path, category=None, business_id=None):
     print("\n[1/6] Loading data...")
     #base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     base = os.path.dirname(os.path.abspath(__file__))
-    all_reviews = pd.read_csv(os.path.join('data', 'sampled_reviews.csv'))
-    categories = pd.read_csv(os.path.join('data', 'business_categories.csv'))[['business_id', 'primary_category']]
+    all_reviews = pd.read_csv(os.path.join(ROOT, 'data', 'sampled_reviews.csv'))
+    categories = pd.read_csv(os.path.join(ROOT, 'data', 'business_categories.csv'))[['business_id', 'primary_category']]
     all_reviews = all_reviews.merge(categories, on='business_id', how='left')
     all_reviews['date'] = pd.to_datetime(all_reviews['date'])
     print(f"      {all_reviews['user_id'].nunique()} users | {len(all_reviews)} reviews loaded")
@@ -195,7 +195,7 @@ if __name__ == "__main__":
     print("  SYLON: A Behavioral Intelligence Engine")
 
     business_type = input("\nWhat type of business are you? (e.g. restaurant, bar, hotel): ").strip()
-    business_path = 'data/yelp_academic_dataset_business.json'
+    business_path = OS.PATH.JOIN(ROOT, 'data', 'yelp_academic_dataset_business.json')
 
     run_sylon(
         business_type=business_type,

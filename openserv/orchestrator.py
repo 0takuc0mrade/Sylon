@@ -7,7 +7,9 @@ import sys
 import os
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, ROOT)
-#sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+if ROOT not in sys.path:
+    sys.path.insert(0, ROOT)
 
 from agents.llm_client import call_cerebras, call_cerebras_mode, call_gemini_structured, retry_with_backoff
 from agents.persona_factory import get_personas_for_business, generate_synthetic_personas
@@ -51,6 +53,7 @@ def get_business_id() -> str | None:
 
 @retry_with_backoff
 def evaluate_route(user_input: str) -> str:
+    prompt = f"Classify this intent aas SIMULATE, INGEST, or CHAT. Only return one word.\nInput: {user_input}"
 # Uses the Router Agent to classify user intent.
     try:
         result = call_gemini_structured(
@@ -58,12 +61,11 @@ def evaluate_route(user_input: str) -> str:
             response_schema=Route,
         )
         return result
-    except Exception as e:
-        err_msg = str(e).lower()
-        is_rate_limit = "429" in err_msg or ("resource" in err_msg and "exhausted" in err_msg)
-        if is_rate_limit:
-            raise  # let the retry decorator handle it
-        print(f"[Router Failsafe] Router failed ({type(e).__name__}), defaulting to CHAT.")
+    except Exception:
+        user_input_lower = user_input.lower()
+        if any(word in user_input_lower for word in ["if", "scenario", "what if", "simulate"]):
+            print("[Router Failsafe] Rate-limited. Heuristic: SIMULATE")
+            return "SIMULATE"
         return "CHAT"
 
 
@@ -91,7 +93,6 @@ Keep it conversational. 3-5 punchy sentences.
 If real customer quotes were cited in the analysis, reference them naturally."""
 
     return call_cerebras(
-        mode="strategist",
         prompt=prompt,
         system_prompt="You are Sylon, a premium business strategist. Be conversational, sharp, and authoritative.",
         max_tokens=800,
@@ -163,7 +164,7 @@ def handle_ingest(user_input: str) -> str:
     persona_names = [p.get("name", "Unknown") for p in result.get("personas", [])]
     top_complaints = [c["theme"] for c in result.get("painpoints", {}).get("complaints", [])[:3]]
 
-    response_parts = [f"Got it. I processed {review_count} reviews"]
+    response_parts = [f"Got it. I've looked through {count_text}"]
 
     if complaint_count > 0:
         response_parts.append(f"and found {complaint_count} key pain points")
@@ -313,12 +314,12 @@ def run_simulation(user_input: str, business_description=None, location=None):
     combined = "\n\n---\n\n".join(all_collisions)
 
 # SIMPLE RECOMMENDER (inline, no new files)
-def simple_recommendation_engine(personas, items):
-    results = []
-
-    for item in items:
-        total_score = 0
-        reasons = []
+    def simple_recommendation_engine(personas, items):
+        results = []
+        
+        for item in items:
+            total_score = 0
+            reasons = []
 
         for p in personas:
             score = 0
@@ -342,23 +343,14 @@ def simple_recommendation_engine(personas, items):
             "score": round(total_score, 3),
             "reasons": list(set(reasons))
         })
-
-    return sorted(results, key=lambda x: x["score"], reverse=True)
+        
+        
+        return sorted(results, key=lambda x: x["score"], reverse=True)
 
     items = [
-    {
-        "name": "Option A",
-        "price_level": 2,
-        "wait_time": 15,
-        "ambience": "quiet"
-    },
-    {
-        "name": "Option B",
-        "price_level": 3,
-        "wait_time": 30,
-        "ambience": "loud"
-    }
-]
+        {"name": "Option A", "price_level": 2, "wait_time": 15, "ambience": "quiet"},
+        {"name": "Option B", "price_level": 3, "wait_time": 30, "ambience": "loud"}
+    ]
 
     ranked_results = simple_recommendation_engine(personas or [], items)
     combined +=f"\n\nRECOMMENDATIONS: \n{ranked_results}"
