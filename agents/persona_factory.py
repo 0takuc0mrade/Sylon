@@ -1,12 +1,4 @@
-"""
-Persona Factory
-
-Two modes:
-1. Synthetic: LLM-generated customer archetypes (cold-start / fallback)
-2. Grounded: Real personas excavated from uploaded business reviews
-
-Hybrid mode blends both when review count < 5.
-"""
+# Persona Factory
 import os
 import json
 # pyrefly: ignore [missing-import]
@@ -23,32 +15,21 @@ from agents.painpoint_extractor import (
 
 load_dotenv()
 
-# ---------------------------------------------------------------------------
 # Phase 1: Synthetic Personas (always available — cold start / fallback)
-# ---------------------------------------------------------------------------
 @retry_with_backoff
 def generate_synthetic_personas(business_description: str, location: str = "", count: int = 3) -> list:
-    """
-    Generates synthetic customer personas based on a business description.
-    Each persona follows the same structure as a grounded persona,
-    ensuring downstream compatibility with the Simulator.
-
-    Args:
-        business_description: What the business is (e.g., "mid-range cafe with outdoor seating")
-        location: Where the business is located (e.g., "Lagos, Nigeria")
-        count: Number of distinct personas to generate (default 3)
-
-    Returns:
-        A list of persona dicts, each containing 'narrative', 'drifts', 'avg_rating', 'top_words'.
-    """
+    # generates synthetic customer personas based on a business description.
     prompt = f"""
 You are an expert consumer psychologist. Generate exactly {count} psychologically distinct customer archetypes
 who would realistically visit a business described as: "{business_description}"
 {"Located in: " + location if location else ""}
+If the location is in Africa or Nigeria specifically, ground the archetypes in 
+local consumer behavior: price sensitivity, the role of word-of-mouth, 
+informal feedback culture, and what "value" means in that market.
 
 For EACH archetype, provide a JSON object with these exact fields:
 - "name": A short archetype label (e.g., "The Weekend Explorer", "The Budget Loyalist")
-- "narrative": A 100-150 word sharp, specific character portrait. Write like you know this person.
+- "narrative": A 100-150 word precise, specific character portrait. Write like you know this person.
   Include their priorities, pet peeves, what they notice first, what makes them leave a bad review.
   End with one sentence about what they would never forgive.
 - "drifts": A list of 1-2 behavioral drift strings (e.g., "Rating drift: became harsher over time (4.2 → 3.1)")
@@ -94,33 +75,12 @@ Return ONLY a valid JSON array of {count} objects. No markdown, no explanation.
         }]
 
 
-# ---------------------------------------------------------------------------
 # Phase 2: Grounded Personas (from real uploaded reviews)
-# ---------------------------------------------------------------------------
 def generate_grounded_personas(business_id: str, max_personas: int = 3) -> dict:
-    """
-    Full pipeline: load reviews → extract painpoints → excavate personas.
-    Returns a dict with 'personas', 'painpoints', and 'review_count'.
-
-    Args:
-        business_id: The business identifier.
-        max_personas: Maximum number of personas to generate.
-
-    Returns:
-        {
-            'personas': [...],
-            'painpoints': {...},
-            'review_count': int
-        }
-    """
     reviews = load_reviews(business_id)
     if not reviews:
         return {'personas': [], 'painpoints': {}, 'review_count': 0}
-
-    # Extract painpoints (map-reduce)
     painpoints = extract_painpoints(reviews, business_id)
-
-    # Excavate grounded personas
     personas = excavate_personas_from_reviews(reviews, painpoints, business_id, max_personas)
 
     return {
@@ -130,24 +90,14 @@ def generate_grounded_personas(business_id: str, max_personas: int = 3) -> dict:
     }
 
 
-# ---------------------------------------------------------------------------
 # Hybrid Mode: Blend synthetic + grounded when < 5 reviews
-# ---------------------------------------------------------------------------
 def get_personas_for_business(
     business_id: str = None,
     business_description: str = "Local Business",
     location: str = "",
     persona_count: int = 3,
 ) -> tuple:
-    """
-    Smart persona selection:
-    - If business_id has >= 5 reviews: use only grounded personas
-    - If business_id has 1-4 reviews: hybrid (grounded + synthetic fill)
-    - If no business_id or 0 reviews: pure synthetic
-
-    Returns:
-        (personas_list, painpoints_dict, mode_string)
-    """
+    # smart persona selection:
     if business_id:
         reviews = load_reviews(business_id)
         review_count = len(reviews)

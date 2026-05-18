@@ -7,6 +7,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from agents.persona import excavate_user
 from agents.reviews import collision_analysis
+from agents.review_ingest import ingest_pdf, ingest_image
 from agents.persona_factory import generate_synthetic_personas
 from agents.google_places import fetch_competitor_personas
 from agents.review_ingest import ingest_text, ingest_json, ingest_csv, load_reviews
@@ -17,21 +18,30 @@ from agents.painpoint_extractor import (
     load_personas,
 )
 
-_REVIEWS_DF = None
+_REVIEWS = None
 
-def get_reviews_df():
-    global _REVIEWS_DF
-    if _REVIEWS_DF is None:
+def get_reviews():
+    global _REVIEWS
+    if _REVIEWS is None:
         try:
-            _REVIEWS_DF = pd.read_csv('data/sampled_reviews.csv')
-            _REVIEWS_DF['date'] = pd.to_datetime(_REVIEWS_DF['date'])
+            _REVIEWS = pd.read_csv('data/sampled_reviews.csv')
+            _REVIEWS['date'] = pd.to_datetime(_REVIEWS['date'])
         except FileNotFoundError:
-            print("Warning: data/sampled_reviews.csv not found.")
-            _REVIEWS_DF = pd.DataFrame()
-    return _REVIEWS_DF
+            print("Warning: data/sampled_reviews.csv not found. Using mock data for demonstration.")
+            _REVIEWS = pd.DataFrame({
+                'review_id': ['mock_1', 'mock_2', 'mock_3'],
+                'user_id': ['test_user_1', 'test_user_1', 'test_user_2'],
+                'business_id': ['biz_1', 'biz_2', 'biz_1'],
+                'stars': [5.0, 2.0, 4.0],
+                'useful': [2, 0, 1],
+                'text': ['Great food and amazing service!', 'Terrible experience, waited an hour.', 'Good attribute but a bit loud.'],
+                'date': pd.to_datetime(['2023-01-01', '2023-06-01', '2023-12-01']),
+                'primary_category': ['Restaurant', 'Restaurant', 'Restaurant']
+            })
+    return _REVIEWS
 
 def tool_excavate_persona(user_id: str) -> dict:
-    df = get_reviews_df()
+    df = get_reviews()
     if df.empty or user_id not in df['user_id'].values:
         return {"error": f"User {user_id} not found in the dataset."}
     return excavate_user(user_id, df)
@@ -47,8 +57,6 @@ def tool_run_collision_simulation(
             'phases': {'recent': {'signal': {'avg_rating': recent_rating, 'top_words': top_words}}}
         }
     }
-    if grounding_quotes:
-        mock_persona['grounding_quotes'] = grounding_quotes
 
     profile = {
         'name': business_attributes.get('name', 'Unknown Business'),
@@ -64,7 +72,7 @@ def tool_run_collision_simulation(
         'noise_level': business_attributes.get('noise_level', 'average'),
         'open_late': business_attributes.get('open_late', False)
     }
-    return collision_analysis(mock_persona, profile, painpoints=painpoints)
+    return collision_analysis(mock_persona, profile, painpoints=painpoints, grounding_quotes=grounding_quotes)
 
 def tool_generate_synthetic_personas(business_description, location="", count=3):
     return generate_synthetic_personas(business_description, location, count)
@@ -72,8 +80,12 @@ def tool_generate_synthetic_personas(business_description, location="", count=3)
 def tool_fetch_competitor_personas(business_category, location="", limit=2):
     return fetch_competitor_personas(business_category, location, limit)
 
-def tool_ingest_reviews(business_id, reviews_text=None, reviews_json=None, csv_path=None):
-    if reviews_text:
+def tool_ingest_reviews(business_id, reviews_text=None, reviews_json=None, csv_path=None, pdf_path=None, image_path=None):
+    if pdf_path:
+        return ingest_pdf(pdf_path, business_id)
+    elif image_path:
+        return ingest_image(image_path, business_id)
+    elif reviews_text:
         return ingest_text(reviews_text, business_id)
     elif reviews_json:
         return ingest_json(reviews_json, business_id)

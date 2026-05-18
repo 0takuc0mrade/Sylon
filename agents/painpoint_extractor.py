@@ -1,25 +1,16 @@
-"""
-Painpoint Extractor & Grounded Persona Excavation
-
-Map-reduce architecture:
-1. MAP: Chunk reviews into batches of 25 → extract themes per batch
-2. REDUCE: Merge all chunk outputs → deduplicate → tally frequencies → attach quotes
-3. EXCAVATE: Build grounded personas from review clusters
-
-Saves results to:
-  data/businesses/{business_id}/painpoints.json
-  data/businesses/{business_id}/personas.json
-"""
 import os
 import json
 import math
+import sys
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if ROOT not in sys.path:
+    sys.path.insert(0, ROOT)
 
 from agents.llm_client import call_cerebras_json, call_cerebras
 
-# ---------------------------------------------------------------------------
-# Constants
-# ---------------------------------------------------------------------------
-CHUNK_SIZE = 25  # Reviews per map batch
+# constants
+CHUNK_SIZE = 25  # reviews per map batch
 DATA_ROOT = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "businesses")
 
 
@@ -29,13 +20,9 @@ def _ensure_dir(business_id: str) -> str:
     return path
 
 
-# ---------------------------------------------------------------------------
-# MAP Phase: Extract themes from a batch of reviews
-# ---------------------------------------------------------------------------
+# map phase: extract themes from a batch of reviews
 def _map_extract_themes(review_batch: list, batch_index: int) -> dict:
-    """
-    Extracts complaint themes, praise themes, and trends from a single batch.
-    """
+    # extracts complaint themes, praise themes, and trends from a single batch.
     reviews_text = "\n\n---\n\n".join(
         f"[Rating: {r.get('rating', '?')}/5] {r['text']}"
         for r in review_batch
@@ -81,15 +68,10 @@ Rules:
         return {"complaints": [], "praise": [], "trends": []}
 
 
-# ---------------------------------------------------------------------------
-# REDUCE Phase: Merge and deduplicate themes across batches
-# ---------------------------------------------------------------------------
+# merge and deduplicate themes across batches
 def _reduce_themes(batch_results: list) -> dict:
-    """
-    Merges themes from all map batches, deduplicates, and tallies frequencies.
-    """
+    # merges themes from all map batches, deduplicates, and tallies frequencies.
     if len(batch_results) == 1:
-        # Single batch — just normalize the counts to "frequency"
         result = batch_results[0]
         for complaint in result.get("complaints", []):
             complaint["frequency"] = complaint.pop("count", 1)
@@ -97,7 +79,7 @@ def _reduce_themes(batch_results: list) -> dict:
             praise["frequency"] = praise.pop("count", 1)
         return result
 
-    # Multiple batches — ask LLM to merge
+    # ask LLM to merge
     batches_json = json.dumps(batch_results, indent=2)
 
     prompt = f"""You have theme extractions from multiple batches of customer reviews.
@@ -136,7 +118,7 @@ Return a JSON object:
         )
     except Exception as e:
         print(f"[Painpoints] Reduce phase failed: {e}")
-        # Fallback: just concatenate all batch results
+        # just concatenate all batch results
         merged = {"complaints": [], "praise": [], "trends": []}
         for batch in batch_results:
             merged["complaints"].extend(batch.get("complaints", []))
@@ -145,24 +127,11 @@ Return a JSON object:
         return merged
 
 
-# ---------------------------------------------------------------------------
-# Public API: Extract Painpoints
-# ---------------------------------------------------------------------------
 def extract_painpoints(reviews: list, business_id: str) -> dict:
-    """
-    Map-reduce painpoint extraction from a review corpus.
-
-    Args:
-        reviews: List of normalized review dicts (must have 'text' and 'rating').
-        business_id: The business identifier.
-
-    Returns:
-        A dict with 'complaints', 'praise', and 'trends', each with frequencies and quotes.
-    """
     if not reviews:
         return {"complaints": [], "praise": [], "trends": []}
 
-    # MAP: chunk reviews into batches
+    #chunk reviews into batches
     num_chunks = math.ceil(len(reviews) / CHUNK_SIZE)
     print(f"[Painpoints] Processing {len(reviews)} reviews in {num_chunks} batch(es)...")
 
@@ -173,11 +142,11 @@ def extract_painpoints(reviews: list, business_id: str) -> dict:
         result = _map_extract_themes(batch, i)
         batch_results.append(result)
 
-    # REDUCE: merge all batch results
+    # merge all batch results
     print(f"  [REDUCE] Merging {len(batch_results)} batch results...")
     painpoints = _reduce_themes(batch_results)
 
-    # Save to disk
+    # save to disk
     biz_dir = _ensure_dir(business_id)
     painpoints_path = os.path.join(biz_dir, "painpoints.json")
     with open(painpoints_path, "w") as f:
@@ -191,32 +160,17 @@ def extract_painpoints(reviews: list, business_id: str) -> dict:
     return painpoints
 
 
-# ---------------------------------------------------------------------------
-# Public API: Excavate Grounded Personas from Reviews
-# ---------------------------------------------------------------------------
+# excavate grounded personas from reviews
 def excavate_personas_from_reviews(
     reviews: list,
     painpoints: dict,
     business_id: str,
     max_personas: int = 3,
 ) -> list:
-    """
-    Clusters reviews by behavioral pattern and builds grounded customer archetypes.
-
-    Each persona includes grounding_quotes — the actual reviews that define the archetype.
-
-    Args:
-        reviews: List of normalized review dicts.
-        painpoints: The painpoints dict from extract_painpoints().
-        business_id: The business identifier.
-        max_personas: Maximum number of personas to generate.
-
-    Returns:
-        A list of grounded persona dicts.
-    """
+    # clusters reviews by behavioral pattern and builds grounded customer archetypes.
     reviews_text = "\n\n---\n\n".join(
         f"[Rating: {r.get('rating', '?')}/5] [Author: {r.get('author_id', 'anon')}] {r['text']}"
-        for r in reviews[:75]  # Cap at 75 reviews to stay within context
+        for r in reviews[:75]  # cap at 75 reviews to stay within context
     )
 
     painpoints_summary = json.dumps(painpoints, indent=2) if painpoints else "No painpoints extracted yet."
@@ -233,7 +187,7 @@ KNOWN PAINPOINTS & PRAISE:
 {painpoints_summary}
 
 For EACH archetype, provide a JSON object with these exact fields:
-- "name": A sharp archetype label (e.g., "The Lunch-Rush Regular", "The Quality Snob")
+- "name": A respectful archetype label based on observable behavior (e.g., "The Lunch-Rush Regular", "The Detail-Oriented Diner", "The Weekend Explorer"). NEVER use judgmental or demeaning labels like "detail‑oriented customer", "budget‑conscious customer", "complainer". Describe behavior, not character.
 - "narrative": A 100-150 word character portrait GROUNDED in the actual reviews.
   Reference specific things these customers said. Write like you know this person.
   Include their priorities, pet peeves, what they notice first, what makes them leave a bad review.
@@ -263,7 +217,7 @@ Do NOT include any explanation outside the JSON."""
         else:
             personas = []
 
-        # Normalize structure
+        # normalize structure
         normalized = []
         for p in personas:
             normalized.append({
@@ -277,7 +231,7 @@ Do NOT include any explanation outside the JSON."""
                 "source": "grounded",
             })
 
-        # Save to disk
+        # save to disk
         biz_dir = _ensure_dir(business_id)
         personas_path = os.path.join(biz_dir, "personas.json")
         with open(personas_path, "w") as f:
@@ -291,11 +245,8 @@ Do NOT include any explanation outside the JSON."""
         return []
 
 
-# ---------------------------------------------------------------------------
-# Public API: Load from disk
-# ---------------------------------------------------------------------------
+# loads painpoints from disk for a business.
 def load_painpoints(business_id: str) -> dict:
-    """Loads painpoints from disk for a business."""
     path = os.path.join(DATA_ROOT, business_id, "painpoints.json")
     if not os.path.exists(path):
         return {"complaints": [], "praise": [], "trends": []}
@@ -304,7 +255,7 @@ def load_painpoints(business_id: str) -> dict:
 
 
 def load_personas(business_id: str) -> list:
-    """Loads grounded personas from disk for a business."""
+    # loads grounded personas from disk for a business.
     path = os.path.join(DATA_ROOT, business_id, "personas.json")
     if not os.path.exists(path):
         return []
@@ -313,7 +264,7 @@ def load_personas(business_id: str) -> list:
 
 
 if __name__ == "__main__":
-    # Quick test — requires reviews to already be ingested
+    # quick test — requires reviews to already be ingested
     from agents.review_ingest import load_reviews
 
     test_id = "test_business_001"

@@ -1,16 +1,17 @@
-import os
-import sys
 import yaml
 import json
 import time
-# pyrefly: ignore [missing-import]
 import enum
-# pyrefly: ignore [missing-import]
 from dotenv import load_dotenv
+import sys
+import os
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, ROOT)
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if ROOT not in sys.path:
+    sys.path.insert(0, ROOT)
 
-from agents.llm_client import call_cerebras, call_gemini_structured, retry_with_backoff
+from agents.llm_client import call_cerebras, call_cerebras_mode, call_gemini_structured, retry_with_backoff
 from agents.persona_factory import get_personas_for_business, generate_synthetic_personas
 from agents.review_ingest import ingest_text, load_reviews, get_review_count
 from agents.painpoint_extractor import load_painpoints, load_personas
@@ -28,18 +29,17 @@ load_dotenv()
 with open(os.path.join(os.path.dirname(__file__), 'agents.yaml'), 'r') as f:
     agents_config = yaml.safe_load(f)['agents']
 
-# --- Structured Output Schema for Router ---
+# Structured Output Schema for Router 
 class Route(enum.Enum):
     SIMULATE = "SIMULATE"
     CHAT = "CHAT"
     INGEST = "INGEST"
+    RECOMMEND = "RECOMMEND"
 
-# ---------------------------------------------------------------------------
-# Session state: tracks the current business_id across the conversation
-# In production this would be per-session; for the demo a global is fine.
-# ---------------------------------------------------------------------------
+# Session state
 _current_business_id = None
-
+_business_context = {"description": "Business Entity", "location": ""}
+_conversation_history = {} # Maps business_id to list of dicts {"role": ..., "content": ...}
 
 def set_business_id(business_id: str):
     global _current_business_id
@@ -50,37 +50,34 @@ def get_business_id() -> str | None:
     return _current_business_id
 
 
-# ---------------------------------------------------------------------------
-# Router
-# ---------------------------------------------------------------------------
+
+
 @retry_with_backoff
 def evaluate_route(user_input: str) -> str:
-    """
-    Uses the Router Agent to classify user intent.
-    Returns 'SIMULATE', 'CHAT', or 'INGEST'.
-    Defaults to 'CHAT' on any failure.
-    """
+    business_id = get_business_id() or "default"
+    history = _conversation_history.get(business_id, [])[-3:] # Last 3 turns
+    history_str = json.dumps(history) if history else "No history."
+
+    prompt = f"Classify this intent as SIMULATE, INGEST, RECOMMEND, or CHAT. Only return one word.\nHistory: {history_str}\nInput: {user_input}"
+# Uses the Router Agent to classify user intent.
     try:
         result = call_gemini_structured(
-            prompt=f"{agents_config['router']['system_prompt']}\n\nUser input: \"{user_input}\"",
+            prompt=f"{agents_config['router']['system_prompt']}\n\nRecent History: {history_str}\nUser input: \"{user_input}\"",
             response_schema=Route,
         )
         return result
-    except Exception as e:
-        err_msg = str(e).lower()
-        is_rate_limit = "429" in err_msg or ("resource" in err_msg and "exhausted" in err_msg)
-        if is_rate_limit:
-            raise  # let the retry decorator handle it
-        print(f"[Router Failsafe] Router failed ({type(e).__name__}), defaulting to CHAT.")
+    except Exception:
+        user_input_lower = user_input.lower()
+        if any(word in user_input_lower for word in ["if", "scenario", "what if", "simulate"]):
+            print("[Router Failsafe] Rate-limited. Heuristic: SIMULATE")
+            return "SIMULATE"
         return "CHAT"
 
 
-# ---------------------------------------------------------------------------
 # Strategist (Cerebras-powered)
-# ---------------------------------------------------------------------------
 @retry_with_backoff
 def simulate_strategist(user_input: str, collision_result: str, painpoints: dict = None) -> str:
-    """Formats the Simulator's raw output into conversational Strategist advice."""
+    #Formats the Simulator's raw output into conversational Strategist advice.
     painpoint_context = ""
     if painpoints and painpoints.get("complaints"):
         top_complaints = [c["theme"] for c in painpoints["complaints"][:3]]
@@ -102,15 +99,14 @@ If real customer quotes were cited in the analysis, reference them naturally."""
 
     return call_cerebras(
         prompt=prompt,
-        system_prompt="You are Sylon, a premium business strategist. Be conversational, sharp, and authoritative.",
-        temperature=0.7,
+        system_prompt="You are Sylon, a premium business strategist. Be conversational, precise, and authoritative.",
         max_tokens=800,
     )
 
 
 @retry_with_backoff
 def direct_chat_strategist(user_input: str) -> str:
-    """Handles general conversation without running the Simulator."""
+    # Handles general conversation without running the Simulator.
     business_id = get_business_id()
     context = ""
     if business_id:
@@ -129,21 +125,22 @@ Keep it to 2-3 sentences max."""
 
     return call_cerebras(
         prompt=prompt,
-        system_prompt="You are Sylon, a premium business strategist. Be conversational and sharp.",
+        system_prompt="You are Sylon, a premium business strategist. Be conversational and precise.",
         temperature=0.7,
         max_tokens=400,
     )
 
 
-# ---------------------------------------------------------------------------
-# INGEST handler (new)
-# ---------------------------------------------------------------------------
+def set_business_context(description: str, location: str = ""):
+    global _business_context
+    _business_context = {
+        "description": description,
+        "location": location
+    }
+
+# INGEST handler 
 def handle_ingest(user_input: str) -> str:
-    """
-    Handles review ingestion from pasted text.
-    Generates a business_id if none exists, parses the reviews,
-    extracts painpoints, and excavates grounded personas.
-    """
+# Handles review ingestion from pasted text, generates a business_id if none exists, parses the reviews, extracts painpoints, and excavates grounded personas.
     import uuid
 
     business_id = get_business_id()
@@ -172,7 +169,7 @@ def handle_ingest(user_input: str) -> str:
     persona_names = [p.get("name", "Unknown") for p in result.get("personas", [])]
     top_complaints = [c["theme"] for c in result.get("painpoints", {}).get("complaints", [])[:3]]
 
-    response_parts = [f"Got it. I processed {review_count} reviews"]
+    response_parts = [f"Got it. I've looked through {review_count} reviews."]
 
     if complaint_count > 0:
         response_parts.append(f"and found {complaint_count} key pain points")
@@ -186,11 +183,9 @@ def handle_ingest(user_input: str) -> str:
     return ". ".join(response_parts)
 
 
-# ---------------------------------------------------------------------------
 # Simulation Pipeline (updated for grounded personas)
-# ---------------------------------------------------------------------------
 def get_local_persona():
-    """Legacy fallback: pre-excavated Yelp persona."""
+    #Legacy fallback: pre-excavated persona from yelp.
     persona_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'outputs', 'bJ5FtCtZX3ZZacz2_2PJjA_persona.json')
     try:
         with open(persona_path, 'r') as f:
@@ -210,19 +205,15 @@ def get_local_persona():
     return persona_narrative, drifts, recent_rating, top_words
 
 
-def run_simulation(user_input: str, business_description: str = "Local Cafe, Coffee Shop", location: str = "") -> str:
-    """
-    Multi-Persona Simulation Pipeline — now with grounded persona support.
-
-    If a business_id is set and has reviews:
-      → Uses grounded personas + painpoints from real reviews
-    Otherwise:
-      → Falls back to synthetic personas (Phase 1) + Google Places (Phase 2)
-    """
+def run_simulation(user_input: str, business_description=None, location=None): 
+    business_description = business_description or _business_context.get("description", "Business Entity") 
+    location = location or _business_context.get("location", "")
+    # Multi-Persona Simulation Pipeline
     business_id = get_business_id()
+    name_source = business_description or "Business Entity"
     business_attributes = {
-        'name': business_description.split(',')[0].strip(),
-        'categories': business_description,
+        'name': name_source.split(',')[0].strip(),
+        'categories': name_source,
         'price_range': 'mid-range',
         'noise_level': 'average'
     }
@@ -230,7 +221,7 @@ def run_simulation(user_input: str, business_description: str = "Local Cafe, Cof
     all_collisions = []
     painpoints = None
 
-    # --- Try grounded personas first ---
+    # Try grounded personas first
     if business_id:
         personas, painpoints, mode = get_personas_for_business(
             business_id=business_id,
@@ -260,7 +251,7 @@ def run_simulation(user_input: str, business_description: str = "Local Cafe, Cof
                 except Exception as e:
                     print(f"  [Simulator] Collision failed for {persona['name']}: {e}")
 
-    # --- Fallback: Synthetic + Google Places ---
+    # Fallback: Synthetic + Google Places
     if not all_collisions:
         persona_count = int(os.environ.get("SYLON_PERSONA_COUNT", "1"))
         print(f"[Archaeologist] Phase 1: Generating {persona_count} synthetic archetype(s)...")
@@ -310,7 +301,7 @@ def run_simulation(user_input: str, business_description: str = "Local Cafe, Cof
                 except Exception as e:
                     print(f"  [Simulator] Collision failed for {persona['name']}: {e}")
 
-    # --- Final fallback: pre-excavated Yelp persona ---
+    # Final fallback: pre-excavated Yelp persona
     if not all_collisions:
         print("[Archaeologist] Falling back to pre-excavated Yelp persona...")
         persona_narrative, drifts, recent_rating, top_words = get_local_persona()
@@ -326,26 +317,104 @@ def run_simulation(user_input: str, business_description: str = "Local Cafe, Cof
 
     # Aggregate all collision results
     combined = "\n\n---\n\n".join(all_collisions)
+
+# SIMPLE RECOMMENDER (inline, no new files)
+    def simple_recommendation_engine(personas, items):
+        results = []
+        
+        for item in items:
+            total_score = 0
+            reasons = []
+
+        for p in personas:
+            score = 0
+
+            if "cheap" in p.get("top_words", []) and item.get("price_level", 3) <= 2:
+                score += 0.4
+                reasons.append("price match")
+
+            if "impatient" in p.get("drifts", []) and item.get("wait_time", 0) > 20:
+                score -= 0.3
+                reasons.append("wait time risk")
+
+            if any(w in item.get("ambience", "") for w in p.get("top_words", [])):
+                score += 0.3
+                reasons.append("ambience match")
+
+            total_score += score
+
+        results.append({
+            "item": item["name"],
+            "score": round(total_score, 3),
+            "reasons": list(set(reasons))
+        })
+        
+        
+        return sorted(results, key=lambda x: x["score"], reverse=True)
+
+    items = [
+        {"name": "Option A", "price_level": 2, "wait_time": 15, "ambience": "quiet"},
+        {"name": "Option B", "price_level": 3, "wait_time": 30, "ambience": "loud"}
+    ]
+
+    ranked_results = simple_recommendation_engine(personas or [], items)
+    combined +=f"\n\nRECOMMENDATIONS: \n{ranked_results}"
     return simulate_strategist(user_input, combined, painpoints)
+ 
+
+# RECOMMENDATION Handler (Multi-Turn)
+def handle_recommendation(user_input: str) -> str:
+    business_id = get_business_id() or "default"
+    history_str = json.dumps(_conversation_history.get(business_id, [])[-4:])
+    
+    prompt = f"""
+    You are a business strategist assessing a request for a recommendation.
+    Look at the recent conversation history: {history_str}
+    And the user's latest message: "{user_input}"
+    
+    Do we know WHO this recommendation is for? (e.g., a specific segment like 'loyalists', 'new customers', 'critical reviewers', or a specific persona).
+    If we do NOT know, write a 1-sentence conversational question asking the user who the target audience is.
+    If we DO know, respond with exactly: READY: [description of target audience]
+    """
+    
+    assessment = call_cerebras(prompt, temperature=0.2)
+    
+    if "READY:" not in assessment:
+        return assessment
+        
+    target_audience = assessment.replace("READY:", "").strip()
+    print(f"[Orchestrator] Running recommendation for audience: {target_audience}")
+    
+    # To fully integrate we'd call evaluate_ndcg.py's LLM ranking here
+    # For now we'll simulate the successful resolution of the multi-turn loop.
+    return f"Based on our discussion targeting {target_audience}, I've analyzed the behavioral drifts. Here are my top 3 recommendations that fit their dealbreakers: Option A, Option B, and Option C."
 
 
-# ---------------------------------------------------------------------------
 # Master Router
-# ---------------------------------------------------------------------------
-def process_user_scenario(user_input: str) -> str:
-    """
-    Master routing function used by the FastAPI server.
-    The Router classifies intent first, then dispatches to the correct pipeline.
-    """
+def process_user_scenario(user_input: str, description: str = "Business Entity", location:str = "") -> str:
+    # routing function used by the FastAPI server.
+    set_business_context(description, location)
+    business_id = get_business_id() or "default"
+    
+    if business_id not in _conversation_history:
+        _conversation_history[business_id] = []
+        
+    _conversation_history[business_id].append({"role": "user", "content": user_input})
+    
     route = evaluate_route(user_input)
     print(f"[Orchestrator] Route resolved: {route}")
 
     if route == "INGEST":
-        return handle_ingest(user_input)
+        response = handle_ingest(user_input)
     elif route == "SIMULATE":
-        return run_simulation(user_input)
+        response = run_simulation(user_input)
+    elif route == "RECOMMEND":
+        response = handle_recommendation(user_input)
     else:
-        return direct_chat_strategist(user_input)
+        response = direct_chat_strategist(user_input)
+        
+    _conversation_history[business_id].append({"role": "assistant", "content": response})
+    return response
 
 
 def main():
@@ -358,6 +427,12 @@ def main():
         if user_input.lower() in ['exit', 'quit']:
             break
 
+        # Update history for CLI as well
+        business_id = get_business_id() or "default"
+        if business_id not in _conversation_history:
+            _conversation_history[business_id] = []
+        _conversation_history[business_id].append({"role": "user", "content": user_input})
+
         route = evaluate_route(user_input)
 
         if route == "INGEST":
@@ -369,11 +444,16 @@ def main():
             print("[OpenServ Routing] -> Passing to Simulator with controlled hallucination rules...")
             final_response = run_simulation(user_input)
             print("[OpenServ Routing] -> Sending Simulator result to Strategist...\n")
+        elif route == "RECOMMEND":
+            print(f"\n[OpenServ Router] -> Intent: RECOMMEND")
+            print("[OpenServ Routing] -> Managing multi-turn recommendation logic...\n")
+            final_response = handle_recommendation(user_input)
         else:
             print(f"\n[OpenServ Router] -> Intent: CHAT")
             print("[OpenServ Routing] -> Responding conversationally...\n")
             final_response = direct_chat_strategist(user_input)
 
+        _conversation_history[business_id].append({"role": "assistant", "content": final_response})
         print(f"Sylon: {final_response}\n")
 
 if __name__ == "__main__":

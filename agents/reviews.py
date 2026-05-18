@@ -1,18 +1,10 @@
-from agents import llm_client
-from agents import llm_client
-from agents import llm_client
-from agents import llm_client
 import os
 import json
-# pyrefly: ignore [missing-import]
 import pandas as pd
-from cerebras.cloud.sdk import Cerebras
 from dotenv import load_dotenv
-
-from agents.llm_client import call_cerebras, retry_with_backoff
+from agents.llm_client import call_cerebras
 
 load_dotenv()
-client = Cerebras(api_key=os.environ.get("CEREBRAS_API_KEY"))
 
 def load_business(business_path, business_id):
     # finds a specific business by ID from the Yelp business file and reads it line by line
@@ -83,9 +75,20 @@ def profile_business(business):
     }
 
 
-def collision_analysis(persona, business_profile):
-    # finds where this user's values and this business's signals collide; what they'll love, what they won't tolerate.
+def collision_analysis(persona, business_profile, segment='fully_committed', painpoints=None, grounding_quotes=None):
+    phases = persona.get('structured', {}).get('phases', {})
+    early_rating = phases.get('early', {}).get('signal', {}).get('avg_rating', 'N/A')
+    recent_rating_val = phases.get('recent', {}).get('signal', {}).get('avg_rating', persona.get('avg_rating', 'N/A'))
+
+    grounding_context = f"""
+GROUNDING CONTEXT:
+- Behavioral segment: {segment.upper().replace('_', ' ')}
+- Rating trajectory: {early_rating} early → {recent_rating_val} recent
+- This customer's complaints are trusted by other reviewers. Weight their friction points heavily.
+"""
+
     prompt = f"""
+Maintain a professional, B2B tone. Describe customer behavior as operational data points. A harsh critic is a "no nonsense" customer. An inconsistent rater shows "preference change". Never use judgemental language.
 You are a customer behavior analyst. You have a deep profile of a real customer
 and the details of a business they have never visited.
 
@@ -96,11 +99,17 @@ CUSTOMER PROFILE:
 {persona['narrative']}
 {grounding_context}
 DRIFT OBSERVED:
-{chr(10).join(persona['structured']['drifts']) if persona['structured']['drifts'] else 'No significant drift'}
+{chr(10).join(persona.get('structured', {}).get('drifts', persona.get('drifts', []))) or 'No significant drift'}
+
+REAL CUSTOMER EVIDENCE:
+{chr(10).join(f'- "{q}"' for q in grounding_quotes) if grounding_quotes else 'No grounding quotes available.'}
+
+KNOWN PAINPOINTS:
+{chr(10).join(f'- {c["theme"]} (severity: {c.get("severity","?")} )' for c in painpoints.get("complaints", [])[:3]) if painpoints else 'No painpoints extracted yet.'}
 
 RECENT BEHAVIOR:
-- Average recent rating: {persona['structured']['phases']['recent']['signal']['avg_rating']}
-- What they keep talking about: {', '.join(persona['structured']['phases']['recent']['signal']['top_words'][:8])}
+- Average recent rating: {recent_rating_val}
+- What they keep talking about: {', '.join(persona.get('structured', {}).get('phases', {}).get('recent', {}).get('signal', {}).get('top_words', persona.get('top_words', []))[:8])}
 
 BUSINESS:
 - Name: {business_profile['name']}
@@ -129,14 +138,7 @@ FIX THIS:
 - [one action the business should take]
 """
 
-    response = client.chat.completions.create(
-        messages=[{"role": "user", "content": prompt}],
-        model="qwen-3-235b-a22b-instruct-2507",
-        max_completion_tokens=1024,
-        temperature=0.2,
-        stream=False
-    )
-    return response.choices[0].message.content
+    return call_cerebras(prompt)
 
 def extract_voice_signature(sample_reviews):
     # reads actual reviews and extracts writing patterns
@@ -152,33 +154,43 @@ REVIEWS:
 
 Write 5 bullet points describing exactly how this person writes.
 """
-    response = client.chat.completions.create(
-        messages=[{"role": "user", "content": prompt}],
-        model="llama3.1-8b",
-        max_completion_tokens=300,
-        temperature=0.1,
-        stream=False
-    )
-    return response.choices[0].message.content
+    
+    return call_cerebras(prompt)
 
-|
+def build_character_card(persona):
+    phases = persona.get('structured', {}).get('phases', {})    
+    early = phases.get('early', {}).get('signal', {})
+    recent = phases.get('recent', {}).get('signal', {})
+    drifts = persona.get('structured', {}).get('drifts',[])
+    
+    return f"""CHARACTER CARD:
+    - Rating trajectory:{early.get('avg_rating', 'N/A')} early to {recent.get('avg_rating', 'N/A')} recent
+    - Vocabulary shift: {'; '.join(drifts) if drifts else 'stable'}
+    - Current obsessions: {'; '.join(recent.get('top_words', [])[:5])}
+    - Review length tendency: {'detailed' if recent.get('avg_rating', 5.0) <3.5 else 'moderate'}
+    - Praise style: specific details, names exact dishes or moments
+    - Complaint style: states the principle being violated, not just the surface issue
+    - Reader address: direct, uses asides, self corrections, parenthetical humor"""
+
 
 def generate_review(persona, business_profile, collision, sample_reviews):
+    character_card = build_character_card(persona)
    # write the review and predict the rating.
     samples_text = "\n\n---\n\n".join(sample_reviews[:3])
-    
     prompt = f"""
 Your only job is to sound exactly like the person who wrote these reviews.
 Read them first. Do not do anything else until you have read all three.
+
+{character_card}
 
 REVIEW A:
 {sample_reviews[0] if len(sample_reviews) > 0 else ''}
 
 REVIEW B:
-{sample_reviews[2] if len(sample_reviews) > 2 else ''}
+{sample_reviews[1] if len(sample_reviews) > 1 else ''}
 
 REVIEW C:
-{sample_reviews[5] if len(sample_reviews) > 5 else ''}
+{sample_reviews[2] if len(sample_reviews) > 2 else ''}
 
 Now that you have read them — notice the opening. Notice how they build a scene before getting to the food. Notice what they find funny. Notice how they complain.
 
@@ -206,16 +218,9 @@ EARLY WARNING TO BUSINESS OWNER:
 [two sharp specific sentences]
 """
 
-    response = client.chat.completions.create(
-      messages=[{"role": "user", "content": prompt}],
-      model="qwen-3-235b-a22b-instruct-2507",
-      max_completion_tokens=1024,
-      temperature=0.2,
-      stream=False
-      )
-    return response.choices[0].message.content
+    return call_cerebras(prompt)
 
-def run(persona, business_path, business_id=None, category=None):
+def run(persona, business_path, business_id=None, category=None, segment='fully_committed'):
     if business_id:
         business = load_business(business_path, business_id)
         if not business:
@@ -252,8 +257,9 @@ def run(persona, business_path, business_id=None, category=None):
     for business in businesses:
         profile = profile_business(business)
         print(f"\nAnalyzing: {profile['name']}")
-
-        collision = collision_analysis(persona, profile)
+        
+        
+        collision = collision_analysis(persona, profile, segment=segment)
         prediction = generate_review(persona, profile, collision, sample_reviews)
 
         results.append({

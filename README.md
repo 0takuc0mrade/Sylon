@@ -4,7 +4,7 @@ Sylon is an AI-powered, review-grounded business intelligence platform. It inges
 
 ## Core Features
 
-*   **Review Ingestion & Persona Excavation:** Upload reviews (via CSV/JSON or pasted text) to automatically identify key customer segments and their recurring pain points.
+*   **Review Ingestion & Persona Excavation:** Upload reviews (via CSV/JSON,PDF, JPG or pasted text) to automatically identify key customer segments and their recurring pain points.
 *   **Multi-Persona Simulator:** Propose a business change (e.g., "I want to raise prices by 10%"). Sylon runs a collision analysis, simulating how each excavated persona will react based on their historical preferences.
 *   **Voice-Native Integration:** Designed as a FastAPI webhook for ElevenLabs, allowing business owners to talk to Sylon conversationally.
 *   **Competitor Analysis Fallback:** If you don't have reviews, Sylon generates synthetic personas and fetches real competitor reviews via the Google Places API to ground its advice.
@@ -12,8 +12,8 @@ Sylon is an AI-powered, review-grounded business intelligence platform. It inges
 ## Technology Stack
 
 *   **FastAPI:** Serves as the webhook endpoint for ElevenLabs and handles data ingestion routes.
-*   **Cerebras AI (Llama 3.3 70B):** Powers the core simulation engine, strategist summarization, and persona extraction. Chosen for rapid inference and complex instruction following.
-*   **Google Gemini (2.5 Flash):** Handles the "Router" agent, utilizing Gemini's structured output capabilities to classify user intent (`CHAT`, `SIMULATE`, `INGEST`).
+*   **Cerebras AI (Qwen-3-235b-a22b-instruct-2507):** Powers the core simulation engine, strategist summarization, and persona extraction. Chosen for rapid inference and complex instruction following.
+*   **Google Gemini (2.0 Flash):** Handles the "Router" agent, utilizing Gemini's structured output capabilities to classify user intent (`CHAT`, `SIMULATE`, `INGEST`).
 *   **Google Places API:** Used for fetching competitor reviews when generating fallback personas.
 *   **ElevenLabs (Integration):** Acts as the frontend for real-time voice-to-voice interaction.
 

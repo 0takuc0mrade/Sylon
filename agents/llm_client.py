@@ -1,47 +1,51 @@
-"""
-Centralized LLM Client for Sylon.
-
-Two providers, one interface:
-- Cerebras AI (Llama 3.3 70B) → heavy lifting (collision, strategist, painpoints, parsing)
-- Gemini → Router structured output only
-
-All retry logic lives here — no more copy-pasting across agents.
-"""
+#Centralized LLM Client for Sylon. two providers, one interface: Cerebras AI, Gemini
 import os
 import time
 import json
 import functools
-# pyrefly: ignore [missing-import]
 from google import genai
-# pyrefly: ignore [missing-import]
-from openai import OpenAI
-# pyrefly: ignore [missing-import]
+from cerebras.cloud.sdk import Cerebras
 from dotenv import load_dotenv
 
-load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
+load_dotenv(os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env"))
 
-# ---------------------------------------------------------------------------
 # Clients
-# ---------------------------------------------------------------------------
 gemini_client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
-cerebras_client = OpenAI(
-    base_url="https://api.cerebras.ai/v1",
-    api_key=os.environ.get("CEREBRAS_API_KEY", "placeholder"),
-)
+cerebras_client = Cerebras(api_key=os.environ.get("CEREBRAS_API_KEY"))
 
-CEREBRAS_MODEL = os.environ.get("CEREBRAS_MODEL", "llama-3.3-70b")
-GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
 
-# ---------------------------------------------------------------------------
+CEREBRAS_MODEL = os.environ.get("CEREBRAS_MODEL", "qwen-3-235b-a22b-instruct-2507")
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash-exp")
+
 # Retry logic (shared)
-# ---------------------------------------------------------------------------
 MAX_RETRIES = 4
 BASE_DELAY = 3  # seconds
 
+def call_llm(prompt, system_prompt):
+    if os.environ.get("SYLON_DEBUG_MODE") == "True":
+        return "DEBUG: This is a fast mock response for testing."
+    
+    return call_cerebras(prompt, system_prompt)
+
+def call_cerebras_mode(mode, prompt, system_prompt="", max_tokens=500):
+    if mode == "persona":
+        temperature = 0.9
+    elif mode == "simulator":
+        temperature = 0.3
+    elif mode == "strategist":
+        temperature = 0.6
+    else:
+        temperature = 0.7
+
+    return call_cerebras(
+        prompt=prompt,
+        system_prompt=system_prompt,
+        temperature=temperature,
+        max_tokens=max_tokens,
+    )
 
 def retry_with_backoff(func):
-    """Decorator that retries on rate-limit (429 / ResourceExhausted) errors."""
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         for attempt in range(1, MAX_RETRIES + 1):
@@ -62,10 +66,7 @@ def retry_with_backoff(func):
                     raise
     return wrapper
 
-
-# ---------------------------------------------------------------------------
-# Cerebras (primary — used for everything except Router)
-# ---------------------------------------------------------------------------
+# Cerebras (primary model: used for everything except Router)
 @retry_with_backoff
 def call_cerebras(
     prompt: str,
@@ -73,18 +74,9 @@ def call_cerebras(
     temperature: float = 0.7,
     max_tokens: int = 2000,
 ) -> str:
-    """
-    Single function for all Cerebras calls.
-
-    Args:
-        prompt: User/content prompt.
-        system_prompt: Optional system instruction.
-        temperature: Sampling temperature.
-        max_tokens: Max output tokens.
-
-    Returns:
-        The model's text response.
-    """
+    # single function for all Cerebras calls
+    if os.environ.get("SYLON_DEBUG_MODE") == "True":
+        return f"DEBUG (Cerebras): Mock response for prompt: {prompt[:50]}."
     messages = []
     if system_prompt:
         messages.append({"role": "system", "content": system_prompt})
@@ -94,7 +86,7 @@ def call_cerebras(
         model=CEREBRAS_MODEL,
         messages=messages,
         temperature=temperature,
-        max_tokens=max_tokens,
+        max_completion_tokens=max_tokens,
     )
     return response.choices[0].message.content
 
@@ -106,10 +98,7 @@ def call_cerebras_json(
     temperature: float = 0.4,
     max_tokens: int = 4000,
 ) -> dict | list:
-    """
-    Cerebras call that forces JSON output and parses it.
-    Falls back to extracting JSON from markdown fences if needed.
-    """
+    # cerebras call that forces JSON output and parses it.
     messages = []
     if system_prompt:
         messages.append({"role": "system", "content": system_prompt})
@@ -119,7 +108,7 @@ def call_cerebras_json(
         model=CEREBRAS_MODEL,
         messages=messages,
         temperature=temperature,
-        max_tokens=max_tokens,
+        max_completion_tokens=max_tokens,
         response_format={"type": "json_object"},
     )
     raw = response.choices[0].message.content
@@ -139,21 +128,13 @@ def call_cerebras_json(
     raise ValueError(f"Could not parse JSON from Cerebras response: {raw[:200]}")
 
 
-# ---------------------------------------------------------------------------
 # Gemini (Router only — structured enum output)
-# ---------------------------------------------------------------------------
 @retry_with_backoff
 def call_gemini_structured(prompt: str, response_schema) -> str:
-    """
-    For Router enum classification. Uses Gemini's structured output.
+    # use Gemini's structured output.
+    if os.environ.get("SYLON_DEBUG_MODE") == "True":
+        return "CHAT"
 
-    Args:
-        prompt: The classification prompt.
-        response_schema: An enum class for structured output.
-
-    Returns:
-        The enum value as a string.
-    """
     response = gemini_client.models.generate_content(
         model=GEMINI_MODEL,
         contents=prompt,
@@ -167,16 +148,7 @@ def call_gemini_structured(prompt: str, response_schema) -> str:
 
 @retry_with_backoff
 def call_gemini(prompt: str, json_mode: bool = False) -> str:
-    """
-    General Gemini call (fallback if Cerebras is down).
-
-    Args:
-        prompt: The prompt text.
-        json_mode: If True, request JSON output.
-
-    Returns:
-        The model's text response.
-    """
+    # alternative for cerebras
     config = {}
     if json_mode:
         config["response_mime_type"] = "application/json"

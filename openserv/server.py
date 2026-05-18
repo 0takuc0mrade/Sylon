@@ -1,9 +1,6 @@
 import asyncio
 import traceback
-
-# pyrefly: ignore [missing-import]
 from fastapi import FastAPI, UploadFile, File, Form
-# pyrefly: ignore [missing-import]
 from pydantic import BaseModel
 import sys
 import os
@@ -35,10 +32,7 @@ class ChatResponse(BaseModel):
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat_endpoint(request: ChatRequest):
-    """
-    Receives spoken text from ElevenLabs, runs the Sylon multi-agent orchestrator,
-    and returns the Strategist's response text to be spoken back to the user.
-    """
+    # receives spoken text from ElevenLabs, runs the Sylon multi-agent orchestrator, and returns the Strategist's response text to be spoken back to the user.
     try:
         # Thread business_id through the session
         if request.business_id:
@@ -70,10 +64,7 @@ async def chat_endpoint(request: ChatRequest):
 
 @app.post("/business/upload-reviews")
 async def upload_reviews(file: UploadFile = File(...), business_id: str = Form(...)):
-    """
-    Endpoint for structured review uploads (CSV/JSON files).
-    For voice/pasted text, use the /chat endpoint with INGEST intent.
-    """
+    # for structured review uploads (CSV/JSON files). for voice/pasted text, use the /chat endpoint with INGEST intent.
     try:
         content = await file.read()
         text = content.decode("utf-8")

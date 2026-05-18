@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  sylon-api:
+    build: .
+    container_name: sylon_backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+      - ./outputs:/app/outputs
+    restart: unless-stopped

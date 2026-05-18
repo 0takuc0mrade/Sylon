@@ -2,13 +2,18 @@ import os
 import json
 import pandas as pd
 import numpy as np
-import os
+import sys
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if ROOT not in sys.path:
+    sys.path.insert(0, ROOT)
+    
 from cerebras.cloud.sdk import Cerebras
 from dotenv import load_dotenv
 from collections import defaultdict
+from agents.llm_client import call_cerebras
 
 load_dotenv()
-client = Cerebras(api_key=os.environ.get("CEREBRAS_API_KEY"))
 
 def split_into_phases(user_history):
     # Split a user's review history into three life phases: early, middle, recent.
@@ -107,9 +112,14 @@ def build_structured_persona(user_id, early, middle, recent, drifts):
 
 def build_narrative_persona(structured_persona, user_id):
     # Feed the structured persona into the llm and asks it to write a character description; the human readable section.
+    early_signal = structured_persona['phases']['early']['signal']
+    recent_signal = structured_persona['phases']['recent']['signal']
+    
+    if not early_signal or not recent_signal:
+        return "Not enough review history to build a narrative portrait."
     prompt = f"""
 You are reading the behavioral data of a real person extracted from their Yelp review history.
-Your job is to write a sharp, on point and specific character portrait of this reviewer.
+Your job is to write a precise, on point and specific character portrait of this reviewer.
 
 Do not be generic. Do not say things like "this user enjoys dining out."
 Write like you actually know this person personally; their quirks, their priorities, their blind spots.
@@ -117,38 +127,34 @@ Write like you actually know this person personally; their quirks, their priorit
 Here is their behavioral data:
 
 EARLY PHASE ({structured_persona['phases']['early']['period']}):
-- Average rating: {structured_persona['phases']['early']['signal']['avg_rating']}
-- Rating variance: {structured_persona['phases']['early']['signal']['rating_variance']}
-- Most used words: {', '.join(structured_persona['phases']['early']['signal']['top_words'])}
-- Sample reviews: {json.dumps(structured_persona['phases']['early']['signal']['sample_texts'][:2])}
+- Average rating: {early_signal['avg_rating']}
+- Rating variance: {early_signal['rating_variance']}
+- Most used words: {', '.join(early_signal['top_words'])}
+- Sample reviews: {json.dumps(early_signal['sample_texts'][:2])}
 
-RECENT PHASE ({structured_persona['phases']['recent']['period']}):
-- Average rating: {structured_persona['phases']['recent']['signal']['avg_rating']}
-- Rating variance: {structured_persona['phases']['recent']['signal']['rating_variance']}
-- Most used words: {', '.join(structured_persona['phases']['recent']['signal']['top_words'])}
-- Sample reviews: {json.dumps(structured_persona['phases']['recent']['signal']['sample_texts'][:2])}
+RECENT PHASE ({structured_persona['phases']['early']['period']}):
+- Average rating: {early_signal['avg_rating']}
+- Rating variance: {early_signal['rating_variance']}
+- Most used words: {', '.join(early_signal['top_words'])}
+- Sample reviews: {json.dumps(early_signal['sample_texts'][:2])}
 
 OBSERVED DRIFTS:
 {chr(10).join(structured_persona['drifts']) if structured_persona['drifts'] else 'No significant drift detected'}
 
-Write a 150-200 word character portrait. Be specific. Be sharp. No fluff.
+Write a 150-200 word character portrait. Be specific. Be precise. No fluff.
 End with one sentence that captures what this person would never forgive in a bad experience.
 """
 
-    response = client.chat.completions.create(
-      messages=[{"role": "user", "content": prompt}],
-      model="llama3.1-8b",
-      max_completion_tokens=1024,
-      temperature=0.2,
-      stream=False
-      )
-    return response.choices[0].message.content
+    response = call_cerebras(prompt)
+    return response
 
 
-def excavate_user(user_id,user_history):
+def excavate_user(user_id,user_history,category_filter= None):
    # Takes a user ID and their reviews and returns both their structured and narrative analysis.
     user_reviews =user_history[user_history['user_id'] == user_id].copy()
     user_reviews['date'] = pd.to_datetime(user_reviews['date'])
+    if category_filter:
+        user_reviews = user_reviews[user_reviews['primary_category'] == category_filter]
 
     if len(user_reviews) < 20:
         print(f"Skipping{user_id} - not enough review history")
@@ -170,6 +176,43 @@ def excavate_user(user_id,user_history):
         'narrative': narrative
     }
 
+def excavate_contextual_personas(user_id, all_reviews):
+    # splits user reviews by business category
+    # builds a separate persona for each context
+    # returns dict of category -> persona
+    
+    user_history = all_reviews[all_reviews['user_id'] == user_id].copy()
+    user_history['date'] = pd.to_datetime(user_history['date'])
+    
+    if len(user_history) < 5:
+        print(f"Skipping {user_id} — insufficient history")
+        return None
+    
+    # find categories this user has reviewed
+    categories = user_history['primary_category'].value_counts()
+    
+    # only build personas for categories with enough reviews
+    active_categories = categories[categories >= 5].index.tolist()
+    
+    if not active_categories:
+        return None
+    
+    contextual_personas = {}
+    
+    for category in active_categories:
+        category_reviews = user_history[
+            user_history['primary_category'] == category
+        ].copy()
+        
+        print(f"  Building {category} persona ({len(category_reviews)} reviews)...")
+        
+        persona = excavate_user(user_id, all_reviews, 
+                               category_filter=category)
+        
+        if persona:
+            contextual_personas[category] = persona
+    
+    return contextual_personas
 
 if __name__ == "__main__":
     all_reviews = pd.read_csv('data/sampled_reviews.csv')

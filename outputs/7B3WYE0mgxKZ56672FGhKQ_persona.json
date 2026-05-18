@@ -1,0 +1,114 @@
+{
+  "structured": {
+    "user_id": "7B3WYE0mgxKZ56672FGhKQ",
+    "phases": {
+      "early": {
+        "period": "2011-07-09 07:23:22 \u2192 2011-07-09 07:23:22",
+        "signal": {
+          "review_count": 1,
+          "avg_rating": 1.0,
+          "rating_variance": 0.0,
+          "top_words": [
+            "other",
+            "appraiser",
+            "apparently",
+            "agreed",
+            "appraisal",
+            "anyone",
+            "close",
+            "closing",
+            "short",
+            "recently",
+            "closed",
+            "finally",
+            "done,",
+            "finished",
+            "forever"
+          ],
+          "gap_reviews": [
+            {
+              "stars": 1.0,
+              "text": "I recently closed a loan with FIB and now that the deal is finally done, I'm finished forever with this incompetent excuse for a bank. One of the other reviewers pointed out that the appraiser was apparently told to low-ball the value... I can't say for sure exactly why or how it happened, but the appraiser came back with an extremely low value for my home, too. This worked out okay in my case because the seller agreed to lower the price, saving me money, but I feel the appraisal was completely bogus, and in light of the other review, I suspect that something fishy may have been going on.\n\nThroughout the whole process, it was incredibly difficult to get in touch with anyone at FIB. My repeated phone calls and emails asking when we would be able to close on the house were totally ignored. Apparently they don't think the question of when you can actually close on the home is important.\n\nThey misplaced documents I sent - I had to send them one of my W2s three times. When the first appraisal came back with some problems, they failed to schedule another visit by the appraiser on the date we agreed upon even though they told me by email that they would. Luckily, my agent was on top of things, and he called the appraiser.\n\nFinally, FIB delayed my closing by failing to notice that the seller's bank (in a short sale) needed five days to review the closing statement. This is standard in a short sale. Of course, they blamed this on the other bank and charged me a rate lock extension fee of $400+.\n\nBased on all the above, I wouldn't recommend that anyone do business with this bank, except maybe my worst enemy. I guess."
+            }
+          ],
+          "sample_texts": [
+            "I recently closed a loan with FIB and now that the deal is finally done, I'm finished forever with this incompetent excuse for a bank. One of the other reviewers pointed out that the appraiser was apparently told to low-ball the value... I can't say for sure exactly why or how it happened, but the appraiser came back with an extremely low value for my home, too. This worked out okay in my case because the seller agreed to lower the price, saving me money, but I feel the appraisal was completely bogus, and in light of the other review, I suspect that something fishy may have been going on.\n\nThroughout the whole process, it was incredibly difficult to get in touch with anyone at FIB. My repeated phone calls and emails asking when we would be able to close on the house were totally ignored. Apparently they don't think the question of when you can actually close on the home is important.\n\nThey misplaced documents I sent - I had to send them one of my W2s three times. When the first appraisal came back with some problems, they failed to schedule another visit by the appraiser on the date we agreed upon even though they told me by email that they would. Luckily, my agent was on top of things, and he called the appraiser.\n\nFinally, FIB delayed my closing by failing to notice that the seller's bank (in a short sale) needed five days to review the closing statement. This is standard in a short sale. Of course, they blamed this on the other bank and charged me a rate lock extension fee of $400+.\n\nBased on all the above, I wouldn't recommend that anyone do business with this bank, except maybe my worst enemy. I guess."
+          ]
+        }
+      },
+      "middle": {
+        "period": "2016-04-02 16:22:46 \u2192 2016-04-02 16:22:46",
+        "signal": {
+          "review_count": 1,
+          "avg_rating": 1.0,
+          "rating_variance": 0.0,
+          "top_words": [
+            "information",
+            "april",
+            "business",
+            "account",
+            "available",
+            "during",
+            "their",
+            "website",
+            "ditech",
+            "automated",
+            "message",
+            "explaining",
+            "system",
+            "beginning",
+            "okay,"
+          ],
+          "gap_reviews": [
+            {
+              "stars": 1.0,
+              "text": "Okay, so it's tax time, April 1, and I need my 1098 so my business partner and I can get the info on our rental properties that we need to do our taxes. Ditech's website is down for maintenance. April 2nd, I go back to the site and it says \"your account information is not available - please contact Ditech customer service.\" I call in and get an automated message explaining that my account information will not be available until April 10. I punch the menu option to speak to a representative. Then I get another automated message explaining that due to extremely high call volume (doubtless due to no information being available on the website during tax time), Ditech cannot take my call. Then the system hangs up on me. Let me point out that this is during business hours.\n\nSo here we are at the beginning of April, when everyone is doing their taxes, and there is absolutely no way for me to get info on my account either over the internet or on the phone. Wow. Who decided it was a good idea to do ten days of system maintenance in the beginning of April? Unfortunately my mortgage was sold to this company. I would never choose to do business with a company that doesn't undestand that their customers actually need to be able to reach them to get basic information on their accounts, especially during tax time."
+            }
+          ],
+          "sample_texts": [
+            "Okay, so it's tax time, April 1, and I need my 1098 so my business partner and I can get the info on our rental properties that we need to do our taxes. Ditech's website is down for maintenance. April 2nd, I go back to the site and it says \"your account information is not available - please contact Ditech customer service.\" I call in and get an automated message explaining that my account information will not be available until April 10. I punch the menu option to speak to a representative. Then I get another automated message explaining that due to extremely high call volume (doubtless due to no information being available on the website during tax time), Ditech cannot take my call. Then the system hangs up on me. Let me point out that this is during business hours.\n\nSo here we are at the beginning of April, when everyone is doing their taxes, and there is absolutely no way for me to get info on my account either over the internet or on the phone. Wow. Who decided it was a good idea to do ten days of system maintenance in the beginning of April? Unfortunately my mortgage was sold to this company. I would never choose to do business with a company that doesn't undestand that their customers actually need to be able to reach them to get basic information on their accounts, especially during tax time."
+          ]
+        }
+      },
+      "recent": {
+        "period": "2020-06-16 17:00:42 \u2192 2020-06-16 17:00:42",
+        "signal": {
+          "review_count": 1,
+          "avg_rating": 1.0,
+          "rating_variance": 0.0,
+          "top_words": [
+            "service",
+            "said,",
+            "couple",
+            "called",
+            "simple",
+            "appointment",
+            "didn't",
+            "sound",
+            "wanted",
+            "business",
+            "someone",
+            "worked",
+            "issue",
+            "don't",
+            "asked"
+          ],
+          "gap_reviews": [
+            {
+              "stars": 1.0,
+              "text": "Called for a simple service appointment and Bob didn't sound like he wanted my business at all. I told him someone else had worked on the issue in the past and he said, \"Why don't you just have them do it?\" I asked what his minimum service call was and he said, \"If I have to sit around for a couple hours, probably a couple hundred bucks.\" At least it's good to know about his level of professionalism  before hiring him."
+            }
+          ],
+          "sample_texts": [
+            "Called for a simple service appointment and Bob didn't sound like he wanted my business at all. I told him someone else had worked on the issue in the past and he said, \"Why don't you just have them do it?\" I asked what his minimum service call was and he said, \"If I have to sit around for a couple hours, probably a couple hundred bucks.\" At least it's good to know about his level of professionalism  before hiring him."
+          ]
+        }
+      }
+    },
+    "drifts": [
+      "Stopped emphasizing: appraisal, agreed, other, finally, close",
+      "Started emphasizing: business, appointment, didn't, asked, don't"
+    ]
+  },
+  "narrative": "Meet the perpetual critic, a master of nitpicking and a virtuoso of victimhood. This individual has a talent for sniffing out incompetence, and their Yelp history is a testament to their ability to find fault in even the most mundane interactions. They're a control freak, always looking for ways to micromanage and assert their dominance, but their tactics often come across as entitled and abrasive.\n\nTheir reviews reveal a pattern of pettiness, with a focus on minor infractions and perceived slights. They're quick to assume the worst about others, often jumping to conclusions without giving anyone the benefit of the doubt. Their language is laced with condescension and a sense of superiority, as if they're the only ones who truly understand what's going on.\n\nOne thing is certain: this person would never forgive a business that fails to acknowledge their importance and cater to their every whim."
+}
