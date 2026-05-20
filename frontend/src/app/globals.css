@@ -1,0 +1,134 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-brown: var(--brand-brown);
+  --color-brand-lightbrown: var(--brand-lightbrown);
+  --color-brand-dark: var(--brand-dark);
+  --color-brand-glow: var(--brand-glow);
+  
+  --background-image-glow-bg: var(--bg-glow);
+  --background-image-card-glass: linear-gradient(135deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.1) 100%);
+}
+
+@layer base {
+  :root {
+    --brand-brown: #7a463b;
+    --brand-lightbrown: #e69d81;
+    --brand-dark: #1a0f0a;
+    --brand-glow: #ffbd98;
+    --bg-base: #ffcba4;
+    --bg-glow: radial-gradient(ellipse at 50% 40%, #ffffff 0%, #fff0e6 20%, #ffcba4 60%, #e08e79 100%);
+    
+    /* Orb specific variables */
+    --orb-dome-active: inset 0 0 100px rgba(165,115,101,0.9);
+    --orb-dome-idle: inset 0 0 40px rgba(255,255,255,0.6);
+    --orb-vortex-active: rgba(165,115,101,0.6);
+    --orb-vortex-idle: rgba(255,255,255,0.3);
+    --orb-hover-shadow: inset 0 0 80px rgba(255,255,255,0.9);
+  }
+
+  .dark {
+    --brand-brown: #d68f77;
+    --brand-lightbrown: #ffcba4;
+    --brand-dark: #f5ece9;
+    --brand-glow: #ff5722;
+    --bg-base: #120c0a; /* Obsidian brown */
+    --bg-glow: radial-gradient(ellipse at 50% 40%, #2a1c17 0%, #1a100d 40%, #0d0705 100%);
+
+    /* Orb specific variables */
+    --orb-dome-active: inset 0 0 100px rgba(255,100,50,0.6);
+    --orb-dome-idle: inset 0 0 40px rgba(165,115,101,0.4);
+    --orb-vortex-active: rgba(255,100,50,0.5);
+    --orb-vortex-idle: rgba(165,115,101,0.2);
+    --orb-hover-shadow: inset 0 0 80px rgba(255,150,100,0.6);
+  }
+
+  body {
+    background-color: var(--bg-base);
+    color: var(--brand-dark);
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  h1.page-heading {
+    color: #0d0705 !important;
+  }
+
+  .page-subtitle {
+    color: #2a1610 !important;
+  }
+
+  .dark h1.page-heading {
+    color: #ffffff !important;
+  }
+
+  .dark .page-subtitle {
+    color: rgba(255, 255, 255, 0.7) !important;
+  }
+}
+
+@layer utilities {
+  .bg-overlay {
+    background: radial-gradient(circle at center, transparent 0%, rgba(255, 200, 180, 0.3) 50%, rgba(180, 100, 80, 0.6) 100%);
+    mix-blend-mode: color-burn;
+  }
+
+  .dark .bg-overlay {
+    background: radial-gradient(circle at center, transparent 0%, rgba(50, 20, 10, 0.6) 50%, rgba(10, 5, 0, 0.9) 100%);
+    mix-blend-mode: multiply;
+  }
+
+  .glass-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.78) 0%, rgba(255, 255, 255, 0.45) 100%);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    border-bottom-color: rgba(255, 255, 255, 0.3);
+    border-right-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 30px 60px rgba(180, 100, 80, 0.2), inset 0 0 30px rgba(255, 255, 255, 0.6);
+    color: #1a0f0a;
+  }
+
+  .glass-card input,
+  .glass-card textarea {
+    color: #1a0f0a;
+  }
+
+  .glass-card input::placeholder,
+  .glass-card textarea::placeholder {
+    color: #5a3a2a;
+  }
+
+  .dark .glass-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.02) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-bottom-color: rgba(255, 255, 255, 0.05);
+    border-right-color: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(255, 255, 255, 0.1);
+    color: #f5ece9;
+  }
+
+  .dark .glass-card input,
+  .dark .glass-card textarea {
+    color: #f5ece9;
+  }
+
+  .dark .glass-card input::placeholder,
+  .dark .glass-card textarea::placeholder {
+    color: rgba(245, 236, 233, 0.4);
+  }
+  
+  .glass-button {
+    background: linear-gradient(to right, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 1);
+    box-shadow: 0 10px 30px rgba(230, 157, 129, 0.4);
+    color: #1a0f0a; /* Force dark text in light mode for this button */
+  }
+
+  .dark .glass-button {
+    background: linear-gradient(to right, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    color: #f5ece9; /* White text for dark mode button */
+  }
+}

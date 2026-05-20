@@ -2,6 +2,7 @@ import os
 import json
 import pandas as pd
 from dotenv import load_dotenv
+
 from agents.llm_client import call_cerebras
 
 load_dotenv()
@@ -49,9 +50,9 @@ def profile_business(business):
 
     hours = business.get('hours') or {}
     late_night = any(
-        int(close.split(':')[0]) >= 22
-        for close in hours.values()
-        if close and ':' in close
+        int(time_range.split('-')[1].split(':')[0]) >= 22
+        for time_range in hours.values()
+        if time_range and '-' in time_range
     )
 
     return {
@@ -300,4 +301,4 @@ if __name__ == "__main__":
         os.makedirs('outputs', exist_ok=True)
         with open('outputs/review_predictions.json', 'w') as f:
             json.dump(results, f, indent=2, default=str)
-        print("\nSaved to review_predictions.json") 
+        print("\nSaved to review_predictions.json")

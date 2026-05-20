@@ -218,11 +218,20 @@ __marimo__/
 .streamlit/secrets.toml
 
 # Data & Outputs
- data/
- outputs/
- *.json
- *.csv
+# Keep source/data scripts trackable, but ignore runtime-generated persistence and artifacts.
+data/businesses/
+data/embeddings/
+data/*.db
+data/*.db-journal
+data/*.sqlite
+data/*.sqlite3
+outputs/
 .vscode/
+
+# Node / frontend
+frontend/node_modules/
+frontend/.next/
+frontend/out/
 
 # OS junk
 .DS_Store

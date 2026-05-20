@@ -1,0 +1,40 @@
+[
+  {
+    "name": "The Quality Seeker",
+    "narrative": "Meet John, Sarah, and Mike, who prioritize great food and are willing to wait a bit for it. They notice the quality of the dishes first and are often satisfied with what they get. However, they can be picky about portion sizes and seating. If they don't get what they expect, they'll leave a bad review. They're not easily swayed by minor issues, but repeated problems or poor service can be a deal-breaker. They would never forgive a restaurant that serves subpar food.",
+    "drifts": [
+      "Initially patient with wait times, now increasingly frustrated"
+    ],
+    "avg_rating": 3.5,
+    "top_words": [
+      "amazing",
+      "great",
+      "loved",
+      "portions",
+      "small",
+      "price",
+      "waited"
+    ],
+    "grounding_quotes": [
+      "the jollof rice is amazing",
+      "loved the suya",
+      "great food"
+    ],
+    "review_count": 3,
+    "source": "grounded"
+  },
+  {
+    "name": "The Average Customer",
+    "narrative": "There isn't enough data to create a distinct archetype beyond The Quality Seeker. However, if we were to create a separate archetype, it would be a customer who is generally satisfied with the food but has some minor complaints. They might not notice the small things, but if they do, they'll leave a mediocre review. They're not particularly picky, but they do expect some basic standards to be met. They would never forgive a restaurant that consistently fails to meet those standards.",
+    "drifts": [],
+    "avg_rating": 3.0,
+    "top_words": [
+      "good",
+      "okay",
+      "fine"
+    ],
+    "grounding_quotes": [],
+    "review_count": 0,
+    "source": "grounded"
+  }
+]

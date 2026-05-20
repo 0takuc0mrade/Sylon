@@ -1,0 +1,26 @@
+[
+  {
+    "text": "John said the jollof rice is amazing but waited 40 minutes.",
+    "rating": 3.0,
+    "date": null,
+    "author_id": "anonymous_1",
+    "source": "pasted",
+    "ingested_at": "2026-05-12T15:33:52.097854"
+  },
+  {
+    "text": "Sarah loved the suya but said portions are too small for the price.",
+    "rating": 3.0,
+    "date": null,
+    "author_id": "anonymous_2",
+    "source": "pasted",
+    "ingested_at": "2026-05-12T15:33:52.097875"
+  },
+  {
+    "text": "Mike said great food but needs more seating.",
+    "rating": 4.0,
+    "date": null,
+    "author_id": "anonymous_3",
+    "source": "pasted",
+    "ingested_at": "2026-05-12T15:33:52.097883"
+  }
+]

@@ -2,6 +2,7 @@ import yaml
 import json
 import time
 import enum
+# pyrefly: ignore [missing-import]
 from dotenv import load_dotenv
 import sys
 import os
@@ -11,10 +12,10 @@ sys.path.insert(0, ROOT)
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
-from agents.llm_client import call_cerebras, call_cerebras_mode, call_gemini_structured, retry_with_backoff
-from agents.persona_factory import get_personas_for_business, generate_synthetic_personas
-from agents.review_ingest import ingest_text, load_reviews, get_review_count
-from agents.painpoint_extractor import load_painpoints, load_personas
+from agents.llm_client import call_cerebras, call_gemini_structured, retry_with_backoff
+from agents.persona_factory import get_personas_for_business
+from agents.review_ingest import get_review_count
+from agents.rec import generate_recommendations
 from openserv.tools import (
     tool_run_collision_simulation,
     tool_generate_synthetic_personas,
@@ -36,26 +37,36 @@ class Route(enum.Enum):
     INGEST = "INGEST"
     RECOMMEND = "RECOMMEND"
 
-# Session state
-_current_business_id = None
-_business_context = {"description": "Business Entity", "location": ""}
-_conversation_history = {} # Maps business_id to list of dicts {"role": ..., "content": ...}
+import threading
+from dataclasses import dataclass, field
+from typing import Dict, Any, List
 
-def set_business_id(business_id: str):
-    global _current_business_id
-    _current_business_id = business_id
+@dataclass
+class BusinessSession:
+    business_id: str
+    context: Dict[str, str] = field(default_factory=lambda: {"description": "Business Entity", "location": ""})
+    history: List[Dict[str, Any]] = field(default_factory=list)
 
+class SessionStore:
+    '''Thread-safe per-business session state.'''
+    def __init__(self):
+        self._sessions: Dict[str, BusinessSession] = {}
+        self._lock = threading.Lock()
 
-def get_business_id() -> str | None:
-    return _current_business_id
+    def get_or_create(self, business_id: str) -> BusinessSession:
+        with self._lock:
+            if business_id not in self._sessions:
+                self._sessions[business_id] = BusinessSession(business_id=business_id)
+            return self._sessions[business_id]
 
+sessions = SessionStore()
 
 
 
 @retry_with_backoff
-def evaluate_route(user_input: str) -> str:
-    business_id = get_business_id() or "default"
-    history = _conversation_history.get(business_id, [])[-3:] # Last 3 turns
+def evaluate_route(user_input: str, business_id: str) -> str:
+    session = sessions.get_or_create(business_id)
+    history = session.history[-3:] # Last 3 turns
     history_str = json.dumps(history) if history else "No history."
 
     prompt = f"Classify this intent as SIMULATE, INGEST, RECOMMEND, or CHAT. Only return one word.\nHistory: {history_str}\nInput: {user_input}"
@@ -105,11 +116,10 @@ If real customer quotes were cited in the analysis, reference them naturally."""
 
 
 @retry_with_backoff
-def direct_chat_strategist(user_input: str) -> str:
+def direct_chat_strategist(user_input: str, business_id: str) -> str:
     # Handles general conversation without running the Simulator.
-    business_id = get_business_id()
     context = ""
-    if business_id:
+    if business_id and business_id != "default":
         review_count = get_review_count(business_id)
         if review_count > 0:
             context = f"\n\nContext: You have {review_count} customer reviews loaded for this business."
@@ -131,23 +141,36 @@ Keep it to 2-3 sentences max."""
     )
 
 
-def set_business_context(description: str, location: str = ""):
-    global _business_context
-    _business_context = {
-        "description": description,
-        "location": location
-    }
+@retry_with_backoff
+def synthesize_recommendation_response(user_input: str, raw_recommendations: str, business_id: str) -> str:
+    session = sessions.get_or_create(business_id)
+    prompt = f"""{agents_config['strategist']['system_prompt']}
+
+The business owner asked for strategic advice: "{user_input}"
+
+Business context:
+{json.dumps(session.context, indent=2)}
+
+Recommendation engine output:
+{raw_recommendations}
+
+Synthesize this into a natural, conversational, authoritative response.
+Do not read lists verbatim. Speak like a trusted strategy advisor.
+Keep it practical and specific. 3-5 concise sentences."""
+
+    return call_cerebras(
+        prompt=prompt,
+        system_prompt="You are Sylon, a premium business strategist. Be conversational, practical, and specific.",
+        temperature=0.6,
+        max_tokens=700,
+    )
+
 
 # INGEST handler 
-def handle_ingest(user_input: str) -> str:
+def handle_ingest(user_input: str, business_id: str) -> str:
 # Handles review ingestion from pasted text, generates a business_id if none exists, parses the reviews, extracts painpoints, and excavates grounded personas.
     import uuid
-
-    business_id = get_business_id()
-    if not business_id:
-        business_id = f"biz_{uuid.uuid4().hex[:8]}"
-        set_business_id(business_id)
-        print(f"[Ingest] Created new business_id: {business_id}")
+    session = sessions.get_or_create(business_id)
 
     # Parse the pasted reviews
     print(f"[Ingest] Parsing pasted reviews for {business_id}...")
@@ -180,6 +203,45 @@ def handle_ingest(user_input: str) -> str:
 
     response_parts.append("Now ask me anything about your business — my advice will be grounded in what your real customers are saying.")
 
+    try:
+        from openserv.persistence import persistence_service
+        import uuid
+        batch_id = f"batch_{uuid.uuid4().hex[:8]}"
+        persistence_service.upsert_business(business_id=business_id, description=session.context.get("description"), location={"city": session.context.get("location", ""), "state": ""})
+        persistence_service.create_review_batch(batch_id=batch_id, business_id=business_id, source_type="chat", review_count=len(reviews))
+        
+        db_reviews = []
+        for r in reviews:
+            db_reviews.append({
+                "review_id": r.get("id", f"rev_{uuid.uuid4().hex[:8]}"),
+                "business_id": business_id,
+                "batch_id": batch_id,
+                "author_id": r.get("author_id", r.get("author_name", "Anonymous")),
+                "rating": float(r.get("rating", 0)),
+                "review_date": r.get("date", r.get("time", "")),
+                "text": r.get("text", ""),
+                "source": "chat",
+                "text_hash": None
+            })
+        persistence_service.insert_reviews(db_reviews)
+        
+        painpoints_dict = result.get("painpoints", {})
+        persistence_service.create_painpoint_snapshot(
+            snapshot_id=f"snap_{uuid.uuid4().hex[:8]}", business_id=business_id, batch_id=batch_id,
+            complaints=painpoints_dict.get("complaints", []), praise=painpoints_dict.get("praise", []),
+            trends=painpoints_dict.get("trends", []), full_payload=painpoints_dict
+        )
+        
+        for p in result.get("personas", []):
+            persistence_service.upsert_persona(
+                persona_id=f"per_{uuid.uuid4().hex[:8]}", business_id=business_id, name=p.get("name", "Unknown"),
+                source="chat", narrative=p.get("narrative", ""), drifts=p.get("drifts", []), avg_rating=p.get("avg_rating", 0),
+                top_words=p.get("top_words", []), grounding_quotes=p.get("grounding_quotes", p.get("sample_texts", [])),
+                review_count=p.get("review_count", len(reviews)), full_payload=p
+            )
+    except Exception as e:
+        print(f"[SQLite] Persistence failed (non-fatal): {e}")
+
     return ". ".join(response_parts)
 
 
@@ -205,11 +267,11 @@ def get_local_persona():
     return persona_narrative, drifts, recent_rating, top_words
 
 
-def run_simulation(user_input: str, business_description=None, location=None): 
-    business_description = business_description or _business_context.get("description", "Business Entity") 
-    location = location or _business_context.get("location", "")
+def run_simulation(user_input: str, business_id: str): 
+    session = sessions.get_or_create(business_id)
+    business_description = session.context.get("description", "Business Entity") 
+    location = session.context.get("location", "")
     # Multi-Persona Simulation Pipeline
-    business_id = get_business_id()
     name_source = business_description or "Business Entity"
     business_attributes = {
         'name': name_source.split(',')[0].strip(),
@@ -220,6 +282,7 @@ def run_simulation(user_input: str, business_description=None, location=None):
 
     all_collisions = []
     painpoints = None
+    personas = []
 
     # Try grounded personas first
     if business_id:
@@ -315,145 +378,118 @@ def run_simulation(user_input: str, business_description=None, location=None):
         )
         all_collisions.append(f"### Baseline Persona\n{result}")
 
-    # Aggregate all collision results
     combined = "\n\n---\n\n".join(all_collisions)
 
-# SIMPLE RECOMMENDER (inline, no new files)
-    def simple_recommendation_engine(personas, items):
-        results = []
-        
-        for item in items:
-            total_score = 0
-            reasons = []
+    strategist_response = simulate_strategist(user_input, combined, painpoints)
+    
+    try:
+        from openserv.persistence import persistence_service
+        import uuid
+        persistence_service.create_collision_log(
+            log_id=f"log_{uuid.uuid4().hex[:8]}",
+            business_id=business_id,
+            scenario=user_input,
+            source_mode="hybrid",
+            persona_ids=[p.get("name") for p in personas] if personas else ["synthetic/google"],
+            collision_analysis=combined,
+            strategist_response=strategist_response
+        )
+    except Exception as e:
+        print(f"[SQLite] Collision persistence failed (non-fatal): {e}")
 
-        for p in personas:
-            score = 0
-
-            if "cheap" in p.get("top_words", []) and item.get("price_level", 3) <= 2:
-                score += 0.4
-                reasons.append("price match")
-
-            if "impatient" in p.get("drifts", []) and item.get("wait_time", 0) > 20:
-                score -= 0.3
-                reasons.append("wait time risk")
-
-            if any(w in item.get("ambience", "") for w in p.get("top_words", [])):
-                score += 0.3
-                reasons.append("ambience match")
-
-            total_score += score
-
-        results.append({
-            "item": item["name"],
-            "score": round(total_score, 3),
-            "reasons": list(set(reasons))
-        })
-        
-        
-        return sorted(results, key=lambda x: x["score"], reverse=True)
-
-    items = [
-        {"name": "Option A", "price_level": 2, "wait_time": 15, "ambience": "quiet"},
-        {"name": "Option B", "price_level": 3, "wait_time": 30, "ambience": "loud"}
-    ]
-
-    ranked_results = simple_recommendation_engine(personas or [], items)
-    combined +=f"\n\nRECOMMENDATIONS: \n{ranked_results}"
-    return simulate_strategist(user_input, combined, painpoints)
+    return strategist_response
  
 
-# RECOMMENDATION Handler (Multi-Turn)
-def handle_recommendation(user_input: str) -> str:
-    business_id = get_business_id() or "default"
-    history_str = json.dumps(_conversation_history.get(business_id, [])[-4:])
-    
-    prompt = f"""
-    You are a business strategist assessing a request for a recommendation.
-    Look at the recent conversation history: {history_str}
-    And the user's latest message: "{user_input}"
-    
-    Do we know WHO this recommendation is for? (e.g., a specific segment like 'loyalists', 'new customers', 'critical reviewers', or a specific persona).
-    If we do NOT know, write a 1-sentence conversational question asking the user who the target audience is.
-    If we DO know, respond with exactly: READY: [description of target audience]
-    """
-    
-    assessment = call_cerebras(prompt, temperature=0.2)
-    
-    if "READY:" not in assessment:
-        return assessment
-        
-    target_audience = assessment.replace("READY:", "").strip()
-    print(f"[Orchestrator] Running recommendation for audience: {target_audience}")
-    
-    # To fully integrate we'd call evaluate_ndcg.py's LLM ranking here
-    # For now we'll simulate the successful resolution of the multi-turn loop.
-    return f"Based on our discussion targeting {target_audience}, I've analyzed the behavioral drifts. Here are my top 3 recommendations that fit their dealbreakers: Option A, Option B, and Option C."
 
+
+def handle_recommendation(user_input: str, business_id: str) -> str:
+    """Handles dynamic strategic recommendations."""
+    session = sessions.get_or_create(business_id)
+    personas, painpoints, _ = get_personas_for_business(
+        business_id=business_id,
+        business_description=session.context.get("description", "Business Entity"),
+        location=session.context.get("location", ""),
+    )
+    has_painpoint_data = bool(painpoints and (painpoints.get("complaints") or painpoints.get("praise") or painpoints.get("trends")))
+
+    if not personas or not has_painpoint_data:
+        return (
+            "I need to analyze your customer reviews before I can give targeted, data-backed recommendations. "
+            "Upload or paste your reviews first, then I can show you what to fix, what to protect, and where the revenue opportunities are."
+        )
+
+    print(f"[Orchestrator] Generating dynamic recommendations for {business_id}...")
+
+    try:
+        raw_recommendations = generate_recommendations(
+            query=user_input,
+            painpoints=painpoints,
+            personas=personas,
+            business_context=session.context,
+        )
+        final_response = synthesize_recommendation_response(user_input, raw_recommendations, business_id)
+    except Exception as e:
+        print(f"[Orchestrator] Dynamic Rec Engine Error: {e}")
+        return "The recommendation engine hit a snag. If you want, ask me to simulate a specific scenario instead, like a price change or menu update."
+
+    try:
+        from openserv.persistence import persistence_service
+        import uuid
+        persistence_service.create_recommendation_log(
+            log_id=f"rec_{uuid.uuid4().hex[:8]}",
+            business_id=business_id,
+            query=user_input,
+            raw_recommendations=raw_recommendations,
+            final_response=final_response,
+            persona_ids=[p.get("name") for p in personas] if personas else [],
+        )
+    except Exception as e:
+        print(f"[SQLite] Recommendation persistence failed (non-fatal): {e}")
+    
+    return final_response
 
 # Master Router
-def process_user_scenario(user_input: str, description: str = "Business Entity", location:str = "") -> str:
+def process_user_scenario(user_input: str, business_id: str = "default", description: str = "Business Entity", location:str = "") -> str:
     # routing function used by the FastAPI server.
-    set_business_context(description, location)
-    business_id = get_business_id() or "default"
+    session = sessions.get_or_create(business_id)
+    if description != "Business Entity":
+        session.context["description"] = description
+    if location != "":
+        session.context["location"] = location
     
-    if business_id not in _conversation_history:
-        _conversation_history[business_id] = []
-        
-    _conversation_history[business_id].append({"role": "user", "content": user_input})
+    session.history.append({"role": "user", "content": user_input})
     
-    route = evaluate_route(user_input)
+    route = evaluate_route(user_input, business_id)
     print(f"[Orchestrator] Route resolved: {route}")
 
     if route == "INGEST":
-        response = handle_ingest(user_input)
+        response = handle_ingest(user_input, business_id)
     elif route == "SIMULATE":
-        response = run_simulation(user_input)
+        response = run_simulation(user_input, business_id)
     elif route == "RECOMMEND":
-        response = handle_recommendation(user_input)
+        response = handle_recommendation(user_input, business_id)
+
     else:
-        response = direct_chat_strategist(user_input)
+        response = direct_chat_strategist(user_input, business_id)
         
-    _conversation_history[business_id].append({"role": "assistant", "content": response})
+    session.history.append({"role": "assistant", "content": response})
     return response
 
 
 def main():
+    import uuid
     print("Sylon Strategist Initialization...")
     print("Loaded local persona profile.")
     print("Type 'exit' to quit.\n")
+    
+    cli_business_id = f"biz_{uuid.uuid4().hex[:8]}"
 
     while True:
         user_input = input("Owner: ")
         if user_input.lower() in ['exit', 'quit']:
             break
 
-        # Update history for CLI as well
-        business_id = get_business_id() or "default"
-        if business_id not in _conversation_history:
-            _conversation_history[business_id] = []
-        _conversation_history[business_id].append({"role": "user", "content": user_input})
-
-        route = evaluate_route(user_input)
-
-        if route == "INGEST":
-            print(f"\n[OpenServ Router] -> Intent: INGEST")
-            print("[OpenServ Routing] -> Parsing and ingesting reviews...\n")
-            final_response = handle_ingest(user_input)
-        elif route == "SIMULATE":
-            print(f"\n[OpenServ Router] -> Intent: SIMULATE")
-            print("[OpenServ Routing] -> Passing to Simulator with controlled hallucination rules...")
-            final_response = run_simulation(user_input)
-            print("[OpenServ Routing] -> Sending Simulator result to Strategist...\n")
-        elif route == "RECOMMEND":
-            print(f"\n[OpenServ Router] -> Intent: RECOMMEND")
-            print("[OpenServ Routing] -> Managing multi-turn recommendation logic...\n")
-            final_response = handle_recommendation(user_input)
-        else:
-            print(f"\n[OpenServ Router] -> Intent: CHAT")
-            print("[OpenServ Routing] -> Responding conversationally...\n")
-            final_response = direct_chat_strategist(user_input)
-
-        _conversation_history[business_id].append({"role": "assistant", "content": final_response})
+        final_response = process_user_scenario(user_input, business_id=cli_business_id)
         print(f"Sylon: {final_response}\n")
 
 if __name__ == "__main__":

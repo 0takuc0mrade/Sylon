@@ -443,6 +443,21 @@ def handle_cold_start(business_ca, top_n=5, preferred_category=None, source_doma
 
     return candidates.head(top_n)[cols].to_dict('records')
 
+def generate_recommendations(query: str, painpoints: dict, personas: list, business_context: dict) -> str:
+    """Generates strategic business recommendations based on pain points and personas."""
+    prompt = f"""
+    You are Sylon's strategic recommendation engine.
+    The business owner asks: "{query}"
+    
+    Business Context: {business_context}
+    Known Pain points: {painpoints}
+    Customer Personas: {personas}
+    
+    Provide 3 actionable, highly specific strategic recommendations based on this data.
+    Focus on addressing the dealbreakers and maximizing revenue opportunities.
+    """
+    return call_cerebras(prompt, max_tokens=1000)
+
 
 if __name__ == "__main__":
 

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sylon Landing Page</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              brown: '#7d5349',
+              lightbrown: '#a57365',
+              dark: '#3f2d29',
+            }
+          },
+          backgroundImage: {
+            'glow-bg': 'radial-gradient(circle at 50% 50%, rgba(255, 235, 225, 1) 0%, rgba(245, 205, 195, 0.8) 40%, rgba(225, 175, 165, 0.4) 100%)',
+            'card-glass': 'linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.1) 100%)',
+          }
+        }
+      }
+    }
+  </script>
+<style data-purpose="custom-utilities">
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    
+    body {
+      background-color: #f7e8df;
+    }
+
+    /* Fallback/Overlay if we were just using the bg gradient */
+    .bg-overlay {
+      background: radial-gradient(circle at center, transparent 20%, rgba(247, 232, 223, 0.7) 100%);
+    }
+
+    .glass-card {
+      background: rgba(255, 255, 255, 0.3);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      box-shadow: 0 8px 32px 0 rgba(165, 115, 101, 0.2);
+    }
+    
+    .glass-button {
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+    }
+  </style>
+</head>
+<body class="font-sans text-brand-dark min-h-screen flex flex-col relative overflow-x-hidden bg-glow-bg">
+<!-- BEGIN: MainHeader -->
+<header class="w-full pt-8 pb-4 px-8 md:px-16 z-50 absolute top-0 left-0">
+<div class="max-w-7xl mx-auto flex items-center justify-between">
+<!-- Logo -->
+<div class="flex-shrink-0">
+<a class="text-2xl font-bold tracking-wider text-brand-lightbrown" href="#">SYLON</a>
+</div>
+<!-- Desktop Navigation -->
+<nav class="hidden md:flex space-x-8 text-sm font-medium text-brand-dark">
+<a class="hover:text-brand-lightbrown transition-colors" href="#">Platform</a>
+<a class="hover:text-brand-lightbrown transition-colors" href="#">Ingestion</a>
+<a class="hover:text-brand-lightbrown transition-colors" href="#">Consult Sylon</a>
+<a class="hover:text-brand-lightbrown transition-colors" href="#">Insights</a>
+</nav>
+<!-- CTA Buttons -->
+<div class="hidden md:flex items-center space-x-4">
+<a class="text-sm font-medium text-brand-dark bg-white/60 hover:bg-white/80 px-5 py-2 rounded-full border border-white/80 transition-all shadow-sm" href="#">
+          Sign In
+        </a>
+<a class="text-sm font-medium text-white bg-gradient-to-r from-brand-lightbrown to-brand-brown hover:opacity-90 px-5 py-2 rounded-full transition-opacity shadow-md" href="#">
+          Get Started
+        </a>
+</div>
+<!-- Mobile menu button placeholder -->
+<div class="md:hidden">
+<button class="p-2 text-brand-dark">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.5" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+</div>
+</div>
+</header>
+<!-- END: MainHeader -->
+<!-- BEGIN: Main Content -->
+<main class="flex-grow flex flex-col items-center justify-start pt-32 md:pt-40 px-4 md:px-8 z-10 relative">
+<!-- Hero Text -->
+<div class="text-center max-w-4xl mx-auto mb-auto">
+<h1 class="text-4xl md:text-5xl lg:text-5xl font-semibold tracking-tight text-brand-dark leading-tight">
+        The Customer Behavioral Intelligence for<br class="hidden md:block"/> Your Business.
+      </h1>
+</div>
+<!-- The 3D Orb Graphic area (Simulated space since bg image has it) -->
+<div class="h-[40vh] md:h-[50vh] w-full flex items-center justify-center">
+<!-- In a real scenario without the full bg image, we'd place the orb img here -->
+<!-- <img src="orb.png" alt="Sylon Intelligence Orb" class="w-64 h-64 object-contain animate-pulse" /> -->
+</div>
+<!-- Subheadline and CTA -->
+<div class="text-center mt-auto mb-16 flex flex-col items-center">
+<p class="text-xl text-brand-dark mb-6 font-semibold">
+        You see a customer. Sylon sees a person.
+      </p>
+<a class="glass-button text-brand-dark px-8 py-3 rounded-full font-bold inline-flex items-center space-x-2 hover:bg-white/80 transition-all shadow-sm" href="#">
+<span>Meet Sylon</span>
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</a>
+</div>
+<!-- Features Grid -->
+<div class="max-w-6xl mx-auto w-full grid grid-cols-1 md:grid-cols-3 gap-6 mb-24 px-4">
+<!-- Card 1 -->
+<div class="glass-card rounded-3xl p-8 flex flex-col h-full min-h-[300px] relative overflow-hidden group">
+<div class="text-sm text-brand-dark font-mono mb-4 font-semibold">/01</div>
+<h3 class="text-2xl font-bold mb-4 leading-tight text-brand-dark">Decision<br/>Forecasting</h3>
+<p class="text-base text-brand-dark/90 leading-relaxed font-medium">
+          Test every move against the people it affects — before it costs you.
+        </p>
+<div class="mt-auto pt-8 text-brand-dark">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<!-- subtle gradient overlay for hover -->
+<div class="absolute inset-0 bg-white/30 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+</div>
+<!-- Card 2 -->
+<div class="glass-card rounded-3xl p-8 flex flex-col h-full min-h-[300px] relative overflow-hidden group">
+<div class="text-sm text-brand-dark font-mono mb-4 font-semibold">/02</div>
+<h3 class="text-2xl font-bold mb-4 leading-tight text-brand-dark">Know Your<br/>Customer</h3>
+<p class="text-base text-brand-dark/90 leading-relaxed font-medium">
+          Built from how they've changed, not just what they said.
+        </p>
+<div class="mt-auto pt-8 text-brand-dark">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<div class="absolute inset-0 bg-white/30 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+</div>
+<!-- Card 3 -->
+<div class="glass-card rounded-3xl p-8 flex flex-col h-full min-h-[300px] relative overflow-hidden group">
+<div class="text-sm text-brand-dark font-mono mb-4 font-semibold">/03</div>
+<h3 class="text-2xl font-bold mb-4 leading-tight text-brand-dark">For New<br/>Businesses</h3>
+<p class="text-base text-brand-dark/90 leading-relaxed font-medium">
+          Intelligence from day one. No reviews required.
+        </p>
+<div class="mt-auto pt-8 text-brand-dark">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M21 7.5l-2.25-1.313M21 7.5v2.25m0-2.25l-2.246 1.313M3 7.5l2.25-1.313M3 7.5l2.246 1.313M3 7.5v2.25m9 3l2.25-1.313M12 12.75l-2.25-1.313M12 12.75V15m0 6.75l2.25-1.313M12 21.75V19.5m0 2.25l-2.25-1.313m0-16.875L12 2.25l2.25 1.313M21 14.25v2.25l-2.25 1.313m-13.5 0L3 16.5v-2.25" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<div class="absolute inset-0 bg-white/30 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+</div>
+</div>
+</main>
+<!-- END: Main Content -->
+<!-- BEGIN: MainFooter -->
+<footer class="w-full pb-8 pt-4 px-8 md:px-16 z-50 relative mt-auto border-t border-brand-dark/10">
+<div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between text-xs text-brand-dark font-medium">
+<!-- Logo -->
+<div class="mb-4 md:mb-0">
+<span class="text-xl font-bold tracking-wider text-brand-lightbrown">SYLON</span>
+</div>
+<!-- Footer Links -->
+<div class="flex space-x-6 mb-4 md:mb-0">
+<a class="hover:text-brand-lightbrown transition-colors" href="#">Privacy Policy</a>
+<a class="hover:text-brand-lightbrown transition-colors" href="#">Terms of Service</a>
+<a class="hover:text-brand-lightbrown transition-colors" href="#">Security</a>
+<a class="hover:text-brand-lightbrown transition-colors" href="#">Contact</a>
+</div>
+<!-- Copyright -->
+<div>
+        © 2024 Sylon Behavioral Intelligence. All rights reserved.
+      </div>
+</div>
+</footer>
+<!-- END: MainFooter -->
+</body></html>

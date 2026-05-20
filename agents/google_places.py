@@ -1,11 +1,10 @@
 import os
 import json
 import requests
-from google import genai    
+from agents.llm_client import call_gemini
 from dotenv import load_dotenv
 
 load_dotenv()
-client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
 PLACES_API_KEY = os.environ.get("GOOGLE_PLACES_API_KEY", "")
 
@@ -87,8 +86,6 @@ def excavate_from_reviews(reviews: list, business_name: str) -> list:
     if not reviews:
         return []
 
-    model_id = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash")
-
     reviews_text = "\n".join([
         f"- [{r['rating']}/5] {r['text']}"
         for r in reviews
@@ -111,14 +108,8 @@ Return ONLY a valid JSON array. No markdown, no explanation.
 """
 
     try:
-        response = client.models.generate_content(
-            model=model_id,
-            contents=prompt,
-            config={
-                "response_mime_type": "application/json",
-            },
-        )
-        personas = json.loads(response.text)
+        response_text = call_gemini(prompt, json_mode=True)
+        personas = json.loads(response_text)
 
         normalized = []
         for p in personas:

@@ -1,0 +1,68 @@
+{
+  "type": "object",
+  "complaints": [
+    {
+      "theme": "wait time",
+      "severity": "high",
+      "quotes": [
+        "waited 40 minutes"
+      ],
+      "frequency": 1
+    },
+    {
+      "theme": "portion size",
+      "severity": "medium",
+      "quotes": [
+        "portions are too small for the price"
+      ],
+      "frequency": 1
+    },
+    {
+      "theme": "seating",
+      "severity": "low",
+      "quotes": [
+        "needs more seating"
+      ],
+      "frequency": 1
+    },
+    {
+      "theme": "price",
+      "severity": "medium",
+      "quotes": [
+        "portions are too small for the price"
+      ],
+      "frequency": 1
+    },
+    {
+      "theme": "wait time",
+      "severity": "high",
+      "quotes": [
+        "waited 40 minutes"
+      ],
+      "frequency": 1
+    }
+  ],
+  "praise": [
+    {
+      "theme": "food quality",
+      "quotes": [
+        "the jollof rice is amazing",
+        "great food"
+      ],
+      "frequency": 2
+    },
+    {
+      "theme": "food quality",
+      "quotes": [
+        "loved the suya"
+      ],
+      "frequency": 1
+    }
+  ],
+  "trends": [
+    {
+      "pattern": "customers are generally satisfied with food quality",
+      "direction": "stable"
+    }
+  ]
+}
