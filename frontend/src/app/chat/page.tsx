@@ -1,5 +1,7 @@
 'use client';
 import { useState } from 'react';
+import EtherealOrb from "@/components/EtherealOrb";
+import { ConversationProvider } from "@elevenlabs/react";
 
 type ChatMessage = {
   role: string;
@@ -25,6 +27,10 @@ export default function Chat() {
   });
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const handleTranscription = (role: string, text: string) => {
+    setMessages(prev => [...prev, { role, content: text }]);
+  };
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,20 +67,30 @@ export default function Chat() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-4 md:p-8 flex flex-col min-h-[calc(100dvh-120px)] md:h-[calc(100vh-80px)] animate-in fade-in duration-500">
-      <header className="mb-6 pt-4 md:pt-8">
-        <h1 className="page-heading text-3xl md:text-4xl font-bold mb-2">Strategist Oracle</h1>
-        <p className="page-subtitle font-medium">Simulate changes, ask for recommendations, or discuss strategy.</p>
-      </header>
+    <div className="max-w-[1400px] mx-auto p-4 md:p-8 flex flex-col md:flex-row min-h-[calc(100dvh-120px)] md:h-[calc(100vh-80px)] animate-in fade-in duration-500 text-brand-dark dark:text-gray-100 gap-8 items-center">
+      
+      {/* Left Panel: The Ethereal Orb (55%) */}
+      <div className="w-full md:w-[55%] flex flex-col items-center justify-center h-full">
+        <ConversationProvider>
+          <EtherealOrb onTranscription={handleTranscription} />
+        </ConversationProvider>
+      </div>
 
-      <div className="glass-card rounded-3xl p-4 md:p-6 flex flex-col flex-grow overflow-hidden shadow-sm">
+      {/* Right Panel: Text Chat (45%) */}
+      <div className="w-full md:w-[45%] flex flex-col h-full max-h-[800px] w-full">
+        <header className="mb-6 pt-4 md:pt-0">
+          <h1 className="page-heading text-3xl md:text-4xl font-bold mb-2">Strategist Oracle</h1>
+          <p className="page-subtitle font-medium">Simulate changes, ask for recommendations, or discuss strategy.</p>
+        </header>
+
+        <div className="glass-card rounded-3xl p-4 md:p-6 flex flex-col flex-grow overflow-hidden shadow-sm">
         <div className="flex-grow overflow-y-auto pr-2 flex flex-col gap-4 mb-4">
           {messages.map((m, i) => (
             <div key={i} className={`flex flex-col max-w-[80%] ${m.role === 'user' ? 'self-end' : 'self-start'}`}>
               <div className={`p-4 rounded-2xl ${
                 m.role === 'user' 
                   ? 'bg-gradient-to-r from-brand-lightbrown to-brand-brown text-white rounded-br-sm shadow-md' 
-                  : 'bg-white/90 dark:bg-black/40 backdrop-blur-md border border-brand-dark/20 dark:border-white/10 dark:text-white rounded-bl-sm'
+                  : 'glass-card rounded-bl-sm font-medium'
               }`}
             >
                 {m.content}
@@ -86,7 +102,7 @@ export default function Chat() {
           ))}
           {loading && (
             <div className="self-start max-w-[80%]">
-              <div className="p-4 rounded-2xl bg-white/80 dark:bg-black/40 backdrop-blur-md border border-brand-dark/20 dark:border-white/10 text-brand-dark dark:text-white/60 rounded-bl-sm italic font-medium">
+              <div className="p-4 rounded-2xl glass-card rounded-bl-sm italic font-medium">
                 Thinking...
               </div>
             </div>
@@ -95,8 +111,7 @@ export default function Chat() {
 
         <form onSubmit={sendMessage} className="flex flex-col sm:flex-row gap-3 mt-auto">
           <input 
-            type="text" 
-            className="flex-grow px-6 py-3 rounded-full border border-brand-dark/30 dark:border-white/10 bg-white/80 dark:bg-black/30 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-brand-lightbrown text-brand-dark dark:text-white placeholder:text-brand-dark/50 dark:placeholder:text-white/40 w-full"
+            className="flex-grow px-6 py-3 rounded-full border border-brand-dark/30 dark:border-brand-brown/40 glass-card focus:outline-none focus:ring-2 focus:ring-brand-lightbrown w-full shadow-inner"
             placeholder="Type your scenario here..." 
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -112,5 +127,6 @@ export default function Chat() {
         </form>
       </div>
     </div>
+  </div>
   );
 }

@@ -1,6 +1,6 @@
 # Local Embedding Engine for Sylon
 # Uses sentence-transformers (all-MiniLM-L6-v2) for zero-cost, CPU-based embeddings.
-# Provides two-stage retrieval: fast embedding similarity → LLM behavioral reranking.
+# Provides two-stage retrieval: fast embedding similarity and LLM behavioral reranking.
 
 import os
 import sys
@@ -24,7 +24,6 @@ _business_ids = None
 
 
 def _get_model():
-    """Lazy-load the sentence-transformer model (downloads ~80MB on first run)."""
     global _model
     if _model is None:
         from sentence_transformers import SentenceTransformer
@@ -34,15 +33,10 @@ def _get_model():
     return _model
 
 
-def build_user_profiles(all_reviews, min_reviews=3):
-    """
-    Builds a text profile for each user by concatenating their review texts,
-    weighted by star rating (higher-rated reviews get more influence).
-    
-    Returns: dict mapping user_id -> profile_text
-    """
+def build_user_profiles(review_data, min_reviews=3):
+    #Builds a text profile for each user by concatenating their review texts, weighted by star rating
     user_profiles = {}
-    grouped = all_reviews.groupby("user_id")
+    grouped = review_data.groupby("user_id")
     
     for user_id, group in grouped:
         if len(group) < min_reviews:
@@ -64,22 +58,16 @@ def build_user_profiles(all_reviews, min_reviews=3):
     return user_profiles
 
 
-def build_business_profiles(all_reviews, business_catalog):
-    """
-    Builds a text profile for each business by combining its metadata
-    with aggregated review text.
-    
-    Returns: dict mapping business_id -> profile_text
-    """
+def build_business_profiles(review_data, business_data):
     business_profiles = {}
     
     # Aggregate reviews per business
-    if all_reviews is not None and len(all_reviews) > 0:
-        review_groups = all_reviews.groupby("business_id")
+    if review_data is not None and len(review_data) > 0:
+        review_groups = review_data.groupby("business_id")
     else:
         review_groups = None
     
-    for _, row in business_catalog.iterrows():
+    for _, row in business_data.iterrows():
         bid = row["business_id"]
         
         # Metadata component
@@ -107,7 +95,7 @@ def build_business_profiles(all_reviews, business_catalog):
     return business_profiles
 
 
-def precompute_embeddings(all_reviews, business_catalog, batch_size=256):
+def precompute_embeddings(reviews_df, business_df, batch_size=256):
     """
     Pre-computes and saves user + business embeddings to disk.
     This is the one-time heavy operation (~10-15 min on CPU).
@@ -117,7 +105,7 @@ def precompute_embeddings(all_reviews, business_catalog, batch_size=256):
     
     # --- User Embeddings ---
     print("[Embeddings] Building user profiles...")
-    user_profiles = build_user_profiles(all_reviews)
+    user_profiles = build_user_profiles(reviews_df)
     user_ids = list(user_profiles.keys())
     user_texts = list(user_profiles.values())
     
@@ -137,7 +125,7 @@ def precompute_embeddings(all_reviews, business_catalog, batch_size=256):
     
     # --- Business Embeddings ---
     print("[Embeddings] Building business profiles...")
-    business_profiles = build_business_profiles(all_reviews, business_catalog)
+    business_profiles = build_business_profiles(reviews_df, business_df)
     biz_ids = list(business_profiles.keys())
     biz_texts = list(business_profiles.values())
     

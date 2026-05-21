@@ -243,4 +243,89 @@ class PersistenceService:
                 painpoint_snapshot_id, metadata.get("model", "unknown") if metadata else "unknown", self._now(), json.dumps(metadata) if metadata else None
             ))
 
+    def get_business_dashboard_data(self, business_id: str) -> dict:
+        with self.get_connection() as conn:
+            # 1. Get latest painpoint snapshot
+            snapshot_row = conn.execute(
+                "SELECT complaints_json, praise_json FROM painpoint_snapshots WHERE business_id = ? ORDER BY created_at DESC LIMIT 1",
+                (business_id,)
+            ).fetchone()
+            
+            top_complaint = "No complaint data available yet."
+            top_praise = "No praise data available yet."
+            if snapshot_row:
+                try:
+                    complaints = json.loads(snapshot_row["complaints_json"])
+                    if complaints and len(complaints) > 0:
+                        top_complaint = complaints[0] if isinstance(complaints[0], str) else str(complaints[0].get("description", complaints[0]))
+                    
+                    praise = json.loads(snapshot_row["praise_json"])
+                    if praise and len(praise) > 0:
+                        top_praise = praise[0] if isinstance(praise[0], str) else str(praise[0].get("description", praise[0]))
+                except Exception:
+                    pass
+
+            # 2. Get Personas / Archetypes
+            persona_rows = conn.execute(
+                "SELECT name, drifts_json, avg_rating FROM personas WHERE business_id = ? ORDER BY created_at DESC LIMIT 10",
+                (business_id,)
+            ).fetchall()
+            
+            archetypes = []
+            total_rating = 0
+            for row in persona_rows:
+                drifts = []
+                try:
+                    drifts = json.loads(row["drifts_json"])
+                except:
+                    pass
+                drift_str = drifts[0] if drifts and len(drifts) > 0 else "No significant drift detected."
+                if isinstance(drift_str, dict):
+                    drift_str = drift_str.get("description", str(drift_str))
+                    
+                rating = float(row["avg_rating"] or 0)
+                total_rating += rating
+                
+                archetypes.append({
+                    "name": row["name"],
+                    "drift": str(drift_str),
+                    "rating": rating
+                })
+            
+            # Health Score
+            health_score = 78 # Default placeholder
+            if archetypes and len(archetypes) > 0:
+                avg = total_rating / len(archetypes)
+                # Convert 1-5 rating to percentage
+                health_score = int((avg / 5.0) * 100)
+
+            # 3. Get Ingestion History
+            history_rows = conn.execute(
+                "SELECT batch_id, source_type, review_count, created_at FROM review_batches WHERE business_id = ? ORDER BY created_at DESC LIMIT 5",
+                (business_id,)
+            ).fetchall()
+            
+            history = []
+            for row in history_rows:
+                # Format date nicely
+                try:
+                    dt = datetime.fromisoformat(row["created_at"])
+                    date_str = dt.strftime("%b %d, %Y")
+                except:
+                    date_str = row["created_at"]
+                    
+                history.append({
+                    "date": date_str,
+                    "source": row["source_type"].capitalize() if row["source_type"] else "Upload",
+                    "review_count": row["review_count"]
+                })
+
+            return {
+                "health_score": health_score,
+                "top_complaint": top_complaint,
+                "top_praise": top_praise,
+                "archetypes": archetypes,
+                "history": history
+            }
+
 persistence_service = PersistenceService()

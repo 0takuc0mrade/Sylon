@@ -2,7 +2,6 @@ import os
 import json
 import pandas as pd
 from dotenv import load_dotenv
-
 from agents.llm_client import call_cerebras
 
 load_dotenv()
@@ -50,9 +49,9 @@ def profile_business(business):
 
     hours = business.get('hours') or {}
     late_night = any(
-        int(time_range.split('-')[1].split(':')[0]) >= 22
-        for time_range in hours.values()
-        if time_range and '-' in time_range
+        int(close.split(':')[0]) >= 22
+        for close in hours.values()
+        if close and ':' in close
     )
 
     return {
@@ -90,11 +89,9 @@ GROUNDING CONTEXT:
 
     prompt = f"""
 Maintain a professional, B2B tone. Describe customer behavior as operational data points. A harsh critic is a "no nonsense" customer. An inconsistent rater shows "preference change". Never use judgemental language.
-You are a customer behavior analyst. You have a deep profile of a real customer
-and the details of a business they have never visited.
+You are a customer behavior analyst. You have a deep profile of a real customer and the details of a business they have never visited.
 
-Your job is to reason through how this specific customer will experience this business,  
-not generically, but based on exactly WHO they are.
+Your job is to reason through how this specific customer will experience this business, not generically, but based on exactly WHO they are.
 
 CUSTOMER PROFILE:
 {persona['narrative']}
@@ -301,4 +298,4 @@ if __name__ == "__main__":
         os.makedirs('outputs', exist_ok=True)
         with open('outputs/review_predictions.json', 'w') as f:
             json.dump(results, f, indent=2, default=str)
-        print("\nSaved to review_predictions.json")
+        print("\nSaved to review_predictions.json") 

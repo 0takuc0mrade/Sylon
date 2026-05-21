@@ -98,45 +98,11 @@ export default function Home() {
         />
       </div>
 
-      {/* Main Header */}
-      <header className="w-full pt-8 pb-4 px-8 md:px-16 z-50 absolute top-0 left-0">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          {/* Logo */}
-          <div className="flex-shrink-0">
-            <Link href="/" className="text-2xl font-bold tracking-wider text-brand-brown">
-              SYLON
-            </Link>
-          </div>
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex space-x-8 text-sm font-medium text-brand-dark">
-            <Link href="#" className="hover:text-brand-lightbrown transition-colors">Platform</Link>
-            <Link href="#" className="hover:text-brand-lightbrown transition-colors">Ingestion</Link>
-            <Link href="#" className="hover:text-brand-lightbrown transition-colors">Consult Sylon</Link>
-            <Link href="#" className="hover:text-brand-lightbrown transition-colors">Insights</Link>
-          </nav>
-          {/* CTA Buttons & Theme Toggle */}
-          <div className="flex items-center space-x-4">
-            <ThemeToggle />
-            <Link href="/login" className="hidden md:block text-sm font-bold text-brand-dark hover:text-brand-lightbrown transition-colors border border-brand-dark/20 px-6 py-2 rounded-full hover:bg-brand-dark/5">
-              Sign In
-            </Link>
-            <Link href="/signup" className="text-sm font-bold text-white bg-gradient-to-r from-brand-lightbrown to-brand-brown px-6 py-2 rounded-full hover:opacity-90 shadow-md transition-opacity">
-              Get Started
-            </Link>
-          </div>
-          {/* Mobile menu button placeholder */}
-          <div className="md:hidden">
-            <button className="p-2 text-brand-dark">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" strokeLinecap="round" strokeLinejoin="round"></path>
-              </svg>
-            </button>
-          </div>
-        </div>
-      </header>
+
+
 
       {/* Main Content */}
-      <main className="flex-grow flex flex-col items-center justify-start pt-32 md:pt-40 px-4 md:px-8 z-10 relative">
+      <main className="flex-grow flex flex-col items-center justify-start pt-32 md:pt-40 pb-32 px-4 md:px-8 z-10 relative">
         {/* Hero Text */}
         <div className="text-center max-w-4xl mx-auto mb-auto perspective-1000">
           <h1
@@ -163,7 +129,7 @@ export default function Home() {
             You see a customer. Sylon sees a person.
           </p>
           <Link
-            href="/chat"
+            href="/upload"
             className="glass-button text-brand-dark px-8 py-3 rounded-full font-bold inline-flex items-center space-x-2 hover:bg-white/80 transition-all shadow-sm"
           >
             <span>Meet Sylon</span>

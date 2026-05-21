@@ -1,4 +1,3 @@
-# this file handles review ingestion from multiple formats: CSV files (ingest_csv), JSON data (ingest_json), Raw pasted text (ingest_text) the demo hero
 import os
 import json
 import csv
@@ -6,7 +5,7 @@ import uuid
 from datetime import datetime, timezone
 from agents.llm_client import call_cerebras_json
 
-# Storage
+# storage
 DATA_ROOT = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "businesses")
 
 

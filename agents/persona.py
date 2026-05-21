@@ -16,7 +16,7 @@ from agents.llm_client import call_cerebras
 load_dotenv()
 
 def split_into_phases(user_history):
-    # Split a user's review history into three life phases: early, middle, recent.
+    # split a user's review history into three life phases: early, middle, recent.
 
     user_history = user_history.sort_values('date').reset_index(drop=True)
     n = len(user_history)
@@ -66,7 +66,7 @@ def extract_phase_signal(phase_reviews):
 
 
 def detect_drift(early_signal, middle_signal, recent_signal):
-    # Compare signals across phases to find what changed over time.
+    # compare signals across phases to find what changed over time.
     drifts = []
 
     if early_signal and recent_signal:
@@ -111,7 +111,7 @@ def build_structured_persona(user_id, early, middle, recent, drifts):
 
 
 def build_narrative_persona(structured_persona, user_id):
-    # Feed the structured persona into the llm and asks it to write a character description; the human readable section.
+    # feed the structured persona into the llm and asks it to write a character description; the human readable section.
     early_signal = structured_persona['phases']['early']['signal']
     recent_signal = structured_persona['phases']['recent']['signal']
     
@@ -119,7 +119,7 @@ def build_narrative_persona(structured_persona, user_id):
         return "Not enough review history to build a narrative portrait."
     prompt = f"""
 You are reading the behavioral data of a real person extracted from their Yelp review history.
-Your job is to write a precise, on point and specific character portrait of this reviewer.
+Your job is to write a sharp, on point and specific character portrait of this reviewer.
 
 Do not be generic. Do not say things like "this user enjoys dining out."
 Write like you actually know this person personally; their quirks, their priorities, their blind spots.
@@ -141,7 +141,7 @@ RECENT PHASE ({structured_persona['phases']['early']['period']}):
 OBSERVED DRIFTS:
 {chr(10).join(structured_persona['drifts']) if structured_persona['drifts'] else 'No significant drift detected'}
 
-Write a 150-200 word character portrait. Be specific. Be precise. No fluff.
+Write a 150-200 word character portrait. Be specific. Be sharp. No fluff.
 End with one sentence that captures what this person would never forgive in a bad experience.
 """
 
@@ -150,7 +150,7 @@ End with one sentence that captures what this person would never forgive in a ba
 
 
 def excavate_user(user_id,user_history,category_filter= None):
-   # Takes a user ID and their reviews and returns both their structured and narrative analysis.
+   # takes a user ID and their reviews and returns both their structured and narrative analysis.
     user_reviews =user_history[user_history['user_id'] == user_id].copy()
     user_reviews['date'] = pd.to_datetime(user_reviews['date'])
     if category_filter:

@@ -5,7 +5,7 @@ import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { useConversation } from "@elevenlabs/react";
 
-export default function EtherealOrb() {
+export default function EtherealOrb({ onTranscription }: { onTranscription?: (role: string, text: string) => void }) {
   const container = useRef<HTMLDivElement>(null);
   const coreRef = useRef<HTMLDivElement>(null);
   const vortexRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -20,7 +20,13 @@ export default function EtherealOrb() {
   const conversation = useConversation({
     onConnect: () => console.log("ElevenLabs Connected"),
     onDisconnect: () => console.log("ElevenLabs Disconnected"),
-    onMessage: (message) => console.log("Message:", message),
+    onMessage: (message: any) => {
+      console.log("Message:", message);
+      if (onTranscription && message.message) {
+        const role = message.source === 'ai' ? 'assistant' : 'user';
+        onTranscription(role, message.message);
+      }
+    },
     onError: (error) => console.error("ElevenLabs Error:", error),
   });
 
@@ -168,8 +174,7 @@ export default function EtherealOrb() {
         duration: 0.4,
         ease: "power2.out"
       });
-      // Speed up vortex
-      gsap.to(vortexRefs.current, { timeScale: 2, duration: 0.5 });
+      gsap.to(vortexRefs.current, { scale: 1.15, duration: 0.5 });
     }
   };
 
@@ -181,7 +186,7 @@ export default function EtherealOrb() {
         duration: 0.6,
         ease: "power2.inOut"
       });
-      gsap.to(vortexRefs.current, { timeScale: 1, duration: 1 });
+      gsap.to(vortexRefs.current, { scale: 1, duration: 1 });
     }
   };
 
@@ -219,7 +224,7 @@ export default function EtherealOrb() {
             <div
               key={`vortex-${i}`}
               ref={el => { vortexRefs.current[i] = el; }}
-              className="absolute border border-white/30 rounded-full mix-blend-screen"
+              className="absolute border border-white/30 rounded-full"
               style={{
                 width: `${100 + i * 20}%`,
                 height: `${100 + i * 20}%`,
@@ -233,7 +238,7 @@ export default function EtherealOrb() {
         {/* The Molten Copper Core */}
         <div 
           ref={coreRef}
-          className="absolute w-32 h-32 md:w-48 md:h-48 bg-gradient-to-tr from-brand-brown via-brand-lightbrown to-brand-glow rounded-full mix-blend-screen"
+          className="absolute w-32 h-32 md:w-48 md:h-48 bg-gradient-to-tr from-brand-brown via-brand-lightbrown to-brand-glow rounded-full"
           style={{ filter: 'blur(40px)' }}
         />
 

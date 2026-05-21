@@ -1,4 +1,4 @@
-#Centralized LLM Client for Sylon. two providers, one interface: Cerebras AI, Gemini
+#centralized LLM Client for Sylon. two providers, one interface: cerebras AI, gemini
 import os
 import time
 import json
@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 
 load_dotenv(os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env"))
 
-# Clients
+# clients
 gemini_client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
 cerebras_client = Cerebras(api_key=os.environ.get("CEREBRAS_API_KEY"))
@@ -18,7 +18,7 @@ cerebras_client = Cerebras(api_key=os.environ.get("CEREBRAS_API_KEY"))
 CEREBRAS_MODEL = os.environ.get("CEREBRAS_MODEL", "qwen-3-235b-a22b-instruct-2507")
 GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash-exp")
 
-# Retry logic (shared)
+# retry logic
 MAX_RETRIES = 4
 BASE_DELAY = 3  # seconds
 
@@ -66,7 +66,6 @@ def retry_with_backoff(func):
                     raise
     return wrapper
 
-# Cerebras (primary model: used for everything except Router)
 @retry_with_backoff
 def call_cerebras(
     prompt: str,
@@ -74,21 +73,29 @@ def call_cerebras(
     temperature: float = 0.7,
     max_tokens: int = 2000,
 ) -> str:
-    # single function for all Cerebras calls
     if os.environ.get("SYLON_DEBUG_MODE") == "True":
         return f"DEBUG (Cerebras): Mock response for prompt: {prompt[:50]}."
+        
     messages = []
     if system_prompt:
         messages.append({"role": "system", "content": system_prompt})
     messages.append({"role": "user", "content": prompt})
 
-    response = cerebras_client.chat.completions.create(
-        model=CEREBRAS_MODEL,
-        messages=messages,
-        temperature=temperature,
-        max_completion_tokens=max_tokens,
-    )
-    return response.choices[0].message.content
+    try:
+        response = cerebras_client.chat.completions.create(
+            model=CEREBRAS_MODEL,
+            messages=messages,
+            temperature=temperature,
+            max_completion_tokens=max_tokens,
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        err_msg = str(e).lower()
+        if "quota" in err_msg or "429" in err_msg or "exhausted" in err_msg:
+            print(f"[LLM] Cerebras Quota Exceeded. Falling back to Gemini...")
+            gemini_prompt = f"{system_prompt}\n\n{prompt}" if system_prompt else prompt
+            return call_gemini(prompt=gemini_prompt, json_mode=False)
+        raise
 
 
 @retry_with_backoff
@@ -98,28 +105,36 @@ def call_cerebras_json(
     temperature: float = 0.4,
     max_tokens: int = 4000,
 ) -> dict | list:
-    # cerebras call that forces JSON output and parses it.
     messages = []
     if system_prompt:
         messages.append({"role": "system", "content": system_prompt})
     messages.append({"role": "user", "content": prompt})
 
-    response = cerebras_client.chat.completions.create(
-        model=CEREBRAS_MODEL,
-        messages=messages,
-        temperature=temperature,
-        max_completion_tokens=max_tokens,
-        response_format={"type": "json_object"},
-    )
-    raw = response.choices[0].message.content
+    try:
+        response = cerebras_client.chat.completions.create(
+            model=CEREBRAS_MODEL,
+            messages=messages,
+            temperature=temperature,
+            max_completion_tokens=max_tokens,
+            response_format={"type": "json_object"},
+        )
+        raw = response.choices[0].message.content
+    except Exception as e:
+        err_msg = str(e).lower()
+        if "quota" in err_msg or "429" in err_msg or "exhausted" in err_msg:
+            print(f"[LLM] Cerebras Quota Exceeded. Falling back to Gemini...")
+            gemini_prompt = f"{system_prompt}\n\n{prompt}\n\nYou MUST respond with strictly valid JSON." if system_prompt else f"{prompt}\n\nYou MUST respond with strictly valid JSON."
+            raw = call_gemini(prompt=gemini_prompt, json_mode=True)
+        else:
+            raise
 
-    # Try direct parse
+    # try direct parse
     try:
         return json.loads(raw)
     except json.JSONDecodeError:
         pass
 
-    # Try extracting from markdown fences
+    # try extracting from markdown fences
     import re
     match = re.search(r"```(?:json)?\s*\n?(.*?)\n?```", raw, re.DOTALL)
     if match:
@@ -128,10 +143,10 @@ def call_cerebras_json(
     raise ValueError(f"Could not parse JSON from Cerebras response: {raw[:200]}")
 
 
-# Gemini (Router only — structured enum output)
+# gemini
 @retry_with_backoff
 def call_gemini_structured(prompt: str, response_schema) -> str:
-    # use Gemini's structured output.
+    # gemini's structured output.
     if os.environ.get("SYLON_DEBUG_MODE") == "True":
         return "CHAT"
 

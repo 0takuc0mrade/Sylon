@@ -187,7 +187,7 @@ KNOWN PAINPOINTS & PRAISE:
 {painpoints_summary}
 
 For EACH archetype, provide a JSON object with these exact fields:
-- "name": A respectful archetype label based on observable behavior (e.g., "The Lunch-Rush Regular", "The Detail-Oriented Diner", "The Weekend Explorer"). NEVER use judgmental or demeaning labels like "detail‑oriented customer", "budget‑conscious customer", "complainer". Describe behavior, not character.
+- "name": A respectful archetype label based on observable behavior (e.g., "The Lunch-Rush Regular", "The Detail-Oriented Diner", "The Weekend Explorer"). NEVER use judgmental or demeaning labels like "snob", "cheapskate", "complainer". Describe behavior, not character.
 - "narrative": A 100-150 word character portrait GROUNDED in the actual reviews.
   Reference specific things these customers said. Write like you know this person.
   Include their priorities, pet peeves, what they notice first, what makes them leave a bad review.
@@ -271,11 +271,11 @@ if __name__ == "__main__":
     reviews = load_reviews(test_id)
     if reviews:
         painpoints = extract_painpoints(reviews, test_id)
-        print("\n=== PAINPOINTS ===")
+        print("\n PAINPOINTS")
         print(json.dumps(painpoints, indent=2))
 
         personas = excavate_personas_from_reviews(reviews, painpoints, test_id)
-        print("\n=== PERSONAS ===")
+        print("\nPERSONAS")
         print(json.dumps(personas, indent=2))
     else:
         print(f"No reviews found for {test_id}. Run review_ingest.py first.")
