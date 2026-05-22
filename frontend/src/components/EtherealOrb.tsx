@@ -38,12 +38,15 @@ export default function EtherealOrb({ onTranscription }: { onTranscription?: (ro
           if (!businessId) return "Tell the user they need to upload sample data first.";
           
           const token = await getAccessToken();
-          const authHeaders = token ? { 'Authorization': `Bearer ${token}` } : {};
+          const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+          if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+          }
           
           // Call our backend Sylon orchestrator!
           const res = await fetch('/api/chat', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', ...authHeaders },
+            headers,
             body: JSON.stringify({ 
               text: "I just uploaded my customer data. Please summarize the customer archetypes you found and give me one actionable recommendation based on the top pain points.", 
               business_id: businessId 
