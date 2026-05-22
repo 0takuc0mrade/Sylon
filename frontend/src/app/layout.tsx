@@ -22,11 +22,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={inter.variable} suppressHydrationWarning>
-      <body>
+      <body className="flex flex-col h-[100dvh] overflow-hidden">
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <PrivyProviderWrapper>
             <Navbar />
-            <main className="bg-glow-bg min-h-screen">
+            <main className="bg-glow-bg flex-1 flex flex-col relative overflow-y-auto overflow-x-hidden">
               {children}
             </main>
           </PrivyProviderWrapper>

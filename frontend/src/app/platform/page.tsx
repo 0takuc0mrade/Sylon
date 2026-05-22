@@ -21,13 +21,13 @@ export default function Platform() {
   }, { scope: containerRef });
 
   return (
-    <div ref={containerRef} className="max-w-6xl mx-auto p-4 md:p-8 flex flex-col min-h-[calc(100dvh-120px)] md:min-h-[calc(100vh-80px)] animate-in fade-in duration-500 relative">
+    <div ref={containerRef} className="w-full max-w-6xl mx-auto p-4 md:p-8 flex flex-col flex-grow animate-in fade-in duration-500 relative">
       {/* Background Glow */}
       <div className="absolute top-[10%] left-[10%] w-[80%] h-[80%] bg-brand-lightbrown/10 blur-[150px] rounded-full pointer-events-none z-[-1]" />
 
       <header ref={headerRef} className="mb-16 pt-12 text-center max-w-4xl mx-auto">
         <div className="inline-block px-5 py-1.5 rounded-full bg-brand-lightbrown/10 border border-brand-brown/20 text-brand-brown text-sm font-bold mb-6 tracking-wide uppercase">Why Sylon?</div>
-        <h1 className="page-heading text-5xl md:text-6xl font-bold mb-6 leading-tight">Behavioral Intelligence<br />That Actually Works.</h1>
+        <h1 className="page-heading text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">Behavioral Intelligence<br />That Actually Works.</h1>
         <p className="text-xl text-brand-dark/70 dark:text-white/60 font-medium leading-relaxed">
           Traditional AI gives you generic advice based on internet averages. Sylon reads the psychological fingerprints of your actual customers and simulates their reactions before you make a decision.
         </p>

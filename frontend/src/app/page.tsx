@@ -75,7 +75,7 @@ export default function Home() {
   }, { scope: containerRef });
 
   return (
-    <div ref={containerRef} className="font-sans text-brand-dark min-h-screen flex flex-col relative overflow-x-hidden bg-glow-bg z-0">
+    <div ref={containerRef} className="font-sans text-brand-dark flex-grow flex flex-col relative overflow-x-hidden bg-glow-bg z-0">
       {/* Complex Background Layers */}
       <div className="absolute inset-0 z-[-1] pointer-events-none overflow-hidden">
         {/* Soft, billowy clouds at the bottom */}

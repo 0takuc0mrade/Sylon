@@ -131,7 +131,7 @@ function UploadContent() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto p-4 md:p-8 animate-in fade-in duration-500">
+    <div className="w-full max-w-3xl mx-auto p-4 md:p-8 flex flex-col flex-grow animate-in fade-in duration-500">
       <header className="mb-8 pt-8">
         <h1 className="page-heading text-3xl md:text-4xl font-bold mb-2">Ingest Data</h1>
         <p className="page-subtitle font-medium">Upload your customer reviews (CSV/JSON) to ground Sylon&apos;s advice.</p>

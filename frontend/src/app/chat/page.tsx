@@ -122,83 +122,92 @@ function ChatContent() {
   };
 
   return (
-    <div className="max-w-[1400px] mx-auto p-4 md:p-8 flex flex-col md:flex-row min-h-[calc(100dvh-120px)] md:h-[calc(100vh-80px)] animate-in fade-in duration-500 text-brand-dark dark:text-gray-100 gap-8 items-center">
+    <div className="w-full max-w-[1400px] mx-auto p-4 md:p-8 flex flex-col md:flex-row flex-1 animate-in fade-in duration-500 text-brand-dark dark:text-gray-100 gap-4 md:gap-8 items-stretch min-h-0">
       
-      {/* Left Panel: The Ethereal Orb (55%) */}
-      <div className="w-full md:w-[55%] flex flex-col items-center justify-center h-full">
+      {/* Left Panel: The Ethereal Orb — hidden on mobile to save space */}
+      <div className="hidden md:flex w-full md:w-[55%] flex-col items-center justify-center">
         <ConversationProvider>
           <EtherealOrb onTranscription={handleTranscription} />
         </ConversationProvider>
       </div>
 
-      {/* Right Panel: Text Chat (45%) */}
-      <div className="w-full md:w-[45%] flex flex-col h-full max-h-[800px] w-full">
-        <header className="mb-6 pt-4 md:pt-0">
-          <h1 className="page-heading text-3xl md:text-4xl font-bold mb-2">Sylon Cognitive Core</h1>
-          <p className="page-subtitle font-medium">Simulate changes, ask for recommendations, or discuss strategy.</p>
+      {/* Right Panel: Text Chat */}
+      <div className="w-full md:w-[45%] flex flex-col flex-1 md:flex-initial md:h-full min-h-0">
+        <header className="mb-4 md:mb-6 pt-2 md:pt-0 flex-shrink-0">
+          <h1 className="page-heading text-2xl sm:text-3xl md:text-4xl font-bold mb-1 md:mb-2">Sylon Cognitive Core</h1>
+          <p className="page-subtitle font-medium text-sm md:text-base">Simulate changes, ask for recommendations, or discuss strategy.</p>
         </header>
 
-        <div className="glass-card rounded-3xl p-4 md:p-6 flex flex-col flex-grow overflow-hidden shadow-sm">
-        <div className="flex-grow overflow-y-auto pr-2 flex flex-col gap-4 mb-4">
-          {messages.map((m, i) => (
-            <div key={i} className={`flex flex-col max-w-[80%] ${m.role === 'user' ? 'self-end' : 'self-start'}`}>
-              <div className={`p-4 rounded-2xl ${
-                m.role === 'user' 
-                  ? 'bg-gradient-to-r from-brand-lightbrown to-brand-brown text-white rounded-br-sm shadow-md' 
-                  : 'glass-card rounded-bl-sm font-medium'
-              }`}
+        {/* Mobile orb — compact version */}
+        <div className="md:hidden flex justify-center mb-4 flex-shrink-0">
+          <ConversationProvider>
+            <div className="scale-[0.55] origin-center -my-16">
+              <EtherealOrb onTranscription={handleTranscription} />
+            </div>
+          </ConversationProvider>
+        </div>
+
+        <div className="glass-card rounded-3xl p-3 sm:p-4 md:p-6 flex flex-col flex-1 overflow-hidden shadow-sm min-h-0">
+          <div className="flex-1 overflow-y-auto pr-1 sm:pr-2 flex flex-col gap-3 sm:gap-4 mb-3 sm:mb-4 min-h-0">
+            {messages.map((m, i) => (
+              <div key={i} className={`flex flex-col max-w-[90%] sm:max-w-[80%] ${m.role === 'user' ? 'self-end' : 'self-start'}`}>
+                <div className={`p-3 sm:p-4 rounded-2xl text-sm sm:text-base ${
+                  m.role === 'user' 
+                    ? 'bg-gradient-to-r from-brand-lightbrown to-brand-brown text-white rounded-br-sm shadow-md' 
+                    : 'glass-card rounded-bl-sm font-medium'
+                }`}
+              >
+                  {m.content}
+                </div>
+                <div className={`text-xs text-brand-dark dark:text-white/50 mt-1 font-semibold ${m.role === 'user' ? 'text-right' : 'text-left'}`}>
+                  {m.role === 'user' ? 'You' : 'Sylon'}
+                </div>
+              </div>
+            ))}
+            {loading && (
+              <div className="self-start max-w-[90%] sm:max-w-[80%]">
+                <div className="p-3 sm:p-4 rounded-2xl glass-card rounded-bl-sm italic font-medium text-sm sm:text-base">
+                  Thinking...
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-2 sm:mb-3 flex-shrink-0">
+            <button
+              type="button"
+              onClick={() => setInput("Simulate Business Pivot: If I start closing at 6 PM instead of 10 PM to cut generator costs, how will my 'Loyalty Skeptics' react?")}
+              className="text-xs font-bold bg-brand-lightbrown/10 hover:bg-brand-lightbrown/20 border border-brand-lightbrown/30 text-brand-brown dark:text-brand-lightbrown px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full transition-colors"
             >
-                {m.content}
-              </div>
-              <div className={`text-xs text-brand-dark dark:text-white/50 mt-1 font-semibold ${m.role === 'user' ? 'text-right' : 'text-left'}`}>
-                {m.role === 'user' ? 'You' : 'Sylon'}
-              </div>
-            </div>
-          ))}
-          {loading && (
-            <div className="self-start max-w-[80%]">
-              <div className="p-4 rounded-2xl glass-card rounded-bl-sm italic font-medium">
-                Thinking...
-              </div>
-            </div>
-          )}
-        </div>
+              Simulate Pivot
+            </button>
+            <button
+              type="button"
+              onClick={() => setInput("Request Service Optimization: My 'Experience Driven' archetype hates wait times. What are 3 zero-cost tweaks I can deploy tomorrow?")}
+              className="text-xs font-bold bg-brand-lightbrown/10 hover:bg-brand-lightbrown/20 border border-brand-lightbrown/30 text-brand-brown dark:text-brand-lightbrown px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full transition-colors"
+            >
+              Service Optimization
+            </button>
+          </div>
 
-        <div className="flex flex-wrap gap-2 mb-3">
-          <button
-            type="button"
-            onClick={() => setInput("Simulate Business Pivot: If I start closing at 6 PM instead of 10 PM to cut generator costs, how will my 'Loyalty Skeptics' react?")}
-            className="text-xs font-bold bg-brand-lightbrown/10 hover:bg-brand-lightbrown/20 border border-brand-lightbrown/30 text-brand-brown dark:text-brand-lightbrown px-3 py-1.5 rounded-full transition-colors"
-          >
-            Simulate Business Pivot
-          </button>
-          <button
-            type="button"
-            onClick={() => setInput("Request Service Optimization: My 'Experience Driven' archetype hates wait times. What are 3 zero-cost tweaks I can deploy tomorrow?")}
-            className="text-xs font-bold bg-brand-lightbrown/10 hover:bg-brand-lightbrown/20 border border-brand-lightbrown/30 text-brand-brown dark:text-brand-lightbrown px-3 py-1.5 rounded-full transition-colors"
-          >
-            Request Service Optimization
-          </button>
+          <form onSubmit={sendMessage} className="flex gap-2 sm:gap-3 mt-auto flex-shrink-0">
+            <input 
+              className="flex-grow px-4 sm:px-6 py-2.5 sm:py-3 rounded-full border border-brand-dark/30 dark:border-brand-brown/40 glass-card focus:outline-none focus:ring-2 focus:ring-brand-lightbrown w-full shadow-inner text-sm sm:text-base min-w-0"
+              placeholder="Type your scenario here..." 
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              disabled={loading}
+            />
+            <button 
+              type="submit" 
+              className="glass-button px-4 sm:px-6 py-2.5 sm:py-3 rounded-full font-bold hover:bg-white/80 transition-all disabled:opacity-50 whitespace-nowrap text-sm sm:text-base flex-shrink-0"
+              disabled={loading}
+            >
+              Send
+            </button>
+          </form>
         </div>
-
-        <form onSubmit={sendMessage} className="flex flex-col sm:flex-row gap-3 mt-auto">
-          <input 
-            className="flex-grow px-6 py-3 rounded-full border border-brand-dark/30 dark:border-brand-brown/40 glass-card focus:outline-none focus:ring-2 focus:ring-brand-lightbrown w-full shadow-inner"
-            placeholder="Type your scenario here..." 
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            disabled={loading}
-          />
-          <button 
-            type="submit" 
-            className="glass-button px-6 py-3 rounded-full font-bold hover:bg-white/80 transition-all disabled:opacity-50 whitespace-nowrap w-full sm:w-auto text-center justify-center flex"
-            disabled={loading}
-          >
-            Send
-          </button>
-        </form>
       </div>
     </div>
-  </div>
   );
 }
