@@ -24,7 +24,7 @@ export default function AuthButton() {
         </span>
         <button
           onClick={logout}
-          className="text-sm font-bold text-brand-dark dark:text-white/80 border border-brand-dark/20 dark:border-white/20 px-5 py-2 rounded-full hover:bg-brand-dark/5 dark:hover:bg-white/10 transition-colors"
+          className="text-xs sm:text-sm font-bold text-brand-dark dark:text-white/80 border border-brand-dark/20 dark:border-white/20 px-3 sm:px-5 py-1.5 sm:py-2 rounded-full hover:bg-brand-dark/5 dark:hover:bg-white/10 transition-colors whitespace-nowrap"
         >
           Sign Out
         </button>
@@ -35,7 +35,7 @@ export default function AuthButton() {
   return (
     <button
       onClick={login}
-      className="text-sm font-bold text-white bg-gradient-to-r from-brand-lightbrown to-brand-brown px-6 py-2 rounded-full hover:opacity-90 shadow-md transition-opacity"
+      className="text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-brand-lightbrown to-brand-brown px-4 sm:px-6 py-1.5 sm:py-2 rounded-full hover:opacity-90 shadow-md transition-opacity whitespace-nowrap"
     >
       Sign In
     </button>
