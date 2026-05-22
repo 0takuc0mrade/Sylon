@@ -1,14 +1,4 @@
 #!/usr/bin/env python3
-"""
-One-time precomputation of user and business embeddings.
-Run this ONCE before evaluation:
-    python scripts/precompute_embeddings.py
-
-Uses sentence-transformers (all-MiniLM-L6-v2) — runs on CPU, zero API credits.
-Generates ~384-dimensional embeddings for all users and businesses.
-Saves to data/embeddings/ for instant reloading.
-"""
-
 import os
 import sys
 import time

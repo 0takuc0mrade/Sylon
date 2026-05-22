@@ -214,7 +214,7 @@ class SampleUploadRequest(BaseModel):
 async def upload_sample(background_tasks: BackgroundTasks, request: SampleUploadRequest):
     try:
         business_id = request.business_id
-        csv_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "sampled_reviews.csv")
+        csv_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "utilities", "sampled_reviews.csv")
         
         from openserv.tools import tool_ingest_reviews, tool_extract_painpoints
         import uuid
@@ -247,6 +247,17 @@ async def get_dashboard(business_id: str):
     except Exception as e:
         print(f"[Server] Dashboard error: {e}")
         traceback.print_exc()
+        return {"status": "error", "message": str(e)}
+
+@app.get("/chat/history/{business_id}")
+async def get_chat_history(business_id: str):
+    from openserv.orchestrator import sessions
+    try:
+        session = sessions.get_or_create(business_id)
+        # Exclude internal system messages if any, return user/assistant pairs
+        return {"status": "ok", "history": session.history}
+    except Exception as e:
+        print(f"[Server] History error: {e}")
         return {"status": "error", "message": str(e)}
 
 if __name__ == "__main__":

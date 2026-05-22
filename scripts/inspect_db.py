@@ -10,7 +10,7 @@ if not os.path.exists(db_path):
 conn = sqlite3.connect(db_path)
 conn.row_factory = sqlite3.Row
 
-print("=== Sylon SQLite DB Inspector ===")
+print(" Sylon SQLite DB Inspector")
 
 tables = ["businesses", "review_batches", "reviews", "painpoint_snapshots", "personas", "collision_logs", "recommendation_logs"]
 

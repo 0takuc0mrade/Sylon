@@ -235,3 +235,10 @@ frontend/out/
 
 # OS junk
 .DS_Store
+
+# Large datasets & Logs
+data/*.json
+data/*.csv
+utilities/*.csv
+*_logs.txt
+

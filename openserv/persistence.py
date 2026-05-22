@@ -257,11 +257,11 @@ class PersistenceService:
                 try:
                     complaints = json.loads(snapshot_row["complaints_json"])
                     if complaints and len(complaints) > 0:
-                        top_complaint = complaints[0] if isinstance(complaints[0], str) else str(complaints[0].get("description", complaints[0]))
+                        top_complaint = complaints[0] if isinstance(complaints[0], str) else str(complaints[0].get("theme", complaints[0].get("description", complaints[0])))
                     
                     praise = json.loads(snapshot_row["praise_json"])
                     if praise and len(praise) > 0:
-                        top_praise = praise[0] if isinstance(praise[0], str) else str(praise[0].get("description", praise[0]))
+                        top_praise = praise[0] if isinstance(praise[0], str) else str(praise[0].get("theme", praise[0].get("description", praise[0])))
                 except Exception:
                     pass
 

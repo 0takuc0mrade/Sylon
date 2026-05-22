@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import EtherealOrb from "@/components/EtherealOrb";
 import { ConversationProvider } from "@elevenlabs/react";
 
@@ -16,9 +16,7 @@ type ChatResponse = {
 const BUSINESS_ID_STORAGE_KEY = 'sylon_business_id';
 
 export default function Chat() {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    { role: 'assistant', content: 'I am Sylon, your premium business strategist. Ask me about a scenario or ask for a recommendation.' }
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [businessId, setBusinessId] = useState<string | null>(() => {
     if (typeof window === 'undefined') {
       return null;
@@ -27,6 +25,49 @@ export default function Chat() {
   });
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const initialized = useRef(false);
+
+  useEffect(() => {
+    if (initialized.current) return;
+    
+    const initChat = async () => {
+      initialized.current = true;
+      if (!businessId) {
+        setMessages([{ role: 'assistant', content: 'I am Sylon, your premium business strategist. Please ingest data first to unlock my full potential.' }]);
+        return;
+      }
+
+      setLoading(true);
+      try {
+        const historyRes = await fetch(`/api/chat/history/${businessId}`);
+        const historyData = await historyRes.json();
+        
+        if (historyData.status === 'ok' && historyData.history && historyData.history.length > 0) {
+          setMessages(historyData.history);
+        } else {
+          // Proactive Greeting
+          const res = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              text: "I just uploaded my customer data. Please summarize the customer archetypes you found and give me one actionable recommendation based on the top pain points.", 
+              business_id: businessId 
+            })
+          });
+          const data = await res.json();
+          setMessages([
+            { role: 'assistant', content: data.response }
+          ]);
+        }
+      } catch (err) {
+        setMessages([{ role: 'assistant', content: 'I am Sylon, your premium business strategist. How can I assist you?' }]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initChat();
+  }, [businessId]);
 
   const handleTranscription = (role: string, text: string) => {
     setMessages(prev => [...prev, { role, content: text }]);
@@ -79,7 +120,7 @@ export default function Chat() {
       {/* Right Panel: Text Chat (45%) */}
       <div className="w-full md:w-[45%] flex flex-col h-full max-h-[800px] w-full">
         <header className="mb-6 pt-4 md:pt-0">
-          <h1 className="page-heading text-3xl md:text-4xl font-bold mb-2">Strategist Oracle</h1>
+          <h1 className="page-heading text-3xl md:text-4xl font-bold mb-2">Sylon Cognitive Core</h1>
           <p className="page-subtitle font-medium">Simulate changes, ask for recommendations, or discuss strategy.</p>
         </header>
 
@@ -107,6 +148,23 @@ export default function Chat() {
               </div>
             </div>
           )}
+        </div>
+
+        <div className="flex flex-wrap gap-2 mb-3">
+          <button
+            type="button"
+            onClick={() => setInput("Simulate Business Pivot: If I start closing at 6 PM instead of 10 PM to cut generator costs, how will my 'Loyalty Skeptics' react?")}
+            className="text-xs font-bold bg-brand-lightbrown/10 hover:bg-brand-lightbrown/20 border border-brand-lightbrown/30 text-brand-brown dark:text-brand-lightbrown px-3 py-1.5 rounded-full transition-colors"
+          >
+            Simulate Business Pivot
+          </button>
+          <button
+            type="button"
+            onClick={() => setInput("Request Service Optimization: My 'Experience Driven' archetype hates wait times. What are 3 zero-cost tweaks I can deploy tomorrow?")}
+            className="text-xs font-bold bg-brand-lightbrown/10 hover:bg-brand-lightbrown/20 border border-brand-lightbrown/30 text-brand-brown dark:text-brand-lightbrown px-3 py-1.5 rounded-full transition-colors"
+          >
+            Request Service Optimization
+          </button>
         </div>
 
         <form onSubmit={sendMessage} className="flex flex-col sm:flex-row gap-3 mt-auto">

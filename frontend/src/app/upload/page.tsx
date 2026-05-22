@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -31,13 +31,35 @@ export default function Upload() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<UploadResult | null>(null);
   const [isNavigating, setIsNavigating] = useState(false);
+  const [isDataReady, setIsDataReady] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (result?.status === 'processing' && !isDataReady && businessId) {
+      interval = setInterval(async () => {
+        try {
+          const res = await fetch(`/api/business/${businessId}/dashboard`);
+          const data = await res.json();
+          if (data.status === 'ok') {
+            setIsDataReady(true);
+            clearInterval(interval);
+          }
+        } catch (err) {
+          // silent error, keep polling
+        }
+      }, 3000);
+    }
+    return () => clearInterval(interval);
+  }, [result, isDataReady, businessId]);
 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!file) return;
 
     setLoading(true);
+    setResult(null);
+    setIsDataReady(false);
     const formData = new FormData();
     formData.append('file', file);
     formData.append('business_id', businessId);
@@ -64,6 +86,12 @@ export default function Upload() {
   const handleSample = async () => {
     setLoading(true);
     setResult(null);
+    setIsDataReady(false);
+    
+    // Always generate a fresh business ID for the demo to prevent stale state issues
+    const newBizId = "demo_" + Math.random().toString(36).substring(2, 9);
+    setBusinessId(newBizId);
+    localStorage.setItem(BUSINESS_ID_STORAGE_KEY, newBizId);
 
     try {
       const res = await fetch('/api/business/upload-sample', {
@@ -71,7 +99,7 @@ export default function Upload() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ business_id: businessId })
+        body: JSON.stringify({ business_id: newBizId })
       });
       const data: UploadResult = await res.json();
       setResult(data);
@@ -152,7 +180,7 @@ export default function Upload() {
               <div className="flex-1">
                 <h3 className="text-xl font-bold text-brand-dark dark:text-white mb-2">Ingestion Successful</h3>
                 <p className="text-brand-dark/80 dark:text-white/70 mb-6 leading-relaxed">
-                  Your dataset has been securely loaded. Sylon is currently excavating customer personas and extracting critical pain points in the background. You can consult the Oracle immediately.
+                  Your dataset has been securely loaded. Sylon is currently excavating customer personas and extracting critical pain points in the background. You can engage the Cognitive Core immediately.
                 </p>
                 <div className="flex justify-start">
                   <button 
@@ -160,7 +188,7 @@ export default function Upload() {
                       setIsNavigating(true);
                       router.push('/chat');
                     }}
-                    disabled={isNavigating}
+                    disabled={isNavigating || !isDataReady}
                     className="text-white bg-gradient-to-r from-brand-lightbrown to-brand-brown hover:shadow-lg hover:scale-[1.02] px-8 py-3.5 rounded-full font-bold shadow-md transition-all flex items-center space-x-3 disabled:opacity-80 disabled:cursor-wait disabled:hover:scale-100"
                   >
                     {isNavigating ? (
@@ -169,11 +197,19 @@ export default function Upload() {
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        <span>Initializing Oracle...</span>
+                        <span>Establishing Neural Link...</span>
+                      </>
+                    ) : !isDataReady ? (
+                      <>
+                        <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span>Synthesizing Behavioral Profiles (~30s)</span>
                       </>
                     ) : (
                       <>
-                        <span>Step 2: Consult Sylon</span>
+                        <span>Step 2: Engage Sylon Core</span>
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                           <path d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" strokeLinecap="round" strokeLinejoin="round"></path>
                         </svg>
