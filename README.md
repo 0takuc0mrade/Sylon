@@ -2,6 +2,10 @@
 
 Sylon is a multi-agent behavioral intelligence platform designed for the **DSN X BCT LLM Agent Challenge**. It transforms unstructured customer reviews into psychologically grounded personas and simulates how they will react to business decisions.
 
+## Live Deployments
+- **Frontend (Web App):** [https://sylon.vercel.app/](https://sylon.vercel.app/)
+- **Backend (API):** [https://sylon.onrender.com/](https://sylon.onrender.com/)
+
 ## Quick Start (Judges Evaluation)
 
 We have containerized the entire application for easy evaluation. 
