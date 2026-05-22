@@ -22,7 +22,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={inter.variable} suppressHydrationWarning>
-      <body className="flex flex-col h-[100dvh] overflow-hidden">
+      <body className="flex flex-col fixed inset-0 overflow-hidden">
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <PrivyProviderWrapper>
             <Navbar />
