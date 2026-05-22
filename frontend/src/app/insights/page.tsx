@@ -69,13 +69,13 @@ export default function Insights() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-4 md:p-8 flex flex-col min-h-[calc(100dvh-120px)] animate-in fade-in duration-500">
-      <header className="mb-8 pt-8 flex justify-between items-end">
+    <div className="w-full max-w-7xl mx-auto p-4 md:p-8 flex flex-col flex-grow animate-in fade-in duration-500">
+      <header className="mb-8 pt-8 flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
         <div>
-          <h1 className="page-heading text-3xl md:text-4xl font-bold mb-2">Customer Insights</h1>
-          <p className="page-subtitle font-medium">Business Health & Excavated Archetypes</p>
+          <h1 className="page-heading text-2xl sm:text-3xl md:text-4xl font-bold mb-2">Customer Insights</h1>
+          <p className="page-subtitle font-medium text-sm md:text-base">Business Health & Excavated Archetypes</p>
         </div>
-        <Link href="/chat" className="text-sm font-bold text-white bg-gradient-to-r from-brand-lightbrown to-brand-brown px-6 py-3 rounded-full hover:opacity-90 shadow-lg hover:scale-105 transition-all">
+        <Link href="/chat" className="text-sm font-bold text-white bg-gradient-to-r from-brand-lightbrown to-brand-brown px-6 py-3 rounded-full hover:opacity-90 shadow-lg hover:scale-105 transition-all whitespace-nowrap self-start sm:self-auto flex-shrink-0">
           Engage Cognitive Core
         </Link>
       </header>

@@ -1,5 +1,6 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:is(.dark *));
 @theme {
   --color-brand-brown: var(--brand-brown);
   --color-brand-lightbrown: var(--brand-lightbrown);
@@ -131,4 +132,18 @@
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     color: #f5ece9; /* White text for dark mode button */
   }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Ensure full viewport height */
+html, body {
+  min-height: 100vh;
 }
