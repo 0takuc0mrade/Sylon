@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-const apiUrl = process.env.SYLON_API_URL || "https://sylon-demo-2026.loca.lt";
+const apiUrl = process.env.SYLON_API_URL || "https://sylon.onrender.com";
 
 const nextConfig: NextConfig = {
   output: 'standalone',
