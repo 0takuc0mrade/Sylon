@@ -1,4 +1,4 @@
-# Sylon: Conversational Recommendation & Reasoning
+# Sylon: Recommendation & Reasoning
 **Team:** Cascade 
 **Project Name:** Sylon
 **Track:** Task B (Recommendation)
@@ -30,4 +30,4 @@ When a recommendation is requested, Sylon’s routing layer analyzes the convers
 ### System Architecture and Reproducibility
 The Sylon recommendation engine is built on a scalable **Next.js** and **FastAPI** stack, featuring an Ethereal Voice Orb UI powered by ElevenLabs that allows users to literally speak to their recommendation engine. 
 
-The entire orchestration layer and the evaluation scripts for NDCG@10 are fully documented in the repository, ensuring complete code reproducibility for the judges.
+The entire orchestration layer and the evaluation scripts for NDCG@10 are fully documented in the repository, ensuring complete code reproducibility.
