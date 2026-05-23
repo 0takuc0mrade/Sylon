@@ -1,4 +1,4 @@
-# Sylon: Deep User Modeling and Simulation
+# Sylon: User Modeling and Simulation
 **Team:** Cascade
 **Project:** Sylon
 **Track:** Task A (User Modeling)
