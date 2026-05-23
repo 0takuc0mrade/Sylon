@@ -1,6 +1,8 @@
 import asyncio
 import traceback
+# pyrefly: ignore [missing-import]
 from fastapi import FastAPI, UploadFile, File, Form, BackgroundTasks, Depends
+# pyrefly: ignore [missing-import]
 from pydantic import BaseModel
 import sys
 import os
@@ -8,6 +10,7 @@ import os
 # Add parent directory to path to resolve absolute imports locally
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+# pyrefly: ignore [missing-import]
 from dotenv import load_dotenv
 load_dotenv()
 
