@@ -29,7 +29,7 @@ export default function Platform() {
         <div className="inline-block px-5 py-1.5 rounded-full bg-brand-lightbrown/10 border border-brand-brown/20 text-brand-brown text-sm font-bold mb-6 tracking-wide uppercase">Why Sylon?</div>
         <h1 className="page-heading text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">Behavioral Intelligence<br />That Actually Works.</h1>
         <p className="text-xl text-brand-dark/70 dark:text-white/60 font-medium leading-relaxed">
-          Regular AI gives you generic advice based on internet averages. Sylon reads the psychological fingerprints of your actual customers and simulates their reactions before you make a decision.
+          Regular AI gives you generic advice based on internet averages. Sylon reads the context driven reviews of your actual customers and simulates their reactions before you make a decision.
         </p>
       </header>
 
@@ -43,7 +43,7 @@ export default function Platform() {
           </div>
           <h2 className="text-3xl font-bold text-brand-dark dark:text-white mb-4">Grounded Reality</h2>
           <p className="text-brand-dark/70 dark:text-white/60 leading-relaxed text-lg">
-            No hallucinations. Sylon is strictly grounded in your business's raw data—using your actual reviews to excavate accurate customer archetypes.
+            Sylon is strictly grounded in your business's raw data using your actual reviews to excavate accurate customer archetypes.
           </p>
         </div>
 
