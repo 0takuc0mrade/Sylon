@@ -140,16 +140,9 @@ function ChatContent() {
       
       {/* Left Panel: The Ethereal Orb — Desktop */}
       <div className="hidden md:flex w-full md:w-[55%] flex-col items-center justify-center">
-        <ErrorBoundary fallback={
-          <div className="flex flex-col items-center justify-center w-[300px] h-[300px] rounded-full border border-brand-dark/10 dark:border-white/5 bg-black/5 dark:bg-white/5 backdrop-blur-sm animate-pulse duration-1000">
-            <div className="w-3 h-3 rounded-full bg-brand-lightbrown/50 mb-4 shadow-[0_0_15px_rgba(212,175,55,0.3)]"></div>
-            <span className="text-sm font-medium tracking-widest uppercase text-brand-dark/40 dark:text-white/30">Voice Link Standby</span>
-          </div>
-        }>
-          <ConversationProvider>
-            <EtherealOrb onTranscription={handleTranscription} />
-          </ConversationProvider>
-        </ErrorBoundary>
+        <ConversationProvider>
+          <EtherealOrb onTranscription={handleTranscription} />
+        </ConversationProvider>
       </div>
 
       {/* Right Panel: Text Chat */}
@@ -162,16 +155,9 @@ function ChatContent() {
         {/* Ethereal Orb — Mobile */}
         <div className="md:hidden flex w-full justify-center mt-2 mb-2">
           <div className="transform scale-75 origin-top">
-            <ErrorBoundary fallback={
-              <div className="flex flex-col items-center justify-center w-[200px] h-[200px] rounded-full border border-brand-dark/10 dark:border-white/5 bg-black/5 dark:bg-white/5 backdrop-blur-sm animate-pulse duration-1000">
-                <div className="w-2.5 h-2.5 rounded-full bg-brand-lightbrown/50 mb-3 shadow-[0_0_10px_rgba(212,175,55,0.3)]"></div>
-                <span className="text-[10px] font-medium tracking-widest uppercase text-brand-dark/40 dark:text-white/30">Voice Link Standby</span>
-              </div>
-            }>
-              <ConversationProvider>
-                <EtherealOrb onTranscription={handleTranscription} isMobile={true} />
-              </ConversationProvider>
-            </ErrorBoundary>
+            <ConversationProvider>
+              <EtherealOrb onTranscription={handleTranscription} isMobile={true} />
+            </ConversationProvider>
           </div>
         </div>
 
