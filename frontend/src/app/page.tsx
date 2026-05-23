@@ -152,7 +152,7 @@ export default function Home() {
             <div className="text-sm text-brand-dark font-mono mb-4 font-semibold">/01</div>
             <h3 className="text-2xl font-bold mb-4 leading-tight text-brand-dark">Decision<br />Forecasting</h3>
             <p className="text-base text-brand-dark/90 leading-relaxed font-medium">
-              Test every move against the people it affects — before it costs you.
+              Test every move against the people it affects before it costs you.
             </p>
             <div className="mt-auto pt-8 text-brand-dark">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -167,7 +167,7 @@ export default function Home() {
             <div className="text-sm text-brand-dark font-mono mb-4 font-semibold">/02</div>
             <h3 className="text-2xl font-bold mb-4 leading-tight text-brand-dark">Know Your<br />Customer</h3>
             <p className="text-base text-brand-dark/90 leading-relaxed font-medium">
-              Built from how they've changed, not just what they said.
+              Build from how they've changed, not just what they said.
             </p>
             <div className="mt-auto pt-8 text-brand-dark">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
