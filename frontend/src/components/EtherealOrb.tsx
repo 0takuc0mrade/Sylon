@@ -57,9 +57,9 @@ export default function EtherealOrb({ onTranscription, isMobile }: { onTranscrip
         onTranscription(role, text);
       }
     },
-    onError: (error: any) => {
+    onError: (error: string | Error) => {
       console.error("ElevenLabs Error:", error);
-      setAsyncError(new Error("ElevenLabs Connection Failed"));
+      // Silently handle to prevent UI crash
     },
     clientTools: {
       get_sylon_strategy: async (parameters: any) => {
