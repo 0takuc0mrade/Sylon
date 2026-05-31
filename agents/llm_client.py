@@ -166,6 +166,8 @@ def call_gemini_structured(prompt: str, response_schema) -> str:
             contents=prompt,
             config=config
         )
+        if response.text is None:
+            raise Exception("Gemini structured returned empty response")
         return response.text
     except Exception as e:
         if "Simulate" in prompt or "what if" in prompt.lower() or "pivot" in prompt.lower():
@@ -190,6 +192,8 @@ def call_gemini(prompt: str, json_mode: bool = False) -> str:
             contents=prompt,
             config=config
         )
+        if response.text is None:
+            raise Exception("Gemini returned empty response (possibly blocked by safety filters)")
         return response.text
     except Exception as e:
         # Absolute Fail-Safe for Demo Video
