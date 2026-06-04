@@ -6,8 +6,17 @@ Validates access tokens issued by Privy using their JWKS endpoint.
 import os
 import jwt
 import requests
+import ssl
 from functools import lru_cache
 from dotenv import load_dotenv
+
+# macOS python SSL patch
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
 
 load_dotenv()
 

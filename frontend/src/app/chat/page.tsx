@@ -5,30 +5,13 @@ import { ConversationProvider } from "@elevenlabs/react";
 import AuthGuard from "@/components/AuthGuard";
 import { usePrivy } from "@privy-io/react-auth";
 
-type ComparisonOption = {
-  rank: number;
-  label: string;
-  risk: 'low' | 'medium' | 'high' | string;
-  upside: string;
-  rationale: string;
-};
-
-type ComparisonResult = {
-  title?: string;
-  summary?: string;
-  winner?: string;
-  riskiest_option?: string;
-  persona_churn_risk?: string;
-  persona_positive_reaction?: string;
-  recommended_next_step?: string;
-  evidence_quotes?: string[];
-  options?: ComparisonOption[];
-};
+import HistorySidebar from "@/components/HistorySidebar";
 
 type ChatMessage = {
   role: string;
   content: string;
-  comparison?: ComparisonResult | null;
+  isComparison?: boolean;
+  timestamp?: string;
 };
 
 type ChatResponse = {
@@ -49,7 +32,20 @@ export default function Chat() {
 
 function ChatContent() {
   const { getAccessToken } = usePrivy();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView();
+    }, 100);
+  };
+
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
   const [businessId, setBusinessId] = useState<string | null>(() => {
     if (typeof window === 'undefined') {
       return null;
@@ -63,13 +59,13 @@ function ChatContent() {
     return new URLSearchParams(window.location.search).get('prompt') || '';
   });
   const [loading, setLoading] = useState(false);
-  const initialized = useRef(false);
+  const initializedFor = useRef<string | null>(null);
 
   useEffect(() => {
-    if (initialized.current) return;
+    if (initializedFor.current === businessId) return;
     
     const initChat = async () => {
-      initialized.current = true;
+      initializedFor.current = businessId;
       if (!businessId) {
         setMessages([{ role: 'assistant', content: 'I am Sylon, your premium business strategist. Please ingest data first to unlock my full potential.' }]);
         return;
@@ -80,9 +76,10 @@ function ChatContent() {
         const token = await getAccessToken();
         const authHeaders: Record<string, string> = { 
           'Bypass-Tunnel-Reminder': 'true',
+          'Cache-Control': 'no-cache',
           ...(token ? { 'Authorization': `Bearer ${token}` } : {}) 
         };
-        const historyRes = await fetch(`/api/chat/history/${businessId}`, { headers: authHeaders });
+        const historyRes = await fetch(`/api/chat/history/${businessId}?t=${Date.now()}`, { headers: authHeaders });
         const historyData = await historyRes.json();
         
         if (historyData.status === 'ok' && historyData.history && historyData.history.length > 0) {
@@ -131,7 +128,8 @@ function ChatContent() {
     if (!input.trim()) return;
 
     const userText = input;
-    setMessages(prev => [...prev, { role: 'user', content: userText }]);
+    const currentIsoTime = new Date().toISOString();
+    setMessages(prev => [...prev, { role: 'user', content: userText, timestamp: currentIsoTime }]);
     setInput('');
     setLoading(true);
 
@@ -151,12 +149,23 @@ function ChatContent() {
         },
         body: JSON.stringify(payload)
       });
+      
+      if (!res.ok) {
+        throw new Error(`Server returned ${res.status}`);
+      }
+      
       const data: ChatResponse = await res.json();
       if (data.business_id) {
         setBusinessId(data.business_id);
         localStorage.setItem(BUSINESS_ID_STORAGE_KEY, data.business_id);
       }
-      setMessages(prev => [...prev, { role: 'assistant', content: data.response, comparison: data.comparison }]);
+      
+      const isComparison = userText.toLowerCase().includes('compare') || 
+                           userText.toLowerCase().includes(' vs ') || 
+                           userText.toLowerCase().includes('simulate') || 
+                           userText.toLowerCase().includes('what if');
+      const responseTime = new Date().toISOString();
+      setMessages(prev => [...prev, { role: 'assistant', content: data.response, isComparison, timestamp: responseTime }]);
     } catch (err) {
       console.error(err);
       setMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, there was an error processing your request.' }]);
@@ -165,21 +174,57 @@ function ChatContent() {
     }
   };
 
+  const clearSession = async () => {
+    if (!businessId) return;
+    if (!confirm("Are you sure you want to clear your current session and delete all ingested data?")) return;
+    
+    setLoading(true);
+    try {
+      const token = await getAccessToken();
+      await fetch(`/api/business/${businessId}`, {
+        method: 'DELETE',
+        headers: {
+          'Bypass-Tunnel-Reminder': 'true',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}) 
+        }
+      });
+      setBusinessId(null);
+      localStorage.removeItem(BUSINESS_ID_STORAGE_KEY);
+      setMessages([{ role: 'assistant', content: 'I am Sylon, your premium business strategist. Session cleared. Please ingest new data to begin.' }]);
+    } catch (err) {
+      console.error("Failed to clear session:", err);
+      alert("Failed to clear session.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="w-full max-w-[1400px] mx-auto p-4 md:p-8 flex flex-col md:flex-row flex-1 animate-in fade-in duration-500 text-brand-dark dark:text-gray-100 gap-4 md:gap-8 items-stretch min-h-0">
+    <div className="w-full max-w-[1400px] mx-auto p-4 md:p-8 flex flex-col md:flex-row flex-1 animate-in fade-in duration-500 text-brand-dark dark:text-gray-100 gap-4 md:gap-8 items-stretch min-h-0 relative">
       
+      {/* History Sidebar */}
+      <HistorySidebar 
+        currentBusinessId={businessId} 
+        onSelectSession={(id) => {
+          setBusinessId(id);
+          localStorage.setItem(BUSINESS_ID_STORAGE_KEY, id);
+        }} 
+      />
+
       {/* Left Panel: The Ethereal Orb — Desktop */}
-      <div className="hidden md:flex w-full md:w-[55%] flex-col items-center justify-center">
+      <div className="hidden md:flex w-full md:w-[55%] flex-col items-center justify-center pl-0 md:pl-12">
         <ConversationProvider>
           <EtherealOrb onTranscription={handleTranscription} />
         </ConversationProvider>
       </div>
 
       {/* Right Panel: Text Chat */}
-      <div className="w-full md:w-[45%] flex flex-col flex-1 md:flex-initial md:h-full min-h-0">
-        <header className="mb-4 md:mb-6 pt-2 md:pt-0 flex-shrink-0">
-          <h1 className="page-heading text-2xl sm:text-3xl md:text-4xl font-bold mb-1 md:mb-2">Sylon Cognitive Core</h1>
-          <p className="page-subtitle font-medium text-sm md:text-base">Simulate changes, ask for recommendations, or discuss strategy.</p>
+      <div className="w-full md:w-[45%] flex flex-col flex-1 md:flex-initial min-h-[600px]">
+        <header className="mb-4 md:mb-6 pt-2 md:pt-0 flex-shrink-0 flex justify-between items-start">
+          <div>
+            <h1 className="page-heading text-2xl sm:text-3xl md:text-4xl font-bold mb-1 md:mb-2">Sylon Cognitive Core</h1>
+            <p className="page-subtitle font-medium text-sm md:text-base">Simulate changes, ask for recommendations, or discuss strategy.</p>
+          </div>
         </header>
 
         {/* Ethereal Orb — Mobile */}
@@ -193,7 +238,9 @@ function ChatContent() {
 
         <div className="glass-card rounded-3xl p-3 sm:p-4 md:p-6 flex flex-col flex-1 overflow-hidden shadow-sm min-h-0">
           <div className="flex-1 overflow-y-auto pr-1 sm:pr-2 flex flex-col gap-3 sm:gap-4 mb-3 sm:mb-4 min-h-0">
-            {messages.map((m, i) => (
+            {messages.map((m, i) => {
+
+              return (
               <div key={i} className={`flex flex-col max-w-[90%] sm:max-w-[80%] ${m.role === 'user' ? 'self-end' : 'self-start'}`}>
                 <div className={`p-3 sm:p-4 rounded-2xl text-sm sm:text-base ${
                   m.role === 'user' 
@@ -204,11 +251,17 @@ function ChatContent() {
                   <MarkdownText text={m.content} />
                   {m.comparison && <ComparisonCard comparison={m.comparison} />}
                 </div>
-                <div className={`text-xs text-brand-dark dark:text-white/50 mt-1 font-semibold ${m.role === 'user' ? 'text-right' : 'text-left'}`}>
-                  {m.role === 'user' ? 'You' : 'Sylon'}
+                <div className={`text-xs mt-1 font-semibold flex items-center gap-2 ${m.role === 'user' ? 'justify-end text-brand-dark dark:text-white/50' : 'justify-start text-brand-dark dark:text-white/50'}`}>
+                  <span>{m.role === 'user' ? 'You' : 'Sylon'}</span>
+                  {m.timestamp && (
+                    <span className="opacity-60 font-normal text-[10px]">
+                      {new Date(m.timestamp.endsWith('Z') ? m.timestamp : m.timestamp + 'Z').toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  )}
                 </div>
               </div>
-            ))}
+              );
+            })}
             {loading && (
               <div className="self-start max-w-[90%] sm:max-w-[80%]">
                 <div className="p-3 sm:p-4 rounded-2xl glass-card rounded-bl-sm italic font-medium text-sm sm:text-base">
@@ -216,6 +269,7 @@ function ChatContent() {
                 </div>
               </div>
             )}
+            <div ref={messagesEndRef} />
           </div>
 
           <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-2 sm:mb-3 flex-shrink-0">
@@ -355,5 +409,5 @@ function MarkdownText({ text }: { text: string }) {
       .replace(/\n/g, '<br />');
     return html;
   };
-  return <div className="space-y-1.5 leading-relaxed" dangerouslySetInnerHTML={{ __html: formatText(text) }} />;
+  return <div className="space-y-1.5 leading-relaxed break-words whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: formatText(text) }} />;
 }

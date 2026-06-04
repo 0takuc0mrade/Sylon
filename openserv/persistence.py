@@ -328,4 +328,15 @@ class PersistenceService:
                 "history": history
             }
 
+    def delete_business(self, business_id: str):
+        with self.get_connection() as conn:
+            # Delete in order of foreign key dependencies
+            conn.execute("DELETE FROM recommendation_logs WHERE business_id = ?", (business_id,))
+            conn.execute("DELETE FROM collision_logs WHERE business_id = ?", (business_id,))
+            conn.execute("DELETE FROM personas WHERE business_id = ?", (business_id,))
+            conn.execute("DELETE FROM painpoint_snapshots WHERE business_id = ?", (business_id,))
+            conn.execute("DELETE FROM reviews WHERE business_id = ?", (business_id,))
+            conn.execute("DELETE FROM review_batches WHERE business_id = ?", (business_id,))
+            conn.execute("DELETE FROM businesses WHERE business_id = ?", (business_id,))
+
 persistence_service = PersistenceService()
