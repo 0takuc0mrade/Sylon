@@ -140,61 +140,123 @@ function UploadContent() {
     }
   };
 
+  const handleFivetranSync = async () => {
+    setLoading(true);
+    setResult(null);
+    setIsDataReady(false);
+    
+    const newBizId = "demo_ft_" + Math.random().toString(36).substring(2, 9);
+    setBusinessId(newBizId);
+    localStorage.setItem(BUSINESS_ID_STORAGE_KEY, newBizId);
+
+    try {
+      const token = await getAccessToken();
+      const res = await fetch('/api/business/fivetran-sync', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Bypass-Tunnel-Reminder': 'true',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ business_id: newBizId, connector_id: 'mock_yelp' })
+      });
+      const data: UploadResult = await res.json();
+      setResult(data);
+      if (data.business_id) {
+        setBusinessId(data.business_id);
+        localStorage.setItem(BUSINESS_ID_STORAGE_KEY, data.business_id);
+      }
+    } catch (err) {
+      console.error(err);
+      setResult({ status: 'error', message: 'Fivetran connection failed' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="w-full max-w-3xl mx-auto p-4 md:p-8 flex flex-col flex-grow animate-in fade-in duration-500">
       <header className="mb-8 pt-8">
-        <h1 className="page-heading text-3xl md:text-4xl font-bold mb-2">Ingest Data</h1>
-        <p className="page-subtitle font-medium">Upload your customer reviews (CSV/JSON) to ground Sylon&apos;s advice.</p>
+        <h1 className="page-heading text-3xl md:text-4xl font-bold mb-2">Data Integrations</h1>
+        <p className="page-subtitle font-medium">Connect live data pipelines or manually ingest files to power Sylon's engine.</p>
       </header>
 
-      <div className="glass-card rounded-3xl p-6 md:p-8">
-        <form onSubmit={handleUpload} className="flex flex-col gap-6">
-          <div className="space-y-2">
-            <label className="block text-sm font-bold text-brand-dark dark:text-white">Business ID</label>
-            <input
-              type="text"
-              className="w-full px-4 py-3 rounded-xl border border-brand-dark/30 dark:border-white/10 bg-white/80 dark:bg-black/30 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-brand-lightbrown text-brand-dark dark:text-white placeholder:text-brand-dark/50 dark:placeholder:text-white/40"
-              placeholder="e.g., my_business_123"
-              value={businessId}
-              onChange={(e) => setBusinessId(e.target.value)}
-              disabled={loading}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="block text-sm font-bold text-brand-dark dark:text-white">Review File (CSV or JSON)</label>
-            <div className="border-2 border-dashed border-brand-dark/30 dark:border-white/20 rounded-xl p-8 flex flex-col items-center justify-center bg-white/40 dark:bg-black/20 hover:bg-white/60 dark:hover:bg-black/40 transition-colors">
-              <input
-                type="file"
-                accept=".csv,.json"
-                className="block w-full text-sm text-brand-dark dark:text-white/70 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-brand-lightbrown file:text-white hover:file:bg-brand-brown cursor-pointer transition-all file:mb-2 md:file:mb-0 whitespace-normal md:whitespace-nowrap overflow-hidden text-ellipsis"
-                onChange={(e) => setFile(e.target.files?.[0] || null)}
-                disabled={loading}
-              />
+      <div className="flex flex-col gap-8">
+        {/* Fivetran Live Integration Card */}
+        <div className="glass-card rounded-3xl p-6 md:p-8 border-2 border-brand-lightbrown/40 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-brand-lightbrown/10 rounded-bl-full -z-10" />
+          <div className="flex items-center gap-4 mb-4">
+            <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm">
+              {/* Fivetran Logo Mock */}
+              <svg className="w-8 h-8 text-[#0073FF]" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-brand-dark dark:text-white">Live Data Pipeline</h2>
+              <p className="text-sm font-medium text-brand-dark/70 dark:text-white/60">Powered by Fivetran MCP</p>
             </div>
           </div>
+          <p className="text-brand-dark/80 dark:text-white/80 mb-6 leading-relaxed">
+            Automatically sync live customer reviews, point-of-sale transactions, and support tickets. Sylon will autonomously trigger fresh data syncs before answering strategy questions.
+          </p>
+          <button
+            type="button"
+            onClick={handleFivetranSync}
+            disabled={loading}
+            className="w-full sm:w-auto text-white bg-gradient-to-r from-[#0073FF] to-[#0055CC] hover:shadow-lg hover:scale-[1.02] px-8 py-3.5 rounded-full transition-all shadow-md font-bold disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center gap-2"
+          >
+            {loading ? 'Authenticating & Syncing...' : 'Connect Fivetran (OAuth)'}
+            {!loading && (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+              </svg>
+            )}
+          </button>
+        </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 mt-2">
-            <button
-              type="submit"
-              className="text-white bg-gradient-to-r from-brand-lightbrown to-brand-brown hover:opacity-90 px-6 py-3 rounded-full transition-opacity shadow-md font-bold disabled:opacity-50"
-              disabled={!file || loading}
-            >
-              {loading ? 'Processing...' : 'Upload & Excavate Personas'}
-            </button>
+        {/* Manual Fallback Card */}
+        <div className="glass-card rounded-3xl p-6 md:p-8 opacity-80 hover:opacity-100 transition-opacity">
+          <h2 className="text-xl font-bold text-brand-dark dark:text-white mb-2">Manual Ingestion (Fallback)</h2>
+          <p className="text-brand-dark/70 dark:text-white/60 text-sm mb-6">Upload static CSV or JSON files for offline analysis.</p>
+          <form onSubmit={handleUpload} className="flex flex-col gap-6">
+            <div className="space-y-2 hidden">
+              <input type="hidden" value={businessId} />
+            </div>
+            <div className="space-y-2">
+              <div className="border-2 border-dashed border-brand-dark/30 dark:border-white/20 rounded-xl p-6 flex flex-col items-center justify-center bg-white/40 dark:bg-black/20 hover:bg-white/60 dark:hover:bg-black/40 transition-colors">
+                <input
+                  type="file"
+                  accept=".csv,.json"
+                  className="block w-full text-sm text-brand-dark dark:text-white/70 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-brand-lightbrown file:text-white hover:file:bg-brand-brown cursor-pointer transition-all"
+                  onChange={(e) => setFile(e.target.files?.[0] || null)}
+                  disabled={loading}
+                />
+              </div>
+            </div>
 
-            <button
-              type="button"
-              onClick={handleSample}
-              className="text-brand-brown bg-white border-2 border-brand-lightbrown hover:bg-brand-lightbrown/10 px-6 py-3 rounded-full transition-colors shadow-sm font-bold disabled:opacity-50"
-              disabled={loading}
-            >
-              {loading ? 'Processing...' : 'Try with Sample Data'}
-            </button>
-          </div>
-        </form>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <button
+                type="submit"
+                className="text-white bg-gradient-to-r from-brand-lightbrown to-brand-brown hover:opacity-90 px-6 py-3 rounded-full transition-opacity shadow-md font-bold disabled:opacity-50 text-sm"
+                disabled={!file || loading}
+              >
+                {loading ? 'Processing...' : 'Upload File'}
+              </button>
+              <button
+                type="button"
+                onClick={handleSample}
+                className="text-brand-brown bg-white border-2 border-brand-lightbrown hover:bg-brand-lightbrown/10 px-6 py-3 rounded-full transition-colors shadow-sm font-bold disabled:opacity-50 text-sm"
+                disabled={loading}
+              >
+                {loading ? 'Processing...' : 'Try Sample Data'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
 
-        {result && result.status === 'processing' && (
+      {result && result.status === 'processing' && (
           <div className="mt-8 p-8 bg-gradient-to-br from-white/60 to-white/30 dark:from-white/10 dark:to-transparent backdrop-blur-md rounded-3xl border border-white/40 dark:border-white/10 shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-700">
             <div className="flex items-start gap-4">
               <div className="flex-shrink-0 w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center border border-green-200 dark:border-green-500/30 shadow-inner">

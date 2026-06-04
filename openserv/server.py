@@ -1,5 +1,6 @@
 import asyncio
 import traceback
+from typing import Optional
 # pyrefly: ignore [missing-import]
 from fastapi import FastAPI, UploadFile, File, Form, BackgroundTasks, Depends
 # pyrefly: ignore [missing-import]
@@ -218,6 +219,10 @@ async def upload_reviews(background_tasks: BackgroundTasks, user: dict = Depends
 class SampleUploadRequest(BaseModel):
     business_id: str
 
+class FivetranSyncRequest(BaseModel):
+    business_id: str
+    connector_id: Optional[str] = None
+
 @app.post("/business/upload-sample")
 async def upload_sample(background_tasks: BackgroundTasks, request: SampleUploadRequest, user: dict = Depends(get_current_user)):
     try:
@@ -243,6 +248,36 @@ async def upload_sample(background_tasks: BackgroundTasks, request: SampleUpload
     except Exception as e:
         print(f"[Server] Sample Upload error: {e}")
         traceback.print_exc()
+        return {"status": "error", "message": str(e)}
+
+@app.post("/business/fivetran-sync")
+async def fivetran_sync(background_tasks: BackgroundTasks, request: FivetranSyncRequest, user: dict = Depends(get_current_user)):
+    try:
+        from agents.mcp_fivetran_client import tool_trigger_fivetran_sync
+        business_id = request.business_id
+        
+        # 1. Trigger the MCP sync (MOCK mode for hackathon)
+        sync_result = tool_trigger_fivetran_sync(business_id)
+        if sync_result.get("status") != "success":
+            raise Exception("Failed to trigger Fivetran sync via MCP.")
+            
+        # 2. Simulate the fresh data arriving by using the sample dataset 
+        # (in reality, Fivetran writes to DB, then we trigger extraction)
+        csv_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "utilities", "mini_sample.csv")
+        import uuid
+        batch_id = f"batch_ft_{uuid.uuid4().hex[:8]}"
+        ingestion_payload = {"csv_path": csv_path, "delete_after": False}
+        
+        # 3. Queue the background extraction
+        background_tasks.add_task(process_and_persist_background, business_id, batch_id, ingestion_payload)
+        
+        return {
+            "status": "processing",
+            "message": "Fivetran sync completed. Live data ingested and AI extraction is running in the background.",
+            "business_id": business_id
+        }
+    except Exception as e:
+        print(f"[Server] Fivetran sync error: {e}")
         return {"status": "error", "message": str(e)}
 
 @app.get("/business/{business_id}/dashboard")
