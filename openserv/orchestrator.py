@@ -2,6 +2,7 @@ import yaml
 import json
 import time
 import enum
+import re
 # pyrefly: ignore [missing-import]
 from dotenv import load_dotenv
 import sys
@@ -12,7 +13,7 @@ sys.path.insert(0, ROOT)
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
-from agents.llm_client import call_cerebras, call_gemini_structured, retry_with_backoff
+from agents.llm_client import call_cerebras, call_cerebras_json, call_gemini_structured, retry_with_backoff
 from agents.persona_factory import get_personas_for_business
 from agents.review_ingest import get_review_count
 from agents.rec import generate_recommendations
@@ -36,6 +37,7 @@ class Route(enum.Enum):
     CHAT = "CHAT"
     INGEST = "INGEST"
     RECOMMEND = "RECOMMEND"
+    COMPARE = "COMPARE"
 
 from pydantic import BaseModel
 class RouteSchema(BaseModel):
@@ -66,6 +68,73 @@ class SessionStore:
 sessions = SessionStore()
 
 
+def normalize_route_value(route) -> str:
+    if isinstance(route, Route):
+        return route.value
+    if isinstance(route, str):
+        stripped = route.strip().strip('"')
+        try:
+            parsed = json.loads(stripped)
+            if isinstance(parsed, str):
+                return parsed.strip().upper()
+            if isinstance(parsed, dict):
+                for key in ("route", "intent", "value"):
+                    if key in parsed:
+                        return str(parsed[key]).strip().upper()
+        except Exception:
+            pass
+        return stripped.upper()
+    return "CHAT"
+
+
+def is_comparison_prompt(user_input: str) -> bool:
+    prompt = user_input.lower()
+    comparison_markers = [
+        "compare",
+        "which is safer",
+        "which option",
+        "which one",
+        "rank these",
+        "help me choose",
+        "choose between",
+        "best option",
+        "safest option",
+    ]
+    if any(marker in prompt for marker in comparison_markers):
+        return True
+    return bool(re.search(r"\bvs\.?\b|\bversus\b", prompt))
+
+
+def extract_comparison_options(user_input: str, max_options: int = 3) -> list[dict[str, str]]:
+    text = user_input.strip()
+    text = re.sub(r"(?i)\bwhich\s+(one|option)\s+is\s+(safest|best|better).*$", "", text)
+    text = re.sub(r"(?i)\bwhich\s+is\s+(safest|best|better).*$", "", text)
+    text = re.sub(r"(?i)^\s*(compare|rank)\s+(these\s+options\s*:?\s*)?", "", text)
+    text = re.sub(r"(?i)^\s*(help\s+me\s+choose\s+between|choose\s+between)\s+", "", text)
+    text = re.sub(r"(?i)^\s*(options\s*:|these\s*:)\s*", "", text)
+
+    pieces = re.split(r"\s+(?:vs\.?|versus)\s+|[;\n]+|,\s*(?:or\s+|and\s+)?|\s+\bor\b\s+", text)
+    options = []
+    seen = set()
+
+    for piece in pieces:
+        cleaned = re.sub(r"^\s*[-*\d.)]+\s*", "", piece).strip(" .?!")
+        cleaned = re.sub(r"(?i)^(or|and)\s+", "", cleaned).strip(" .?!")
+        if len(cleaned) < 4:
+            continue
+        key = cleaned.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        options.append({
+            "label": cleaned[:80],
+            "scenario": cleaned,
+        })
+        if len(options) >= max_options:
+            break
+
+    return options
+
 
 @retry_with_backoff
 def evaluate_route(user_input: str, business_id: str) -> str:
@@ -73,7 +142,10 @@ def evaluate_route(user_input: str, business_id: str) -> str:
     history = session.history[-3:] # Last 3 turns
     history_str = json.dumps(history) if history else "No history."
 
-    prompt = f"Classify this intent as SIMULATE, INGEST, RECOMMEND, or CHAT. Only return one word.\nHistory: {history_str}\nInput: {user_input}"
+    if is_comparison_prompt(user_input) and len(extract_comparison_options(user_input)) >= 2:
+        return "COMPARE"
+
+    prompt = f"Classify this intent as SIMULATE, INGEST, RECOMMEND, COMPARE, or CHAT. Only return one word.\nHistory: {history_str}\nInput: {user_input}"
 # Uses the Router Agent to classify user intent.
     try:
         result_obj = call_gemini_structured(
@@ -397,6 +469,7 @@ def run_simulation(user_input: str, business_id: str):
     try:
         from openserv.persistence import persistence_service
         import uuid
+        persistence_service.upsert_business(business_id=business_id)
         persistence_service.create_collision_log(
             log_id=f"log_{uuid.uuid4().hex[:8]}",
             business_id=business_id,
@@ -411,6 +484,195 @@ def run_simulation(user_input: str, business_id: str):
 
     return strategist_response
  
+
+def _build_business_attributes(session: BusinessSession) -> dict:
+    business_description = session.context.get("description", "Business Entity")
+    name_source = business_description or "Business Entity"
+    return {
+        'name': name_source.split(',')[0].strip(),
+        'categories': business_description,
+        'price_range': 'mid-range',
+        'noise_level': 'average',
+    }
+
+
+def _fallback_comparison_result(user_input: str, options: list[dict[str, str]], option_results: list[dict[str, Any]], personas: list[dict[str, Any]]) -> dict:
+    ranked_options = []
+    for idx, option_result in enumerate(option_results):
+        analysis = option_result.get("analysis", "")
+        analysis_lower = analysis.lower()
+        risk_score = analysis_lower.count("hate") + analysis_lower.count("risk") + analysis_lower.count("disappoint")
+        upside_score = analysis_lower.count("love") + analysis_lower.count("match") + analysis_lower.count("benefit")
+        risk = "high" if risk_score >= 3 else "medium" if risk_score >= 1 else "low"
+        ranked_options.append({
+            "rank": idx + 1,
+            "label": option_result["label"],
+            "risk": risk,
+            "upside": "Strong persona fit" if upside_score >= 2 else "Mixed upside",
+            "rationale": analysis.splitlines()[0][:180] if analysis else "Needs owner judgment; the simulator returned limited detail.",
+        })
+
+    ranked_options.sort(key=lambda item: {"low": 0, "medium": 1, "high": 2}.get(item["risk"], 1))
+    for idx, item in enumerate(ranked_options):
+        item["rank"] = idx + 1
+
+    evidence_quotes = []
+    for persona in personas:
+        evidence_quotes.extend(persona.get("grounding_quotes", [])[:1])
+
+    winner = ranked_options[0]["label"] if ranked_options else options[0]["label"]
+    riskiest = ranked_options[-1]["label"] if ranked_options else options[-1]["label"]
+
+    return {
+        "title": "Decision Comparison",
+        "summary": (
+            f"The safest move is {winner}. The riskiest move is {riskiest}. "
+            "I ranked the options by persona friction, customer pain points, and likely downside."
+        ),
+        "winner": winner,
+        "riskiest_option": riskiest,
+        "persona_churn_risk": personas[0].get("name", "Most sensitive customer archetype") if personas else "Most sensitive customer archetype",
+        "persona_positive_reaction": personas[-1].get("name", "Most receptive customer archetype") if personas else "Most receptive customer archetype",
+        "recommended_next_step": f"Pilot {winner} first, communicate the customer benefit clearly, and watch for complaints tied to the riskiest persona.",
+        "evidence_quotes": evidence_quotes[:3],
+        "options": ranked_options,
+        "source_prompt": user_input,
+    }
+
+
+def synthesize_comparison_response(user_input: str, option_results: list[dict[str, Any]], personas: list[dict[str, Any]], painpoints: dict | None) -> dict:
+    painpoint_summary = ""
+    if painpoints and painpoints.get("complaints"):
+        painpoint_summary = json.dumps(painpoints.get("complaints", [])[:3], indent=2)
+
+    prompt = f"""{agents_config['strategist']['system_prompt']}
+
+The business owner wants to compare multiple operational decisions:
+"{user_input}"
+
+Persona simulation results by option:
+{json.dumps(option_results, indent=2)[:9000]}
+
+Known customer pain points:
+{painpoint_summary or "No pain point data available."}
+
+Return strictly valid JSON with this exact shape:
+{{
+  "title": "Decision Comparison",
+  "summary": "2-3 sentence executive verdict in plain English",
+  "winner": "best option label",
+  "riskiest_option": "riskiest option label",
+  "persona_churn_risk": "persona most likely to react negatively",
+  "persona_positive_reaction": "persona most likely to react positively",
+  "recommended_next_step": "one practical next action",
+  "evidence_quotes": ["up to three exact customer quotes if available"],
+  "options": [
+    {{
+      "rank": 1,
+      "label": "option label",
+      "risk": "low|medium|high",
+      "upside": "short upside",
+      "rationale": "one concise reason grounded in personas or pain points"
+    }}
+  ]
+}}"""
+
+    result = call_cerebras_json(
+        prompt=prompt,
+        system_prompt="You are Sylon's decision comparison engine. Output valid JSON only, grounded in the supplied simulation results.",
+        temperature=0.3,
+        max_tokens=1800,
+    )
+    if not isinstance(result, dict) or not result.get("options"):
+        raise ValueError("Comparison JSON was missing required options")
+    return result
+
+
+def run_scenario_comparison(user_input: str, business_id: str) -> dict:
+    options = extract_comparison_options(user_input)
+    if len(options) < 2:
+        return {
+            "response": "Give me two or three clear options to compare, like: compare raising prices by 15%, closing earlier, or reducing the menu size.",
+            "comparison": None,
+        }
+
+    session = sessions.get_or_create(business_id)
+    business_description = session.context.get("description", "Business Entity")
+    location = session.context.get("location", "")
+    business_attributes = _build_business_attributes(session)
+
+    personas, painpoints, mode = get_personas_for_business(
+        business_id=business_id,
+        business_description=business_description,
+        location=location,
+        persona_count=min(2, int(os.environ.get("SYLON_PERSONA_COUNT", "2"))),
+    )
+
+    option_results = []
+    for option in options[:3]:
+        print(f"[Comparator] Simulating option: {option['label']} ({mode})")
+        persona_outputs = []
+        simulator_rules = f"\n{agents_config['simulator']['system_prompt']}\nOwner's option to evaluate: \"{option['scenario']}\""
+
+        for persona in personas:
+            try:
+                result = tool_run_collision_simulation(
+                    persona_narrative=persona['narrative'] + "\n\nSIMULATOR RULES:" + simulator_rules,
+                    persona_drifts=persona.get('drifts', []),
+                    recent_rating=persona.get('avg_rating', 3.5),
+                    top_words=persona.get('top_words', []),
+                    business_attributes=business_attributes,
+                    painpoints=painpoints,
+                    grounding_quotes=persona.get('grounding_quotes', []),
+                )
+                persona_outputs.append({
+                    "persona": persona.get("name", "Unknown Persona"),
+                    "source": persona.get("source", mode),
+                    "analysis": result,
+                })
+            except Exception as e:
+                print(f"  [Comparator] Collision failed for {persona.get('name', 'persona')}: {e}")
+
+        option_results.append({
+            "label": option["label"],
+            "scenario": option["scenario"],
+            "personas": persona_outputs,
+            "analysis": "\n\n".join(f"### {item['persona']}\n{item['analysis']}" for item in persona_outputs),
+        })
+
+    try:
+        comparison = synthesize_comparison_response(user_input, option_results, personas, painpoints)
+    except Exception as e:
+        print(f"[Comparator] Structured synthesis failed, using fallback: {e}")
+        comparison = _fallback_comparison_result(user_input, options, option_results, personas)
+
+    response = comparison.get("summary") or (
+        f"The safest option is {comparison.get('winner', options[0]['label'])}. "
+        f"The riskiest option is {comparison.get('riskiest_option', options[-1]['label'])}. "
+        f"Next step: {comparison.get('recommended_next_step', 'Pilot the safest option before a full rollout.')}"
+    )
+
+    try:
+        from openserv.persistence import persistence_service
+        import uuid
+        persistence_service.upsert_business(business_id=business_id)
+        persistence_service.create_collision_log(
+            log_id=f"cmp_{uuid.uuid4().hex[:8]}",
+            business_id=business_id,
+            scenario=user_input,
+            source_mode=f"comparison:{mode}",
+            persona_ids=[p.get("name") for p in personas] if personas else ["synthetic"],
+            collision_analysis=json.dumps(option_results),
+            strategist_response=response,
+        )
+    except Exception as e:
+        print(f"[SQLite] Comparison persistence failed (non-fatal): {e}")
+
+    return {
+        "response": response,
+        "comparison": comparison,
+    }
+
 
 
 
@@ -447,6 +709,7 @@ def handle_recommendation(user_input: str, business_id: str) -> str:
     try:
         from openserv.persistence import persistence_service
         import uuid
+        persistence_service.upsert_business(business_id=business_id)
         persistence_service.create_recommendation_log(
             log_id=f"rec_{uuid.uuid4().hex[:8]}",
             business_id=business_id,
@@ -476,6 +739,8 @@ def process_user_scenario(user_input: str, business_id: str = "default", descrip
 
     if route == "INGEST":
         response = handle_ingest(user_input, business_id)
+    elif route == "COMPARE":
+        response = run_scenario_comparison(user_input, business_id)
     elif route == "SIMULATE":
         response = run_simulation(user_input, business_id)
     elif route == "RECOMMEND":
@@ -483,8 +748,9 @@ def process_user_scenario(user_input: str, business_id: str = "default", descrip
 
     else:
         response = direct_chat_strategist(user_input, business_id)
-        
-    session.history.append({"role": "assistant", "content": response})
+
+    response_text = response.get("response", "") if isinstance(response, dict) else response
+    session.history.append({"role": "assistant", "content": response_text})
     return response
 
 

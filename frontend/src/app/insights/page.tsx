@@ -11,6 +11,8 @@ type InsightData = {
   history: { date: string; source: string; review_count: number }[];
 };
 
+const COMPARISON_DEMO_PROMPT = "Compare these options: raise prices by 15%, close 2 hours earlier, or reduce menu size. Which is safest for my customer base?";
+
 export default function Insights() {
   const { getAccessToken } = usePrivy();
   const [data, setData] = useState<InsightData | null>(null);
@@ -41,7 +43,7 @@ export default function Insights() {
         } else {
           setError(json.message || "Failed to load insights.");
         }
-      } catch (err) {
+      } catch {
         setError("Network error connecting to the engine.");
       } finally {
         setLoading(false);
@@ -83,9 +85,14 @@ export default function Insights() {
           <h1 className="page-heading text-2xl sm:text-3xl md:text-4xl font-bold mb-2">Customer Insights</h1>
           <p className="page-subtitle font-medium text-sm md:text-base">Business Health & Excavated Archetypes</p>
         </div>
-        <Link href="/chat" className="text-sm font-bold text-white bg-gradient-to-r from-brand-lightbrown to-brand-brown px-6 py-3 rounded-full hover:opacity-90 shadow-lg hover:scale-105 transition-all whitespace-nowrap self-start sm:self-auto flex-shrink-0">
-          Engage Cognitive Core
-        </Link>
+        <div className="flex flex-col sm:flex-row gap-3 self-start sm:self-auto">
+          <Link href={`/chat?prompt=${encodeURIComponent(COMPARISON_DEMO_PROMPT)}`} className="text-sm font-bold text-white bg-gradient-to-r from-brand-lightbrown to-brand-brown px-6 py-3 rounded-full hover:opacity-90 shadow-lg hover:scale-105 transition-all whitespace-nowrap flex-shrink-0 text-center">
+            Compare Decisions
+          </Link>
+          <Link href="/chat" className="text-sm font-bold text-brand-brown bg-white/80 border border-brand-lightbrown px-6 py-3 rounded-full hover:bg-brand-lightbrown/10 shadow-sm hover:scale-105 transition-all whitespace-nowrap flex-shrink-0 text-center">
+            Engage Cognitive Core
+          </Link>
+        </div>
       </header>
 
       <div className="flex flex-col lg:flex-row gap-8">
@@ -100,11 +107,11 @@ export default function Insights() {
             </div>
             <div className="glass-card p-6 rounded-2xl flex flex-col shadow-sm">
               <div className="text-sm text-brand-dark/70 dark:text-white/60 font-semibold mb-2">Top Complaint Thread</div>
-              <div className="text-lg font-medium text-brand-dark dark:text-white mt-auto line-clamp-3">"{data.top_complaint}"</div>
+              <div className="text-lg font-medium text-brand-dark dark:text-white mt-auto line-clamp-3">&quot;{data.top_complaint}&quot;</div>
             </div>
             <div className="glass-card p-6 rounded-2xl flex flex-col shadow-sm">
               <div className="text-sm text-brand-dark/70 dark:text-white/60 font-semibold mb-2">Top Praise Thread</div>
-              <div className="text-lg font-medium text-brand-dark dark:text-white mt-auto line-clamp-3">"{data.top_praise}"</div>
+              <div className="text-lg font-medium text-brand-dark dark:text-white mt-auto line-clamp-3">&quot;{data.top_praise}&quot;</div>
             </div>
           </div>
 
@@ -122,7 +129,7 @@ export default function Insights() {
                       </div>
                     </div>
                     <div className="text-sm text-brand-dark/70 dark:text-white/60 font-semibold mb-1">Behavioral Drift:</div>
-                    <p className="text-brand-dark dark:text-white/90 italic line-clamp-3">"{arch.drift}"</p>
+                    <p className="text-brand-dark dark:text-white/90 italic line-clamp-3">&quot;{arch.drift}&quot;</p>
                   </div>
                 ))
               ) : (

@@ -1,6 +1,5 @@
 'use client';
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import AuthGuard from "@/components/AuthGuard";
 import { usePrivy } from "@privy-io/react-auth";
@@ -21,6 +20,7 @@ type UploadResult = {
 };
 
 const BUSINESS_ID_STORAGE_KEY = 'sylon_business_id';
+const COMPARISON_DEMO_PROMPT = 'Compare these options: raise prices by 15%, close 2 hours earlier, or reduce menu size. Which is safest for my customer base?';
 
 export default function Upload() {
   return (
@@ -62,7 +62,7 @@ function UploadContent() {
             setIsDataReady(true);
             clearInterval(interval);
           }
-        } catch (err) {
+        } catch {
           // silent error, keep polling
         }
       }, 3000);
@@ -269,7 +269,7 @@ function UploadContent() {
                 <p className="text-brand-dark/80 dark:text-white/70 mb-6 leading-relaxed">
                   Your dataset has been securely loaded. Sylon is currently excavating customer personas and extracting critical pain points in the background. You can engage the Cognitive Core immediately.
                 </p>
-                <div className="flex justify-start">
+                <div className="flex flex-col sm:flex-row justify-start gap-3">
                   <button 
                     onClick={() => {
                       setIsNavigating(true);
@@ -302,6 +302,17 @@ function UploadContent() {
                         </svg>
                       </>
                     )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsNavigating(true);
+                      router.push(`/chat?prompt=${encodeURIComponent(COMPARISON_DEMO_PROMPT)}`);
+                    }}
+                    disabled={isNavigating || !isDataReady}
+                    className="text-brand-brown bg-white/80 border-2 border-brand-lightbrown hover:bg-brand-lightbrown/10 px-8 py-3.5 rounded-full font-bold shadow-sm transition-all disabled:opacity-80 disabled:cursor-wait"
+                  >
+                    Compare Sample Decisions
                   </button>
                 </div>
               </div>
