@@ -37,6 +37,10 @@ class Route(enum.Enum):
     INGEST = "INGEST"
     RECOMMEND = "RECOMMEND"
 
+from pydantic import BaseModel
+class RouteSchema(BaseModel):
+    intent: str
+
 import threading
 from dataclasses import dataclass, field
 from typing import Dict, Any, List
@@ -72,15 +76,23 @@ def evaluate_route(user_input: str, business_id: str) -> str:
     prompt = f"Classify this intent as SIMULATE, INGEST, RECOMMEND, or CHAT. Only return one word.\nHistory: {history_str}\nInput: {user_input}"
 # Uses the Router Agent to classify user intent.
     try:
-        result = call_gemini_structured(
+        result_obj = call_gemini_structured(
             prompt=f"{agents_config['router']['system_prompt']}\n\nRecent History: {history_str}\nUser input: \"{user_input}\"",
-            response_schema=Route,
+            response_schema=RouteSchema,
         )
-        return result
-    except Exception:
+        try:
+            parsed = json.loads(result_obj)
+            return parsed.get("intent", "CHAT")
+        except Exception:
+            # If the fallback returned the raw string 'SIMULATE', 'CHAT', etc.
+            if isinstance(result_obj, str) and result_obj.upper() in ["SIMULATE", "CHAT", "INGEST", "RECOMMEND"]:
+                return result_obj.upper()
+            return "CHAT"
+    except Exception as e:
+        print(f"[Router Exception] {e}")
         user_input_lower = user_input.lower()
-        if any(word in user_input_lower for word in ["if", "scenario", "what if", "simulate"]):
-            print("[Router Failsafe] Rate-limited. Heuristic: SIMULATE")
+        if any(word in user_input_lower for word in ["if", "scenario", "what if", "simulate", "compare", " vs "]):
+            print("[Router Failsafe] Rate-limited or error. Heuristic: SIMULATE")
             return "SIMULATE"
         return "CHAT"
 

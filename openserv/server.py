@@ -268,6 +268,25 @@ async def get_chat_history(business_id: str, user: dict = Depends(get_current_us
         print(f"[Server] History error: {e}")
         return {"status": "error", "message": str(e)}
 
+@app.delete("/business/{business_id}")
+async def delete_business(business_id: str, user: dict = Depends(get_current_user)):
+    try:
+        from openserv.orchestrator import sessions
+        
+        # Remove from local in-memory store
+        with sessions._lock:
+            if business_id in sessions._sessions:
+                del sessions._sessions[business_id]
+                
+        # Remove from database
+        persistence_service.delete_business(business_id)
+        
+        return {"status": "ok", "message": "Business session and all related data deleted successfully."}
+    except Exception as e:
+        print(f"[Server] Delete error: {e}")
+        traceback.print_exc()
+        return {"status": "error", "message": str(e)}
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("openserv.server:app", host="0.0.0.0", port=8000, reload=True)
