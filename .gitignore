@@ -242,3 +242,5 @@ data/*.csv
 utilities/sampled_reviews.csv
 *_logs.txt
 
+
+node_modules/
