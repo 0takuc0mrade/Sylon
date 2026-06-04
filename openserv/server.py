@@ -37,6 +37,7 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     response: str
     business_id: str | None = None
+    comparison: dict | None = None
 
 @app.get("/health")
 async def health():
@@ -67,12 +68,20 @@ async def chat_endpoint(request: ChatRequest, req: Request, user: dict = Depends
         business_id = request.business_id or f"biz_{uuid.uuid4().hex[:8]}"
 
         # Run the sync orchestrator in a thread so we don't block the event loop
-        strategist_response = await asyncio.to_thread(
+        strategist_result = await asyncio.to_thread(
             process_user_scenario, request.text, business_id
         )
+        if isinstance(strategist_result, dict):
+            strategist_response = str(strategist_result.get("response", ""))
+            comparison = strategist_result.get("comparison")
+        else:
+            strategist_response = str(strategist_result)
+            comparison = None
+
         return ChatResponse(
             response=strategist_response,
             business_id=business_id,
+            comparison=comparison,
         )
 
     except Exception as e:

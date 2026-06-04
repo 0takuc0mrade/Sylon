@@ -3,7 +3,6 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import EtherealOrb from "@/components/EtherealOrb";
 import { ConversationProvider } from "@elevenlabs/react";
 import AuthGuard from "@/components/AuthGuard";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { usePrivy } from "@privy-io/react-auth";
 
 import HistorySidebar from "@/components/HistorySidebar";
@@ -18,6 +17,7 @@ type ChatMessage = {
 type ChatResponse = {
   response: string;
   business_id?: string | null;
+  comparison?: ComparisonResult | null;
 };
 
 const BUSINESS_ID_STORAGE_KEY = 'sylon_business_id';
@@ -52,7 +52,12 @@ function ChatContent() {
     }
     return localStorage.getItem(BUSINESS_ID_STORAGE_KEY);
   });
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState(() => {
+    if (typeof window === 'undefined') {
+      return '';
+    }
+    return new URLSearchParams(window.location.search).get('prompt') || '';
+  });
   const [loading, setLoading] = useState(false);
   const initializedFor = useRef<string | null>(null);
 
@@ -95,10 +100,10 @@ function ChatContent() {
           });
           const data = await res.json();
           setMessages([
-            { role: 'assistant', content: data.response }
+            { role: 'assistant', content: data.response, comparison: data.comparison }
           ]);
         }
-      } catch (err) {
+      } catch {
         setMessages([{ role: 'assistant', content: 'I am Sylon, your premium business strategist. How can I assist you?' }]);
       } finally {
         setLoading(false);
@@ -106,7 +111,7 @@ function ChatContent() {
     };
 
     initChat();
-  }, [businessId]);
+  }, [businessId, getAccessToken]);
 
   const handleTranscription = useCallback((role: string, text: string) => {
     setMessages(prev => {
@@ -244,6 +249,7 @@ function ChatContent() {
                 }`}
               >
                   <MarkdownText text={m.content} />
+                  {m.comparison && <ComparisonCard comparison={m.comparison} />}
                 </div>
                 <div className={`text-xs mt-1 font-semibold flex items-center gap-2 ${m.role === 'user' ? 'justify-end text-brand-dark dark:text-white/50' : 'justify-start text-brand-dark dark:text-white/50'}`}>
                   <span>{m.role === 'user' ? 'You' : 'Sylon'}</span>
@@ -281,6 +287,13 @@ function ChatContent() {
             >
               Service Optimization
             </button>
+            <button
+              type="button"
+              onClick={() => setInput("Compare these options: raise prices by 15%, close 2 hours earlier, or reduce menu size. Which is safest for my customer base?")}
+              className="text-xs font-bold bg-brand-lightbrown/10 hover:bg-brand-lightbrown/20 border border-brand-lightbrown/30 text-brand-brown dark:text-brand-lightbrown px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full transition-colors"
+            >
+              Compare Decisions
+            </button>
           </div>
 
           <form onSubmit={sendMessage} className="flex gap-2 sm:gap-3 mt-auto flex-shrink-0">
@@ -305,10 +318,91 @@ function ChatContent() {
   );
 }
 
+function ComparisonCard({ comparison }: { comparison: ComparisonResult }) {
+  const options = comparison.options || [];
+  const riskClass = (risk: string) => {
+    const normalized = risk.toLowerCase();
+    if (normalized === 'high') return 'text-red-700 dark:text-red-300 bg-red-100/80 dark:bg-red-900/30 border-red-200 dark:border-red-500/30';
+    if (normalized === 'low') return 'text-green-700 dark:text-green-300 bg-green-100/80 dark:bg-green-900/30 border-green-200 dark:border-green-500/30';
+    return 'text-amber-700 dark:text-amber-300 bg-amber-100/80 dark:bg-amber-900/30 border-amber-200 dark:border-amber-500/30';
+  };
+
+  return (
+    <div className="mt-4 rounded-2xl border border-brand-lightbrown/30 bg-white/60 dark:bg-black/20 p-4 shadow-inner">
+      <div className="flex items-start justify-between gap-3 mb-4">
+        <div>
+          <div className="text-xs font-bold uppercase tracking-wide text-brand-brown dark:text-brand-lightbrown">Decision Comparison</div>
+          <h3 className="text-lg font-bold text-brand-dark dark:text-white">{comparison.title || 'Best Move To Make'}</h3>
+        </div>
+        {comparison.winner && (
+          <div className="text-right text-xs">
+            <div className="font-bold text-green-700 dark:text-green-300">Safest</div>
+            <div className="font-semibold text-brand-dark dark:text-white max-w-[140px]">{comparison.winner}</div>
+          </div>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 gap-3">
+        {options.map((option) => (
+          <div key={`${option.rank}-${option.label}`} className="rounded-xl border border-brand-dark/10 dark:border-white/10 bg-white/70 dark:bg-white/5 p-3">
+            <div className="flex items-start justify-between gap-3 mb-2">
+              <div className="font-bold text-brand-dark dark:text-white">
+                #{option.rank} {option.label}
+              </div>
+              <span className={`rounded-full border px-2 py-0.5 text-[11px] font-bold uppercase ${riskClass(option.risk)}`}>
+                {option.risk} risk
+              </span>
+            </div>
+            <p className="text-sm text-brand-dark/80 dark:text-white/75 mb-2">{option.rationale}</p>
+            {option.upside && <div className="text-xs font-semibold text-brand-brown dark:text-brand-lightbrown">Upside: {option.upside}</div>}
+          </div>
+        ))}
+      </div>
+
+      {(comparison.persona_churn_risk || comparison.riskiest_option) && (
+        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+          {comparison.riskiest_option && (
+            <div className="rounded-xl bg-red-50/80 dark:bg-red-900/20 p-3">
+              <div className="font-bold text-red-700 dark:text-red-300">Watch Carefully</div>
+              <div className="text-brand-dark dark:text-white">{comparison.riskiest_option}</div>
+            </div>
+          )}
+          {comparison.persona_churn_risk && (
+            <div className="rounded-xl bg-amber-50/80 dark:bg-amber-900/20 p-3">
+              <div className="font-bold text-amber-700 dark:text-amber-300">Churn Risk Persona</div>
+              <div className="text-brand-dark dark:text-white">{comparison.persona_churn_risk}</div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {comparison.evidence_quotes && comparison.evidence_quotes.length > 0 && (
+        <div className="mt-4">
+          <div className="text-xs font-bold uppercase tracking-wide text-brand-dark/60 dark:text-white/50 mb-2">Evidence</div>
+          <div className="space-y-2">
+            {comparison.evidence_quotes.slice(0, 3).map((quote, index) => (
+              <blockquote key={`${quote}-${index}`} className="border-l-2 border-brand-lightbrown pl-3 text-sm italic text-brand-dark/80 dark:text-white/75">
+                &quot;{quote}&quot;
+              </blockquote>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {comparison.recommended_next_step && (
+        <div className="mt-4 rounded-xl bg-brand-lightbrown/10 p-3 text-sm">
+          <span className="font-bold text-brand-brown dark:text-brand-lightbrown">Next step: </span>
+          <span className="text-brand-dark dark:text-white">{comparison.recommended_next_step}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Simple markdown formatter for bold, italics, and lists
 function MarkdownText({ text }: { text: string }) {
   const formatText = (content: string) => {
-    let html = content
+    const html = content
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
       .replace(/^- (.*)$/gm, '<li class="ml-4 list-disc">$1</li>')

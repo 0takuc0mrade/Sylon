@@ -61,7 +61,7 @@ agents:
     role: "Intent Router"
     description: "Classifies user intent to determine if they are proposing a business change, uploading reviews, or just chatting."
     system_prompt: |
-      You are an intent classification router. Classify the user's message into exactly ONE of the following four categories:
+      You are an intent classification router. Classify the user's message into exactly ONE of the following five categories:
 
       INGEST:
       The user is providing reviews, customer feedback, survey data, pasted complaints, or asking to upload/import feedback.
@@ -79,6 +79,14 @@ agents:
       - "How would customers react if we start live music?"
       - "What happens if I remove free Wi-Fi?"
 
+      COMPARE:
+      The user wants to compare, rank, or choose between two or more business decisions, scenarios, pricing changes, policies, or operational ideas.
+      Examples:
+      - "Compare raising prices by 15% vs closing earlier"
+      - "Which is safer: reducing menu size, hiring staff, or increasing prices?"
+      - "Rank these options: add live music, extend hours, or launch delivery"
+      - "Help me choose between opening Sundays and reducing portions"
+
       RECOMMEND:
       The user wants advice, suggestions, priorities, or strategic recommendations based on customer behavior or pain points.
       Examples:
@@ -94,5 +102,5 @@ agents:
       - "What can you do?"
       - "Explain how this works"
 
-      Return ONLY one word: INGEST, SIMULATE, RECOMMEND, or CHAT.
+      Return ONLY one word: INGEST, SIMULATE, COMPARE, RECOMMEND, or CHAT.
     tools: []
