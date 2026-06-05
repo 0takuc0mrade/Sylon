@@ -9,10 +9,25 @@ from dotenv import load_dotenv
 
 load_dotenv(os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env"))
 
-# clients
-gemini_client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
+# clients — lazy initialization so the server can boot without API keys
+_gemini_client = None
+_cerebras_client = None
 
-cerebras_client = Cerebras(api_key=os.environ.get("CEREBRAS_API_KEY"))
+def get_gemini_client():
+    global _gemini_client
+    if _gemini_client is None:
+        api_key = os.environ.get("GEMINI_API_KEY")
+        if api_key:
+            _gemini_client = genai.Client(api_key=api_key)
+    return _gemini_client
+
+def get_cerebras_client():
+    global _cerebras_client
+    if _cerebras_client is None:
+        api_key = os.environ.get("CEREBRAS_API_KEY")
+        if api_key:
+            _cerebras_client = Cerebras(api_key=api_key)
+    return _cerebras_client
 
 
 CEREBRAS_MODEL = os.environ.get("CEREBRAS_MODEL", "gpt-oss-120b")
@@ -84,7 +99,7 @@ def call_cerebras(
     try:
         if not os.environ.get("CEREBRAS_API_KEY"):
             raise Exception("Missing Cerebras Key")
-        response = cerebras_client.chat.completions.create(
+        response = get_cerebras_client().chat.completions.create(
             messages=messages,
             model=CEREBRAS_MODEL,
             temperature=temperature,
@@ -113,7 +128,7 @@ def call_cerebras_json(
     try:
         if not os.environ.get("CEREBRAS_API_KEY"):
             raise Exception("Missing Cerebras Key")
-        response = cerebras_client.chat.completions.create(
+        response = get_cerebras_client().chat.completions.create(
             messages=messages,
             model=CEREBRAS_MODEL,
             temperature=temperature,
@@ -153,7 +168,7 @@ def call_gemini_structured(prompt: str, response_schema) -> str:
         if not os.environ.get("GEMINI_API_KEY"):
             raise Exception("Missing Gemini Key")
         config = {"response_mime_type": "application/json", "response_schema": response_schema}
-        response = gemini_client.models.generate_content(
+        response = get_gemini_client().models.generate_content(
             model=GEMINI_MODEL,
             contents=prompt,
             config=config
@@ -179,7 +194,7 @@ def call_gemini(prompt: str, json_mode: bool = False) -> str:
     try:
         if not os.environ.get("GEMINI_API_KEY"):
             raise Exception("Missing Gemini Key")
-        response = gemini_client.models.generate_content(
+        response = get_gemini_client().models.generate_content(
             model=GEMINI_MODEL,
             contents=prompt,
             config=config
