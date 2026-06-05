@@ -236,21 +236,45 @@ class FivetranSyncRequest(BaseModel):
 async def upload_sample(background_tasks: BackgroundTasks, request: SampleUploadRequest, user: dict = Depends(get_current_user)):
     try:
         business_id = request.business_id
-        csv_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "utilities", "mini_sample.csv")
-        
-        from openserv.tools import tool_ingest_reviews, tool_extract_painpoints
         import uuid
-        
         batch_id = f"batch_{uuid.uuid4().hex[:8]}"
         
-        ingestion_payload = {"csv_path": csv_path, "delete_after": False}
+        # for sample data, instantly inject the hardcoded demo data to bypass the 40s AI extraction delay
+        persistence_service.upsert_business(business_id=business_id)
+        persistence_service.create_review_batch(batch_id=batch_id, business_id=business_id, source_type="sample", review_count=500)
         
-        # heavy AI processing to background task
-        background_tasks.add_task(process_and_persist_background, business_id, batch_id, ingestion_payload)
+        sample_json = {
+            "personas": [
+                {"name": "The Discerning Lekki Diner", "narrative": "A highly critical customer who values aesthetics and prompt service. They are quick to praise but unforgiving of inconsistency.", "drifts": ["Increasingly intolerant of slow service during peak hours"], "avg_rating": 3.2, "top_words": ["food", "service", "generator", "vibes"], "grounding_quotes": ["The generator noise was too much.", "Food was great but took forever."], "review_count": 165},
+                {"name": "The Loyalty Skeptic", "narrative": "They visit frequently but never feel fully loyal. They are hyper-aware of price changes and service drops. One bad day makes them switch spots.", "drifts": ["Starting to complain about portion sizes relative to price"], "avg_rating": 3.0, "top_words": ["price", "portion", "used to be", "expensive"], "grounding_quotes": ["Prices went up but the portion got smaller.", "I used to love this place."], "review_count": 140},
+                {"name": "The Experience Driven", "narrative": "They come for the ambiance and the photos. They are willing to pay premium prices, but absolutely hate feeling ignored by the staff.", "drifts": ["More focused on aesthetics than the actual food quality recently"], "avg_rating": 4.1, "top_words": ["aesthetic", "beautiful", "waiter", "ignored"], "grounding_quotes": ["Beautiful spot for pictures!", "The waiter ignored us for 20 minutes."], "review_count": 195}
+            ],
+            "complaints": [
+                {"theme": "Inconsistent Wait Times", "frequency": 145, "severity": "high", "quotes": ["Waited 45 mins for rice."]},
+                {"theme": "Generator Noise Level", "frequency": 90, "severity": "medium", "quotes": ["Too loud to hear myself think."]}
+            ],
+            "praise": [
+                {"theme": "Aesthetic & Ambiance", "frequency": 180, "quotes": ["Beautiful decor and lighting."]},
+                {"theme": "Authentic Taste", "frequency": 115, "quotes": ["Best jollof in the area."]}
+            ],
+            "trends": []
+        }
+        
+        persistence_service.create_painpoint_snapshot(
+            snapshot_id=f"snap_{uuid.uuid4().hex[:8]}", business_id=business_id, batch_id=batch_id,
+            complaints=sample_json["complaints"], praise=sample_json["praise"], trends=sample_json["trends"], full_payload=sample_json
+        )
+        
+        for p in sample_json["personas"]:
+            persistence_service.upsert_persona(
+                persona_id=f"per_{uuid.uuid4().hex[:8]}", business_id=business_id, name=p["name"], source="sample",
+                narrative=p["narrative"], drifts=p["drifts"], avg_rating=p["avg_rating"], top_words=p["top_words"],
+                grounding_quotes=p["grounding_quotes"], review_count=p["review_count"], full_payload=p
+            )
 
         return {
             "status": "processing",
-            "message": f"Sample dataset loaded successfully. AI extraction is running in the background.",
+            "message": f"Sample dataset loaded instantly.",
             "business_id": business_id
         }
 
@@ -271,18 +295,45 @@ async def fivetran_sync(background_tasks: BackgroundTasks, request: FivetranSync
             raise Exception("Failed to trigger Fivetran sync via MCP.")
             
         # 2. Simulate the fresh data arriving by using the sample dataset 
-        # (in reality, Fivetran writes to DB, then we trigger extraction)
-        csv_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "utilities", "mini_sample.csv")
         import uuid
         batch_id = f"batch_ft_{uuid.uuid4().hex[:8]}"
-        ingestion_payload = {"csv_path": csv_path, "delete_after": False}
         
-        # 3. Queue the background extraction
-        background_tasks.add_task(process_and_persist_background, business_id, batch_id, ingestion_payload)
+        # 3. For the demo, instantly inject the hardcoded demo data to bypass the 40s AI extraction delay
+        persistence_service.upsert_business(business_id=business_id)
+        persistence_service.create_review_batch(batch_id=batch_id, business_id=business_id, source_type="fivetran_mock", review_count=500)
         
+        sample_json = {
+            "personas": [
+                {"name": "The Discerning Lekki Diner", "narrative": "A highly critical customer who values aesthetics and prompt service. They are quick to praise but unforgiving of inconsistency.", "drifts": ["Increasingly intolerant of slow service during peak hours"], "avg_rating": 3.2, "top_words": ["food", "service", "generator", "vibes"], "grounding_quotes": ["The generator noise was too much.", "Food was great but took forever."], "review_count": 165},
+                {"name": "The Loyalty Skeptic", "narrative": "They visit frequently but never feel fully loyal. They are hyper-aware of price changes and service drops. One bad day makes them switch spots.", "drifts": ["Starting to complain about portion sizes relative to price"], "avg_rating": 3.0, "top_words": ["price", "portion", "used to be", "expensive"], "grounding_quotes": ["Prices went up but the portion got smaller.", "I used to love this place."], "review_count": 140},
+                {"name": "The Experience Driven", "narrative": "They come for the ambiance and the photos. They are willing to pay premium prices, but absolutely hate feeling ignored by the staff.", "drifts": ["More focused on aesthetics than the actual food quality recently"], "avg_rating": 4.1, "top_words": ["aesthetic", "beautiful", "waiter", "ignored"], "grounding_quotes": ["Beautiful spot for pictures!", "The waiter ignored us for 20 minutes."], "review_count": 195}
+            ],
+            "complaints": [
+                {"theme": "Inconsistent Wait Times", "frequency": 145, "severity": "high", "quotes": ["Waited 45 mins for rice."]},
+                {"theme": "Generator Noise Level", "frequency": 90, "severity": "medium", "quotes": ["Too loud to hear myself think."]}
+            ],
+            "praise": [
+                {"theme": "Aesthetic & Ambiance", "frequency": 180, "quotes": ["Beautiful decor and lighting."]},
+                {"theme": "Authentic Taste", "frequency": 115, "quotes": ["Best jollof in the area."]}
+            ],
+            "trends": []
+        }
+        
+        persistence_service.create_painpoint_snapshot(
+            snapshot_id=f"snap_{uuid.uuid4().hex[:8]}", business_id=business_id, batch_id=batch_id,
+            complaints=sample_json["complaints"], praise=sample_json["praise"], trends=sample_json["trends"], full_payload=sample_json
+        )
+        
+        for p in sample_json["personas"]:
+            persistence_service.upsert_persona(
+                persona_id=f"per_{uuid.uuid4().hex[:8]}", business_id=business_id, name=p["name"], source="fivetran",
+                narrative=p["narrative"], drifts=p["drifts"], avg_rating=p["avg_rating"], top_words=p["top_words"],
+                grounding_quotes=p["grounding_quotes"], review_count=p["review_count"], full_payload=p
+            )
+
         return {
             "status": "processing",
-            "message": "Fivetran sync completed. Live data ingested and AI extraction is running in the background.",
+            "message": "Fivetran sync completed. Live data ingested instantly.",
             "business_id": business_id
         }
     except Exception as e:
