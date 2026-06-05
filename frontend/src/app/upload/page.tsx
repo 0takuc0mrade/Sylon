@@ -91,6 +91,9 @@ function UploadContent() {
         },
         body: formData
       });
+      if (!res.ok) {
+        throw new Error(`Upload failed with status ${res.status}`);
+      }
       const data: UploadResult = await res.json();
       setResult(data);
       if (data.business_id) {
@@ -126,6 +129,9 @@ function UploadContent() {
         },
         body: JSON.stringify({ business_id: newBizId })
       });
+      if (!res.ok) {
+        throw new Error(`Upload failed with status ${res.status}`);
+      }
       const data: UploadResult = await res.json();
       setResult(data);
       if (data.business_id) {
@@ -160,6 +166,9 @@ function UploadContent() {
         },
         body: JSON.stringify({ business_id: newBizId, connector_id: 'mock_yelp' })
       });
+      if (!res.ok) {
+        throw new Error(`Upload failed with status ${res.status}`);
+      }
       const data: UploadResult = await res.json();
       setResult(data);
       if (data.business_id) {
