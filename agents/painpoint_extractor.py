@@ -225,13 +225,13 @@ Do NOT include any explanation outside the JSON."""
         normalized = []
         for p in personas:
             normalized.append({
-                "name": p.get("name", "Unknown Archetype"),
-                "narrative": p.get("narrative", ""),
-                "drifts": p.get("drifts", []),
-                "avg_rating": float(p.get("avg_rating", 3.5)),
-                "top_words": p.get("top_words", []),
-                "grounding_quotes": p.get("grounding_quotes", []),
-                "review_count": p.get("review_count", 0),
+                "name": p.get("name") or "Unknown Archetype",
+                "narrative": p.get("narrative") or "",
+                "drifts": p.get("drifts") or [],
+                "avg_rating": float(p.get("avg_rating") or 3.5),
+                "top_words": p.get("top_words") or [],
+                "grounding_quotes": p.get("grounding_quotes") or [],
+                "review_count": p.get("review_count") or 0,
                 "source": "grounded",
             })
 

@@ -518,7 +518,8 @@ def _fallback_comparison_result(user_input: str, options: list[dict[str, str]], 
 
     evidence_quotes = []
     for persona in personas:
-        evidence_quotes.extend(persona.get("grounding_quotes", [])[:1])
+        quotes = persona.get("grounding_quotes") or []
+        evidence_quotes.extend(quotes[:1])
 
     winner = ranked_options[0]["label"] if ranked_options else options[0]["label"]
     riskiest = ranked_options[-1]["label"] if ranked_options else options[-1]["label"]
