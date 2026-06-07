@@ -103,7 +103,7 @@ export default function HistorySidebar({
 
       {/* Sidebar Panel */}
       <div
-        className={`fixed top-[73px] bottom-0 left-0 z-40 w-72 glass-card border-r border-brand-dark/10 dark:border-white/10 transform transition-transform duration-300 ease-in-out flex flex-col ${
+        className={`fixed top-[73px] bottom-0 left-0 z-40 w-72 bg-[#f4ebe1] dark:bg-[#0a0a0a] shadow-2xl border-r border-brand-dark/10 dark:border-white/10 transform transition-transform duration-300 ease-in-out flex flex-col ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >

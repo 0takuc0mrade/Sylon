@@ -177,8 +177,8 @@ function UploadContent() {
   return (
     <div className="w-full max-w-3xl mx-auto p-4 md:p-8 flex flex-col flex-grow animate-in fade-in duration-500">
       <header className="mb-8 pt-8">
-        <h1 className="page-heading text-3xl md:text-4xl font-bold mb-2">Data Integrations</h1>
-        <p className="page-subtitle font-medium">Connect live data pipelines or manually ingest files to power Sylon's engine.</p>
+        <h1 className="page-heading text-3xl md:text-4xl font-bold mb-2">Ingest Data</h1>
+        <p className="page-subtitle font-medium">Upload your customer reviews (CSV/JSON) to ground Sylon's advice.</p>
       </header>
 
       <div className="flex flex-col gap-8">
@@ -188,23 +188,23 @@ function UploadContent() {
           <div className="flex items-center gap-4 mb-4">
             <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm">
               {/* Fivetran Logo Mock */}
-              <svg className="w-8 h-8 text-[#0073FF]" viewBox="0 0 24 24" fill="currentColor">
+              <svg className="w-8 h-8 text-brand-brown" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
               </svg>
             </div>
             <div>
-              <h2 className="text-xl font-bold text-brand-dark dark:text-white">Live Data Pipeline</h2>
-              <p className="text-sm font-medium text-brand-dark/70 dark:text-white/60">Powered by Fivetran MCP</p>
+              <h2 className="text-xl font-bold text-brand-dark dark:text-white">Live Sync</h2>
+              <p className="text-sm font-medium text-brand-dark/70 dark:text-white/60">Powered by Fivetran</p>
             </div>
           </div>
           <p className="text-brand-dark/80 dark:text-white/80 mb-6 leading-relaxed">
-            Automatically sync live customer reviews, point-of-sale transactions, and support tickets. Sylon will autonomously trigger fresh data syncs before answering strategy questions.
+            Connect your platforms once, and we'll keep everything updated automatically. Sylon will pull in your latest reviews and sales data right before it gives you advice, so you're never acting on stale information.
           </p>
           <button
             type="button"
             onClick={handleFivetranSync}
             disabled={loading}
-            className="w-full sm:w-auto text-white bg-gradient-to-r from-[#0073FF] to-[#0055CC] hover:shadow-lg hover:scale-[1.02] px-8 py-3.5 rounded-full transition-all shadow-md font-bold disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center gap-2"
+            className="w-full sm:w-auto text-white bg-gradient-to-r from-brand-lightbrown to-brand-brown hover:shadow-lg hover:scale-[1.02] px-8 py-3.5 rounded-full transition-all shadow-md font-bold disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center gap-2"
           >
             {loading ? 'Authenticating & Syncing...' : 'Connect Fivetran (OAuth)'}
             {!loading && (
@@ -217,8 +217,8 @@ function UploadContent() {
 
         {/* Manual Fallback Card */}
         <div className="glass-card rounded-3xl p-6 md:p-8 opacity-80 hover:opacity-100 transition-opacity">
-          <h2 className="text-xl font-bold text-brand-dark dark:text-white mb-2">Manual Ingestion (Fallback)</h2>
-          <p className="text-brand-dark/70 dark:text-white/60 text-sm mb-6">Upload static CSV or JSON files for offline analysis.</p>
+          <h2 className="text-xl font-bold text-brand-dark dark:text-white mb-2">File Upload</h2>
+          <p className="text-brand-dark/70 dark:text-white/60 text-sm mb-6">Got a spreadsheet? Drop it here and we'll analyze it instantly.</p>
           <form onSubmit={handleUpload} className="flex flex-col gap-6">
             <div className="space-y-2 hidden">
               <input type="hidden" value={businessId} />
@@ -330,6 +330,5 @@ function UploadContent() {
           </div>
         )}
       </div>
-    </div>
   );
 }

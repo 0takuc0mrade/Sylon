@@ -12,12 +12,15 @@ type ChatMessage = {
   content: string;
   isComparison?: boolean;
   timestamp?: string;
+  comparison?: any | null;
+  board_debate?: any | null;
 };
 
 type ChatResponse = {
   response: string;
   business_id?: string | null;
-  comparison?: ComparisonResult | null;
+  comparison?: any | null;
+  board_debate?: any | null;
 };
 
 const BUSINESS_ID_STORAGE_KEY = 'sylon_business_id';
@@ -220,16 +223,16 @@ function ChatContent() {
 
       {/* Right Panel: Text Chat */}
       <div className="w-full md:w-[45%] flex flex-col flex-1 md:flex-initial min-h-[600px]">
-        <header className="mb-4 md:mb-6 pt-2 md:pt-0 flex-shrink-0 flex justify-between items-start">
+        <header className="mb-4 md:mb-6 pt-14 md:pt-0 flex-shrink-0 flex justify-between items-start relative z-10">
           <div>
             <h1 className="page-heading text-2xl sm:text-3xl md:text-4xl font-bold mb-1 md:mb-2">Sylon Cognitive Core</h1>
             <p className="page-subtitle font-medium text-sm md:text-base">Simulate changes, ask for recommendations, or discuss strategy.</p>
           </div>
         </header>
 
-        {/* Ethereal Orb — Mobile */}
-        <div className="md:hidden flex w-full justify-center mt-2 mb-2">
-          <div className="transform scale-75 origin-top">
+                {/* Ethereal Orb — Mobile */}
+        <div className={`md:hidden flex w-full justify-center mt-2 mb-2 transition-all duration-500 ${messages.length > 0 ? 'h-0 overflow-hidden opacity-0 scale-0' : 'h-auto'}`}>
+          <div className="transform scale-[0.6] origin-top">
             <ConversationProvider>
               <EtherealOrb onTranscription={handleTranscription} isMobile={true} />
             </ConversationProvider>
@@ -250,6 +253,7 @@ function ChatContent() {
               >
                   <MarkdownText text={m.content} />
                   {m.comparison && <ComparisonCard comparison={m.comparison} />}
+                  {m.board_debate && <BoardDebateCard debate={m.board_debate} />}
                 </div>
                 <div className={`text-xs mt-1 font-semibold flex items-center gap-2 ${m.role === 'user' ? 'justify-end text-brand-dark dark:text-white/50' : 'justify-start text-brand-dark dark:text-white/50'}`}>
                   <span>{m.role === 'user' ? 'You' : 'Sylon'}</span>
@@ -328,7 +332,7 @@ function ComparisonCard({ comparison }: { comparison: ComparisonResult }) {
   };
 
   return (
-    <div className="mt-4 rounded-2xl border border-brand-lightbrown/30 bg-white/60 dark:bg-black/20 p-4 shadow-inner">
+    <div className="mt-4 rounded-2xl border border-brand-lightbrown/30 bg-white/60 dark:bg-black/20 p-3 md:p-4 shadow-inner w-full overflow-hidden break-words">
       <div className="flex items-start justify-between gap-3 mb-4">
         <div>
           <div className="text-xs font-bold uppercase tracking-wide text-brand-brown dark:text-brand-lightbrown">Decision Comparison</div>
@@ -410,4 +414,34 @@ function MarkdownText({ text }: { text: string }) {
     return html;
   };
   return <div className="space-y-1.5 leading-relaxed break-words whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: formatText(text) }} />;
+}
+
+
+function BoardDebateCard({ debate }: { debate: any }) {
+  if (!debate || !debate.cfo) return null;
+  
+  return (
+    <div className="mt-4 p-4 rounded-xl border border-brand-lightbrown/30 bg-black/20 flex flex-col gap-3">
+      <div className="text-xs font-bold uppercase tracking-wider text-brand-lightbrown opacity-80 mb-1 border-b border-brand-lightbrown/20 pb-2">
+        Internal Board of Directors Debate
+      </div>
+      
+      <div className="flex flex-col gap-3">
+        <div className="flex gap-3 items-start">
+          <div className="w-8 h-8 rounded-full bg-blue-900/40 flex items-center justify-center flex-shrink-0 text-blue-300 font-bold text-xs border border-blue-500/30">CFO</div>
+          <div className="text-sm opacity-90 leading-relaxed"><span className="font-semibold text-blue-300">Financial Impact:</span> {debate.cfo}</div>
+        </div>
+        
+        <div className="flex gap-3 items-start">
+          <div className="w-8 h-8 rounded-full bg-red-900/40 flex items-center justify-center flex-shrink-0 text-red-300 font-bold text-xs border border-red-500/30">CX</div>
+          <div className="text-sm opacity-90 leading-relaxed"><span className="font-semibold text-red-300">Customer Churn Risk:</span> {debate.cx}</div>
+        </div>
+        
+        <div className="flex gap-3 items-start">
+          <div className="w-8 h-8 rounded-full bg-green-900/40 flex items-center justify-center flex-shrink-0 text-green-300 font-bold text-xs border border-green-500/30">OPS</div>
+          <div className="text-sm opacity-90 leading-relaxed"><span className="font-semibold text-green-300">Operational Friction:</span> {debate.ops}</div>
+        </div>
+      </div>
+    </div>
+  );
 }

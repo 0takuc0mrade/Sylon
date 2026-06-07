@@ -1,54 +1,85 @@
-# Sylon
+<div align="center">
+  <img src="https://raw.githubusercontent.com/ikhaisoshuare/Cascade/main/frontend/public/logo.png" width="120" alt="Sylon Logo" style="border-radius: 20px;"/>
+  <h1>Sylon Cognitive Core</h1>
+  <p><b>Enterprise Behavioral Intelligence & Multi-Agent Decision Engine</b></p>
+  <p><i>Powered by Google Vertex AI & Gemini 1.5 Flash</i></p>
+</div>
 
-Sylon is an agentic behavioral intelligence platform that transforms unstructured customer feedback into psychologically grounded personas, allowing businesses to simulate operational changes before making them.
+---
 
 **Live Web App:** [https://sylon.vercel.app/](https://sylon.vercel.app/)
 
-## The Problem
-Traditional business intelligence relies on aggregate star ratings. However, static scores obscure the reality of human behavior, they ignore temporal drift and contextual friction. A business owner knows a review is negative, but they don't know *who* that customer is, *why* their expectations shifted, or how to win them back without alienating others.
+## 🏆 The Problem: The Death of the Dashboard
+Modern business intelligence is fundamentally broken. Traditional platforms ingest millions of data points only to spit out static star ratings and sterile dashboards. They tell a business owner *what* happened, but they fail to explain *who* is angry, *why* their expectations shifted, and *how* a specific operational pivot will impact churn. 
 
-## The Solution
-Sylon moves beyond collaborative filtering by treating customers as evolving psychological entities. 
+Dashboards do not solve problems. Agents do.
 
-Instead of generating a static dashboard, Sylon reads raw, unstructured data and excavates distinct customer archetypes. It acts as a conversational strategist, predicting how specific personas will react to future business decisions and recommending operational pivots grounded entirely in historical frustration data.
+## 🚀 The Solution: Sylon
+Sylon moves beyond collaborative filtering by treating customers as **evolving psychological entities**. 
 
-Sylon is completely domain-agnostic. While the primary demo focuses on the hospitality sector, the ingestion engine instantly adapts to extract relevant behavioral metrics for retail, real estate, SaaS, or education simply by uploading a different dataset.
+Built natively on **Google Cloud Vertex AI**, Sylon ingests raw, unstructured data (via Fivetran or CSV) and mathematically excavates distinct customer archetypes. It does not just summarize data; it acts as an autonomous conversational strategist. When a business owner proposes a change (e.g., *"If I raise prices by 15%, what happens?"*), Sylon triggers a highly concurrent, Multi-Agent simulation to debate the outcome in real-time.
 
-## Agentic Workflow Architecture
+---
 
-Sylon is built on a highly modular, multi agent orchestration architecture to handle complex reasoning without hallucinations:
+## 🧠 Architecture: The "Board of Directors" Pipeline
 
-1. **The Intent Router:** Powered by Gemini 2.0 Flash, this agent analyzes conversation history to classify user intent (SIMULATE, RECOMMEND, INGEST, or CHAT) and routes the prompt to the appropriate subsystem.
-2. **The Extraction Swarm:** During data ingestion, multiple worker agents analyze thousands of reviews in parallel, synthesizing localized pain points and personas before committing them to the database.
-3. **The Strategist Agent:** When executing a recommendation task, this agent automatically injects the active SQLite business session, the extracted personas, and the pain points into a zero-shot reasoning prompt. This grounds the LLM strictly in historical data.
-4. **The Voice Integration:** ElevenLabs Conversational AI is hooked into the Strategist Agent via a live client tool, allowing real time vocal reasoning.
+To achieve mathematical rigor without LLM hallucination, Sylon relies on a synchronized 4-Agent Pipeline executed via concurrent threading.
 
-## Documentation
+1. **The CFO Agent (Margin Safety):** Evaluates the strict financial impact of the proposed scenario, optimizing for revenue retention.
+2. **The CX Agent (Churn Risk):** Analyzes the exact psychological personas excavated from the dataset to predict customer outrage or delight.
+3. **The Ops Agent (Friction):** Evaluates supply chain, staff training, and ground-level execution friction.
+4. **The Synthesizer (Sylon Core):** Synthesizes the internal debate and outputs a cohesive, actionable directive to the business owner.
 
-For a deep dive into the underlying architecture, mathematical evaluations, and scaling roadmap, refer to the official solution papers:
+This entire debate is streamed live to the Next.js frontend, exposing the raw "thinking" of the AI to the user before delivering the final recommendation.
 
-*   [Task A Solution Paper: User Behaviour Modeling](task_a_solution_paper.md)
-*   [Task B Solution Paper: Recommendation & Reasoning](task_b_solution_paper.md)
+### Advanced Data Layer
+*   **Temporal Sentiment Drift:** Sylon injects simulated BigQuery ML metrics into the RAG payload, allowing agents to reason over the *velocity* of sentiment (e.g., predicting cohort loss because negative sentiment regarding "wait times" accelerated by 14% over 30 days).
+*   **Dynamic Intent Routing:** A Gemini-powered router analyzes conversation history to instantly classify user intent (SIMULATE, RECOMMEND, INGEST, or CHAT) and routes the prompt to the appropriate subsystem.
+*   **Omnichannel Voice:** Integrated directly with ElevenLabs Conversational AI, allowing real-time vocal reasoning for hands-free operational strategy.
 
-## Local Development & Contributing
+---
 
-If you wish to run the Sylon Engine locally or contribute to the repository, the application is fully containerized.
+## 🛠 Tech Stack
 
-1. Clone the repository and create a `.env` file in the root directory:
+**AI & Machine Learning:**
+*   **Google Vertex AI:** Native integration for `gemini-1.5-flash`, powering the Multi-Agent swarm with structured JSON outputs.
+*   **Cerebras (Proxy Engine):** Integrated fallback routing for unlimited, high-speed Llama-3 inference during high-volume load testing.
+
+**Frontend & Authentication:**
+*   **Next.js 14:** Highly responsive, SSR-optimized React framework.
+*   **Privy:** Seamless, secure Web3/Social authentication pipeline.
+*   **Tailwind CSS:** Custom `brand-brown` aesthetic prioritizing a warm, native, and premium UX.
+
+**Backend & Data:**
+*   **FastAPI (Python):** High-throughput, async Python backend driving the orchestrator.
+*   **Fivetran:** Automated, real-time ingestion pipelines mapping enterprise databases directly into Sylon's engine.
+*   **SQLite:** Highly optimized, local vector-ready storage for lightning-fast RAG retrieval.
+
+---
+
+## 💻 Local Development
+
+Sylon is fully containerized for instant deployment.
+
+1. **Clone & Configure:**
    ```bash
-   CEREBRAS_API_KEY=your_key
-   GEMINI_API_KEY=your_key
-   ELEVENLABS_API_KEY=your_key
-   PRIVY_APP_SECRET=your_key
+   git clone https://github.com/your-org/sylon.git
+   cd sylon
    ```
-   *Note: Frontend `.env.local` requires `NEXT_PUBLIC_PRIVY_APP_ID`.*
+   Create a `.env` file in the root directory:
+   ```env
+   GEMINI_API_KEY=your_google_cloud_api_key
+   CEREBRAS_API_KEY=your_cerebras_key
+   ELEVENLABS_API_KEY=your_elevenlabs_key
+   SYLON_DB_PATH=data/sylon.db
+   ```
 
-2. Spin up the cluster using Docker Compose:
+2. **Spin up the Cluster:**
    ```bash
    docker compose up --build
    ```
 
-3. Open your browser to: **http://localhost:3000**
+3. **Access the Engine:** Open your browser to `http://localhost:3000`
 
 ---
-*Built with Python, FastAPI, Next.js, Cerebras, Google GenAI, and SQLite.*
+*Built to redefine Enterprise Intelligence at the Google Cloud Hackathon.*
