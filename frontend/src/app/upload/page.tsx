@@ -193,7 +193,7 @@ function UploadContent() {
               </svg>
             </div>
             <div>
-              <h2 className="text-xl font-bold text-brand-dark dark:text-white">Live Sync</h2>
+              <h2 className="text-xl font-bold text-brand-dark dark:text-white">Live Data Pipeline</h2>
               <p className="text-sm font-medium text-brand-dark/70 dark:text-white/60">Powered by Fivetran</p>
             </div>
           </div>
@@ -206,7 +206,7 @@ function UploadContent() {
             disabled={loading}
             className="w-full sm:w-auto text-white bg-gradient-to-r from-brand-lightbrown to-brand-brown hover:shadow-lg hover:scale-[1.02] px-8 py-3.5 rounded-full transition-all shadow-md font-bold disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center gap-2"
           >
-            {loading ? 'Authenticating & Syncing...' : 'Connect Fivetran (OAuth)'}
+            {loading ? 'Syncing via Fivetran API...' : 'Sync via Fivetran'}
             {!loading && (
               <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />

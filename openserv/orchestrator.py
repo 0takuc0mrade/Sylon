@@ -27,6 +27,16 @@ from openserv.tools import (
 
 load_dotenv()
 
+import logging
+from datetime import datetime
+
+logger = logging.getLogger('sylon')
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter('[%(asctime)s] [%(name)s] %(message)s', datefmt='%Y-%m-%d %H:%M:%S'))
+    logger.addHandler(handler)
+
 # Load agents config
 with open(os.path.join(os.path.dirname(__file__), 'agents.yaml'), 'r') as f:
     agents_config = yaml.safe_load(f)['agents']
@@ -188,7 +198,7 @@ def simulate_strategist(user_input: str, collision_result: str, painpoints: dict
         
         painpoint_context = f"\n\nKNOWN CUSTOMER PAINPOINTS: {', '.join(top_complaints)}\n{temporal_drift}\nYour advice MUST address how the proposed change relates to these real issues."
 
-    print("[Multi-Agent] Initiating Board of Directors Simulation...")
+    logger.info("[MULTI-AGENT] Spawning CFO, CX, OPS agents (concurrent threads)")
     
     def call_cfo():
         prompt = f"""You are the CFO. Evaluate the financial impact and margin safety of this scenario: {user_input}
@@ -211,6 +221,7 @@ Context: {collision_result}
 Limit your answer to 2 concise sentences."""
         return call_llm(prompt, system_prompt="You are a pragmatic, execution-focused COO.")
 
+    t0 = time.time()
     with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
         future_cfo = executor.submit(call_cfo)
         future_cx = executor.submit(call_cx)
@@ -219,6 +230,8 @@ Limit your answer to 2 concise sentences."""
         cfo_response = future_cfo.result()
         cx_response = future_cx.result()
         ops_response = future_ops.result()
+    elapsed = time.time() - t0
+    logger.info(f"[MULTI-AGENT] All 3 agents completed in {elapsed:.1f}s")
         
     debate_summary = f"""CFO PERSPECTIVE:
 {cfo_response}
@@ -425,7 +438,7 @@ def run_simulation(user_input: str, business_id: str):
         )
 
         if personas:
-            print(f"[Simulator] Using {len(personas)} personas in {mode} mode")
+            logger.info(f"[SIMULATOR] Using {len(personas)} grounded personas | mode={mode}")
             simulator_rules = f"\n{agents_config['simulator']['system_prompt']}\nOwner's scenario: \"{user_input}\""
 
             for persona in personas:
@@ -782,7 +795,7 @@ def process_user_scenario(user_input: str, business_id: str = "default", descrip
     session.history.append({"role": "user", "content": user_input})
     
     route = evaluate_route(user_input, business_id)
-    print(f"[Orchestrator] Route resolved: {route}")
+    logger.info(f"[ROUTER] Intent: {route} | Business: {business_id}")
 
     if route == "INGEST":
         response = handle_ingest(user_input, business_id)

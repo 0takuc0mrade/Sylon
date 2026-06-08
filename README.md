@@ -2,12 +2,22 @@
   <img src="https://raw.githubusercontent.com/ikhaisoshuare/Cascade/main/frontend/public/logo.png" width="120" alt="Sylon Logo" style="border-radius: 20px;"/>
   <h1>Sylon Cognitive Core</h1>
   <p><b>Enterprise Behavioral Intelligence & Multi-Agent Decision Engine</b></p>
-  <p><i>Powered by Google Vertex AI & Gemini 1.5 Flash</i></p>
+  <p><i>Powered by Google Vertex AI & Gemini 2.5 Flash</i></p>
 </div>
 
 ---
 
 **Live Web App:** [https://sylon.vercel.app/](https://sylon.vercel.app/)
+
+---
+
+## 🥇 Google Cloud Rapid Agent Hackathon (Fivetran Track)
+**For the Judges:** Sylon is purpose-built to win the **Fivetran Partner Bucket**. Here is exactly how we hit the 4 judging criteria:
+
+1. **Technological Implementation (The Superpower):** We built a custom **Fivetran REST API Client** (`agents/mcp_fivetran_client.py`) that allows our agentic router to programmatically trigger connector syncs. Sylon refuses to give strategic advice on stale data; it autonomously uses the Fivetran REST API to pull fresh analytics before the Board of Directors simulates a pivot. Powered natively by **Google Vertex AI (Gemini 2.5 Flash)**.
+2. **Move Beyond Chat (Quality of the Idea):** Sylon is not a chatbot. It is a highly concurrent Multi-Agent Decision Engine. When a user proposes a business change, Sylon spawns 3 distinct Gemini agents (CFO, CX, Ops) to debate the financial and operational friction of the decision in real-time.
+3. **Design:** We rejected standard dashboard UI kits and built a highly premium, glassmorphic "Brown Aesthetic" React frontend optimized for mobile and web. We feature a responsive "Ethereal Orb" visualizer mapping the LLM's thought process.
+4. **Potential Impact:** Brick-and-mortar retail businesses lack enterprise strategy. Sylon democratizes McKinsey-level operational intelligence for local stores, using Fivetran as the infallible data foundation.
 
 ## 🏆 The Problem: The Death of the Dashboard
 Modern business intelligence is fundamentally broken. Traditional platforms ingest millions of data points only to spit out static star ratings and sterile dashboards. They tell a business owner *what* happened, but they fail to explain *who* is angry, *why* their expectations shifted, and *how* a specific operational pivot will impact churn. 
@@ -24,6 +34,41 @@ Built natively on **Google Cloud Vertex AI**, Sylon ingests raw, unstructured da
 ## 🧠 Architecture: The "Board of Directors" Pipeline
 
 To achieve mathematical rigor without LLM hallucination, Sylon relies on a synchronized 4-Agent Pipeline executed via concurrent threading.
+
+```mermaid
+graph TD
+    User([User / Store Owner]) -->|Proposes Pivot| UI[Next.js Frontend]
+    UI -->|API Payload| Router{Gemini Intent Router}
+    
+    %% Fivetran Data Pipeline
+    Router -->|INGEST| FTC[Fivetran REST API Client]
+    FTC -->|Triggers Sync| Fivetran(Fivetran REST API)
+    Fivetran -->|Pulls Live Reviews| DB[(Local Vector DB)]
+    
+    %% Multi-Agent Pipeline
+    Router -->|SIMULATE| RAG[RAG Retrieval]
+    DB -.->|Customer Archetypes| RAG
+    
+    RAG -->|Context + Prompt| Threads[[Concurrent Execution]]
+    
+    Threads --> CFO[CFO Agent<br/>Margin Safety]
+    Threads --> CX[CX Agent<br/>Churn Risk]
+    Threads --> Ops[Ops Agent<br/>Execution Friction]
+    
+    CFO --> Synthesizer((Synthesizer Agent))
+    CX --> Synthesizer
+    Ops --> Synthesizer
+    
+    Synthesizer -->|Actionable Directive| UI
+    
+    style User fill:#f4ebe1,stroke:#664229,stroke-width:2px,color:#664229
+    style Fivetran fill:#0052FF,stroke:#000,stroke-width:2px,color:#fff
+    style FTC fill:#664229,stroke:#000,stroke-width:2px,color:#fff
+    style CFO fill:#1e3a8a,stroke:#000,color:#fff
+    style CX fill:#7f1d1d,stroke:#000,color:#fff
+    style Ops fill:#14532d,stroke:#000,color:#fff
+    style Synthesizer fill:#664229,stroke:#f4ebe1,stroke-width:3px,color:#fff
+```
 
 1. **The CFO Agent (Margin Safety):** Evaluates the strict financial impact of the proposed scenario, optimizing for revenue retention.
 2. **The CX Agent (Churn Risk):** Analyzes the exact psychological personas excavated from the dataset to predict customer outrage or delight.
@@ -42,8 +87,8 @@ This entire debate is streamed live to the Next.js frontend, exposing the raw "t
 ## 🛠 Tech Stack
 
 **AI & Machine Learning:**
-*   **Google Vertex AI:** Native integration for `gemini-1.5-flash`, powering the Multi-Agent swarm with structured JSON outputs.
-*   **Cerebras (Proxy Engine):** Integrated fallback routing for unlimited, high-speed Llama-3 inference during high-volume load testing.
+*   **Google Vertex AI:** Native integration for `gemini-2.5-flash`, powering the Multi-Agent swarm with structured JSON outputs.
+*   **Cerebras (Production Resilience Fallback):** Automatic failover engine. If Gemini hits rate limits during peak usage, Sylon cascades to Cerebras inference to guarantee zero downtime.
 
 **Frontend & Authentication:**
 *   **Next.js 14:** Highly responsive, SSR-optimized React framework.
