@@ -22,3 +22,6 @@ google-cloud-aiplatform==1.50.0
 google-cloud-bigquery==3.21.0
 bigframes==1.2.0
 db-dtypes
+google-cloud-discoveryengine
+vertexai
+mcp

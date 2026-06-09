@@ -111,7 +111,7 @@ def call_gemini(prompt: str, system_prompt: str = None, json_mode: bool = False)
     return response.text
 
 
-# ─── Core Cerebras Call ──────────────────────────────────────────────────────
+# Core Cerebras Call
 
 def call_cerebras_native(prompt: str, system_prompt: str = None, json_mode: bool = False) -> str:
     """Direct Cerebras API call. Raises exception on failure."""

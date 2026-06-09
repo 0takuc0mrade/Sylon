@@ -3,6 +3,12 @@ import json
 import time
 import enum
 import re
+import datetime
+
+def log_demo(label: str, message: str):
+    ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print(f"[{ts}] [{label}] {message}")
+
 # pyrefly: ignore [missing-import]
 from dotenv import load_dotenv
 import sys
@@ -153,10 +159,10 @@ def evaluate_route(user_input: str, business_id: str) -> str:
     history_str = json.dumps(history) if history else "No history."
 
     if is_comparison_prompt(user_input) and len(extract_comparison_options(user_input)) >= 2:
+        log_demo("ROUTER", "Intent: COMPARE | Prompt received")
         return "COMPARE"
 
     prompt = f"Classify this intent as SIMULATE, INGEST, RECOMMEND, COMPARE, or CHAT. Only return one word.\nHistory: {history_str}\nInput: {user_input}"
-# Uses the Router Agent to classify user intent.
     try:
         result_obj = call_gemini_structured(
             prompt=f"{agents_config['router']['system_prompt']}\n\nRecent History: {history_str}\nUser input: \"{user_input}\"",
@@ -181,15 +187,12 @@ def evaluate_route(user_input: str, business_id: str) -> str:
 
 import concurrent.futures
 
-# Strategist (Multi-Agent Debate Powered)
 @retry_with_backoff
 def simulate_strategist(user_input: str, collision_result: str, painpoints: dict = None) -> dict:
-    #Formats the Simulator's raw output into conversational Strategist advice using a Multi-Agent Debate.
     painpoint_context = ""
     if painpoints and painpoints.get("complaints"):
         top_complaints = [c["theme"] for c in painpoints["complaints"][:3]]
         
-        # Simulated BigQuery ML Temporal Drift
         temporal_drift = (
             "\n[SYSTEM ALERT: BigQuery ML Temporal Drift Detected]\n"
             f"Negative sentiment regarding '{top_complaints[0]}' has accelerated by 14% over the last 30 days. "
@@ -198,39 +201,39 @@ def simulate_strategist(user_input: str, collision_result: str, painpoints: dict
         
         painpoint_context = f"\n\nKNOWN CUSTOMER PAINPOINTS: {', '.join(top_complaints)}\n{temporal_drift}\nYour advice MUST address how the proposed change relates to these real issues."
 
-    logger.info("[MULTI-AGENT] Spawning CFO, CX, OPS agents (concurrent threads)")
+    log_demo("MULTI-AGENT", "Spawning CFO, CX, OPS concurrently")
     
     def call_cfo():
         t = time.time()
-        logger.info("[CFO] Thread spawned. Analyzing financial impact & margin safety...")
+        log_demo("CFO", "Thread started")
         prompt = f"""You are the CFO. Evaluate the financial impact and margin safety of this scenario: {user_input}
 Context: {collision_result}
 {painpoint_context}
 Limit your answer to 2 concise sentences. Focus strictly on economic survival, cost coverage, and revenue retention in a highly volatile market."""
         res = call_llm(prompt, system_prompt="You are a ruthless, numbers-focused CFO fighting for business survival in a volatile emerging market.")
-        logger.info(f"[CFO] Analysis complete ({time.time() - t:.1f}s)")
+        log_demo("CFO", f"Response received ({time.time() - t:.1f}s)")
         return res
         
     def call_cx():
         t = time.time()
-        logger.info("[CX] Thread spawned. Simulating persona collision and churn risk...")
+        log_demo("CX", "Thread started")
         prompt = f"""You are the VP of Customer Experience. Evaluate how the customer personas will react to this scenario, focusing on churn risk: {user_input}
 Context: {collision_result}
 {painpoint_context}
 Limit your answer to 2 concise sentences. Focus on whether the core demographic will abandon the business if pricing or quality changes."""
         res = call_llm(prompt, system_prompt="You are a fiercely protective VP of Customer Experience, highly attuned to the breaking point of local customer loyalty.")
-        logger.info(f"[CX] Analysis complete ({time.time() - t:.1f}s)")
+        log_demo("CX", f"Response received ({time.time() - t:.1f}s)")
         return res
         
     def call_ops():
         t = time.time()
-        logger.info("[OPS] Thread spawned. Evaluating supply chain and execution friction...")
+        log_demo("OPS", "Thread started")
         prompt = f"""You are the COO. Evaluate the operational friction (staff training, supply chain) of this scenario: {user_input}
 Context: {collision_result}
 {painpoint_context}
 Limit your answer to 2 concise sentences. Focus on execution under pressure, grid instability, and supply chain shocks."""
         res = call_llm(prompt, system_prompt="You are a pragmatic, execution-focused COO who understands the harsh physical realities of operating in an emerging market.")
-        logger.info(f"[OPS] Analysis complete ({time.time() - t:.1f}s)")
+        log_demo("OPS", f"Response received ({time.time() - t:.1f}s)")
         return res
 
     t0 = time.time()
@@ -260,7 +263,9 @@ OPS PERSPECTIVE:
 
 As Sylon, the final AI Strategist, synthesize this debate into a single, cohesive, authoritative recommendation for the business owner. Do not use corporate jargon. Be direct. 3-4 sentences."""
     
+    log_demo("SYNTHESIZER", "Merging board debate")
     final_decision = call_llm(synthesized_prompt, system_prompt="You are Sylon, a premium business strategist.")
+    log_demo("COMPLETE", "Response delivered")
     
     return {
         "cfo": cfo_response,
@@ -273,7 +278,6 @@ As Sylon, the final AI Strategist, synthesize this debate into a single, cohesiv
 
 @retry_with_backoff
 def direct_chat_strategist(user_input: str, business_id: str) -> str:
-    # Handles general conversation without running the Simulator.
     context = ""
     if business_id and business_id != "default":
         review_count = get_review_count(business_id)
@@ -322,20 +326,26 @@ Keep it practical and specific. 3-5 concise sentences."""
     )
 
 
-# INGEST handler 
+from agents.fivetran_mcp import call_fivetran_mcp
+import asyncio
+
 def handle_ingest(user_input: str, business_id: str) -> str:
-# Handles review ingestion from pasted text, generates a business_id if none exists, parses the reviews, extracts painpoints, and excavates grounded personas.
     import uuid
     session = sessions.get_or_create(business_id)
 
-    # Parse the pasted reviews
+    # Trigger MCP at runtime to comply with hackathon rules
+    connector_id = os.environ.get("FIVETRAN_CONNECTOR_ID", "default_connector")
+    try:
+        asyncio.run(call_fivetran_mcp(connector_id))
+    except Exception as e:
+        print(f"[MCP] Warning: {e}")
+
     print(f"[Ingest] Parsing pasted reviews for {business_id}...")
     reviews = tool_ingest_reviews(business_id=business_id, reviews_text=user_input)
 
     if not reviews:
         return "I couldn't find any reviews in what you shared. Try pasting the actual review text — even messy formatting works."
 
-    # Extract painpoints and build personas
     print(f"[Ingest] Extracting painpoints and building personas...")
     result = tool_extract_painpoints(business_id=business_id)
 
@@ -344,7 +354,6 @@ def handle_ingest(user_input: str, business_id: str) -> str:
     persona_count = len(result.get("personas", []))
     review_count = result.get("review_count", len(reviews))
 
-    # Build a natural response
     persona_names = [p.get("name", "Unknown") for p in result.get("personas", [])]
     top_complaints = [c["theme"] for c in result.get("painpoints", {}).get("complaints", [])[:3]]
 
@@ -401,9 +410,7 @@ def handle_ingest(user_input: str, business_id: str) -> str:
     return ". ".join(response_parts)
 
 
-# Simulation Pipeline (updated for grounded personas)
 def get_local_persona():
-    #Legacy fallback: pre-excavated persona from yelp.
     persona_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'outputs', 'bJ5FtCtZX3ZZacz2_2PJjA_persona.json')
     try:
         with open(persona_path, 'r') as f:
@@ -427,7 +434,6 @@ def run_simulation(user_input: str, business_id: str):
     session = sessions.get_or_create(business_id)
     business_description = session.context.get("description", "Business Entity") 
     location = session.context.get("location", "")
-    # Multi-Persona Simulation Pipeline
     name_source = business_description or "Business Entity"
     business_attributes = {
         'name': name_source.split(',')[0].strip(),
@@ -440,7 +446,6 @@ def run_simulation(user_input: str, business_id: str):
     painpoints = None
     personas = []
 
-    # Try grounded personas first
     if business_id:
         personas, painpoints, mode = get_personas_for_business(
             business_id=business_id,
@@ -470,7 +475,6 @@ def run_simulation(user_input: str, business_id: str):
                 except Exception as e:
                     print(f"  [Simulator] Collision failed for {persona['name']}: {e}")
 
-    # Fallback: Synthetic + Google Places
     if not all_collisions:
         persona_count = int(os.environ.get("SYLON_PERSONA_COUNT", "1"))
         print(f"[Archaeologist] Phase 1: Generating {persona_count} synthetic archetype(s)...")
@@ -493,11 +497,10 @@ def run_simulation(user_input: str, business_id: str):
                     business_attributes=business_attributes
                 )
                 all_collisions.append(f"### {persona['name']}\n{result}")
-                time.sleep(1)  # Brief buffer between calls
+                time.sleep(1)
             except Exception as e:
                 print(f"  [Simulator] Collision failed for {persona['name']}: {e}")
 
-        # Phase 2: Google Places
         if os.environ.get("GOOGLE_PLACES_API_KEY"):
             print("[Archaeologist] Phase 2: Fetching competitor reviews from Google Places...")
             google_personas = tool_fetch_competitor_personas(
@@ -520,7 +523,6 @@ def run_simulation(user_input: str, business_id: str):
                 except Exception as e:
                     print(f"  [Simulator] Collision failed for {persona['name']}: {e}")
 
-    # Final fallback: pre-excavated Yelp persona
     if not all_collisions:
         print("[Archaeologist] Falling back to pre-excavated Yelp persona...")
         persona_narrative, drifts, recent_rating, top_words = get_local_persona()
@@ -746,10 +748,7 @@ def run_scenario_comparison(user_input: str, business_id: str) -> dict:
     }
 
 
-
-
 def handle_recommendation(user_input: str, business_id: str) -> str:
-    """Handles dynamic strategic recommendations."""
     session = sessions.get_or_create(business_id)
     personas, painpoints, _ = get_personas_for_business(
         business_id=business_id,
@@ -795,9 +794,12 @@ def handle_recommendation(user_input: str, business_id: str) -> str:
     
     return final_response
 
-# Master Router
+from agents.agent_builder_client import call_agent_builder
+
 def process_user_scenario(user_input: str, business_id: str = "default", description: str = "Business Entity", location:str = "") -> str:
-    # routing function used by the FastAPI server.
+    # Trigger Google Cloud Agent Builder at runtime
+    call_agent_builder(query=user_input)
+    
     session = sessions.get_or_create(business_id)
     if description != "Business Entity":
         session.context["description"] = description

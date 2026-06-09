@@ -14,7 +14,7 @@
 ## 🥇 Google Cloud Rapid Agent Hackathon (Fivetran Track)
 **For the Judges:** Sylon is purpose-built to win the **Fivetran Partner Bucket**. Here is exactly how we hit the 4 judging criteria:
 
-1. **Technological Implementation (The Superpower):** We built a custom **Fivetran REST API Client** (`agents/mcp_fivetran_client.py`) that allows our agentic router to programmatically trigger connector syncs. Sylon refuses to give strategic advice on stale data; it autonomously uses the Fivetran REST API to pull fresh analytics before the Board of Directors simulates a pivot. Powered natively by **Google Vertex AI (Gemini 2.5 Flash)**.
+1. **Technological Implementation (The Superpower):** We built a custom **Fivetran MCP Server**: Bypasses manual file uploads by syncing business intelligence (e.g., POS data, Square, Stripe) dynamically via the Model Context Protocol. Sylon refuses to give strategic advice on stale data; it autonomously uses the Fivetran MCP Server to pull fresh analytics before the Board of Directors simulates a pivot. Powered natively by **Google Vertex AI (Gemini 2.5 Flash) and Google Cloud Agent Builder**.
 2. **Move Beyond Chat (Quality of the Idea):** Sylon is not a chatbot. It is a highly concurrent Multi-Agent Decision Engine. When a user proposes a business change, Sylon spawns 3 distinct Gemini agents (CFO, CX, Ops) to debate the financial and operational friction of the decision in real-time.
 3. **Design:** We rejected standard dashboard UI kits and built a highly premium, glassmorphic "Brown Aesthetic" React frontend optimized for mobile and web. We feature a responsive "Ethereal Orb" visualizer mapping the LLM's thought process.
 4. **Potential Impact:** Brick-and-mortar retail businesses lack enterprise strategy. Sylon democratizes McKinsey-level operational intelligence for local stores, using Fivetran as the infallible data foundation.
@@ -41,8 +41,8 @@ graph TD
     UI -->|API Payload| Router{Gemini Intent Router}
     
     %% Fivetran Data Pipeline
-    Router -->|INGEST| FTC[Fivetran REST API Client]
-    FTC -->|Triggers Sync| Fivetran(Fivetran REST API)
+    Router -->|INGEST| FTC[Fivetran MCP Server Client]
+    FTC -->|Triggers Sync| Fivetran(Fivetran MCP Server)
     Fivetran -->|Pulls Live Reviews| DB[(Local Vector DB)]
     
     %% Multi-Agent Pipeline
@@ -88,7 +88,6 @@ This entire debate is streamed live to the Next.js frontend, exposing the raw "t
 
 **AI & Machine Learning:**
 *   **Google Vertex AI:** Native integration for `gemini-2.5-flash`, powering the Multi-Agent swarm with structured JSON outputs.
-*   **Cerebras (Production Resilience Fallback):** Automatic failover engine. If Gemini hits rate limits during peak usage, Sylon cascades to Cerebras inference to guarantee zero downtime.
 
 **Frontend & Authentication:**
 *   **Next.js 14:** Highly responsive, SSR-optimized React framework.
@@ -114,7 +113,7 @@ Sylon is fully containerized for instant deployment.
    Create a `.env` file in the root directory:
    ```env
    GEMINI_API_KEY=your_google_cloud_api_key
-   CEREBRAS_API_KEY=your_cerebras_key
+   GCP_PROJECT_ID=your_gcp_project_id
    ELEVENLABS_API_KEY=your_elevenlabs_key
    SYLON_DB_PATH=data/sylon.db
    ```

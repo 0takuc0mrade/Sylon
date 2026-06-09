@@ -63,18 +63,15 @@ from fastapi import Request, HTTPException
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat_endpoint(request: ChatRequest, req: Request, user: dict = Depends(get_optional_user)):
-    # Webhook exception for ElevenLabs (or frontend client)
-    # receives spoken text from ElevenLabs, runs the Sylon multi-agent orchestrator, and returns the Strategist's response text to be spoken back to the user.
     try:
         import uuid
         business_id = request.business_id or f"biz_{uuid.uuid4().hex[:8]}"
 
-        # Run the sync orchestrator in a thread so we don't block the event loop
         strategist_result = await asyncio.to_thread(
             process_user_scenario, request.text, business_id
         )
         if isinstance(strategist_result, dict):
-            if "cfo" in strategist_result: # Multi-Agent Debate format
+            if "cfo" in strategist_result:
                 strategist_response = str(strategist_result.get("final", ""))
                 comparison = None
                 board_debate = strategist_result
