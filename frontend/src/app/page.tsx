@@ -6,7 +6,7 @@ import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { ConversationProvider } from "@elevenlabs/react";
 import EtherealOrb from "@/components/EtherealOrb";
-import { usePrivy } from "@/hooks/useMockPrivy";
+import { usePrivy } from "@privy-io/react-auth";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import ThemeToggle from "@/components/ThemeToggle";

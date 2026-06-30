@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { usePrivy } from "@/hooks/useMockPrivy";
+import { usePrivy } from "@privy-io/react-auth";
 
 type SessionInfo = {
   business_id: string;

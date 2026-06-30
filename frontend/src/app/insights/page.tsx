@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { usePrivy } from "@/hooks/useMockPrivy";
+import { usePrivy } from "@privy-io/react-auth";
 
 type InsightData = {
   health_score: number;

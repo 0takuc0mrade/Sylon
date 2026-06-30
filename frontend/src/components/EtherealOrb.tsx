@@ -4,7 +4,7 @@ import { useRef, useCallback, useEffect, useMemo, useState } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { useConversation } from "@elevenlabs/react";
-import { usePrivy } from "@/hooks/useMockPrivy";
+import { usePrivy } from "@privy-io/react-auth";
 
 export default function EtherealOrb({ onTranscription, isMobile }: { onTranscription?: (role: string, text: string) => void, isMobile?: boolean }) {
   const container = useRef<HTMLDivElement>(null);

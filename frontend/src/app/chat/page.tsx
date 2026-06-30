@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import EtherealOrb from "@/components/EtherealOrb";
 import { ConversationProvider } from "@elevenlabs/react";
 import AuthGuard from "@/components/AuthGuard";
-import { usePrivy } from "@/hooks/useMockPrivy";
+import { usePrivy } from "@privy-io/react-auth";
 
 import HistorySidebar from "@/components/HistorySidebar";
 
