@@ -88,7 +88,7 @@ function ChatContent() {
         if (historyData.status === 'ok' && historyData.history && historyData.history.length > 0) {
           // Filter out the internal system prompt so it doesn't look like the user typed it
           const cleanHistory = historyData.history.filter((m: ChatMessage) => 
-            !m.content.includes("I just uploaded my customer data. Please summarize the customer archetypes")
+            !m.content.includes("I just connected my business data") && !m.content.includes("I just uploaded my customer data")
           );
           setMessages(cleanHistory);
         } else {
@@ -97,7 +97,7 @@ function ChatContent() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', ...authHeaders },
             body: JSON.stringify({ 
-              text: "I just uploaded my customer data. Please summarize the customer archetypes you found and give me one actionable recommendation based on the top pain points.", 
+              text: "I just connected my business data. Provide a highly generalized executive summary of my operations, customer sentiment, and pricing strategy. Do not fixate on specific products. Give me a high-level strategic overview of my business health based on the signals you ingested.", 
               business_id: businessId 
             })
           });
@@ -240,9 +240,10 @@ function ChatContent() {
         </div>
 
         <div className="glass-card rounded-3xl p-3 sm:p-4 md:p-6 flex flex-col flex-1 overflow-hidden shadow-sm min-h-0">
-          <div className="flex-1 overflow-y-auto pr-1 sm:pr-2 flex flex-col gap-3 sm:gap-4 mb-3 sm:mb-4 min-h-0">
+          <div className="flex-1 overflow-y-auto pr-1 sm:pr-2 flex flex-col gap-3 sm:gap-4 mb-3 sm:mb-4 min-h-0 relative">
+            {/* The Chat Interface */}
+            
             {messages.map((m, i) => {
-
               return (
               <div key={i} className={`flex flex-col max-w-[90%] sm:max-w-[80%] ${m.role === 'user' ? 'self-end' : 'self-start'}`}>
                 <div className={`p-3 sm:p-4 rounded-2xl text-sm sm:text-base ${
@@ -441,6 +442,87 @@ function BoardDebateCard({ debate }: { debate: any }) {
           <div className="w-8 h-8 rounded-full bg-green-900/40 flex items-center justify-center flex-shrink-0 text-green-300 font-bold text-xs border border-green-500/30">OPS</div>
           <div className="text-sm opacity-90 leading-relaxed"><span className="font-semibold text-green-300">Operational Friction:</span> {debate.ops}</div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function BusinessMemoryDashboard() {
+  return (
+    <div className="flex flex-col gap-4 animate-in fade-in duration-700 w-full mb-6 mt-2">
+      <div className="text-xs font-bold uppercase tracking-widest opacity-50 mb-2 border-b border-white/10 pb-2">Active Business Memory</div>
+      
+      {/* Top Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="bg-black/20 border border-white/5 p-4 rounded-2xl flex flex-col items-center text-center shadow-inner">
+          <div className="text-2xl font-black text-brand-lightbrown">1,243</div>
+          <div className="text-[10px] font-bold uppercase tracking-wider opacity-60 mt-1">Conversations</div>
+        </div>
+        <div className="bg-orange-500/10 border border-orange-500/20 p-4 rounded-2xl flex flex-col items-center text-center shadow-inner relative overflow-hidden">
+          <div className="absolute top-0 w-full h-1 bg-gradient-to-r from-orange-400 to-rose-400"></div>
+          <div className="text-2xl font-black text-orange-400">483</div>
+          <div className="text-[10px] font-bold uppercase tracking-wider opacity-60 mt-1">Decision Signals</div>
+        </div>
+        <div className="bg-black/20 border border-white/5 p-4 rounded-2xl flex flex-col items-center text-center shadow-inner">
+          <div className="text-2xl font-black text-brand-lightbrown">91</div>
+          <div className="text-[10px] font-bold uppercase tracking-wider opacity-60 mt-1">Products Tracked</div>
+        </div>
+        <div className="bg-black/20 border border-white/5 p-4 rounded-2xl flex flex-col items-center text-center shadow-inner">
+          <div className="text-2xl font-black text-brand-lightbrown">138</div>
+          <div className="text-[10px] font-bold uppercase tracking-wider opacity-60 mt-1">Returning Cust.</div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+        {/* Recent Signals */}
+        <div className="bg-black/20 border border-white/5 p-4 rounded-2xl shadow-inner">
+          <h3 className="text-[11px] font-bold uppercase tracking-wider text-brand-lightbrown mb-4 flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+            Real-Time Signals
+          </h3>
+          <div className="space-y-4">
+            <div className="border-l-2 border-orange-400 pl-3">
+              <p className="text-sm font-medium opacity-90 text-white">"Do you have Oraimo power banks?"</p>
+              <div className="text-[10px] text-orange-400 font-bold uppercase mt-1 tracking-wider">WhatsApp &bull; 10 mins ago</div>
+            </div>
+            <div className="border-l-2 border-orange-400 pl-3">
+              <p className="text-sm font-medium opacity-90 text-white">"Delivery took too long yesterday."</p>
+              <div className="text-[10px] text-orange-400 font-bold uppercase mt-1 tracking-wider">Instagram &bull; 1 hour ago</div>
+            </div>
+            <div className="border-l-2 border-white/20 pl-3">
+              <p className="text-sm font-medium opacity-70">"I need a screen guard for iPhone 13"</p>
+              <div className="text-[10px] opacity-50 font-bold uppercase mt-1 tracking-wider">Facebook &bull; 2 hours ago</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Detected Trends */}
+        <div className="bg-gradient-to-br from-orange-500/5 to-transparent border border-orange-500/20 p-4 rounded-2xl shadow-inner relative overflow-hidden">
+          <div className="absolute right-0 top-0 w-32 h-32 bg-orange-500/10 blur-3xl rounded-full translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
+          <h3 className="text-[11px] font-bold uppercase tracking-wider text-orange-400 mb-4 relative z-10">Detected Intelligence Trends</h3>
+          
+          <div className="bg-black/40 p-3 rounded-xl mb-3 border border-white/5 relative z-10 shadow-sm">
+            <div className="flex justify-between items-start mb-1">
+              <div className="font-bold text-sm text-white">Oraimo Demand Spike</div>
+              <div className="text-xs font-black text-green-400 bg-green-400/10 px-2 py-0.5 rounded-sm">+42%</div>
+            </div>
+            <p className="text-xs opacity-70">27 distinct requests across WhatsApp and Facebook in the last 48 hours.</p>
+          </div>
+
+          <div className="bg-black/40 p-3 rounded-xl border border-white/5 relative z-10 shadow-sm">
+            <div className="flex justify-between items-start mb-1">
+              <div className="font-bold text-sm text-white">Weekend Wait Times</div>
+              <div className="text-xs font-black text-red-400 bg-red-400/10 px-2 py-0.5 rounded-sm">Critical</div>
+            </div>
+            <p className="text-xs opacity-70">Negative sentiment rising on Saturday afternoons due to understaffing.</p>
+          </div>
+        </div>
+      </div>
+      
+      <div className="flex items-center justify-center mt-4 mb-2">
+         <div className="h-px bg-gradient-to-r from-transparent via-brand-lightbrown/30 to-transparent w-full"></div>
+         <div className="px-4 text-[10px] font-bold uppercase tracking-widest text-brand-lightbrown opacity-60 whitespace-nowrap">Session Active</div>
+         <div className="h-px bg-gradient-to-r from-brand-lightbrown/30 via-brand-lightbrown/30 to-transparent w-full"></div>
       </div>
     </div>
   );

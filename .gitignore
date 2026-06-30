@@ -244,3 +244,24 @@ utilities/sampled_reviews.csv
 
 
 node_modules/
+
+# Local logs and Tunnel files
+*.log
+frontend.log
+backend.log
+cf_retry.log
+cloudflared.log
+cloudflared2.log
+lt.log
+lt2.log
+pinggy.log
+pinggy2.log
+
+# Video Outputs
+*.webm
+*.mp4
+
+# Frontend Environment
+frontend/.env.local
+frontend/.env.development
+frontend/.env.production

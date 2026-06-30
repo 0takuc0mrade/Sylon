@@ -115,7 +115,7 @@ export default function Home() {
             ref={heroTextRef}
             className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-brand-dark leading-tight drop-shadow-sm opacity-0"
           >
-            The Customer Behavioral Intelligence for<br className="hidden md:block" /> Your Business.
+            Every customer interaction is a business signal.
           </h1>
         </div>
 
@@ -130,19 +130,30 @@ export default function Home() {
         <div className="text-center mt-auto mb-16 flex flex-col items-center">
           <p
             ref={subTextRef}
-            className="text-xl md:text-2xl text-brand-dark mb-8 font-semibold opacity-0"
+            className="text-xl md:text-2xl text-brand-dark mb-4 font-semibold opacity-0"
           >
             You see a customer. Sylon sees a person.
           </p>
-          <button
-            onClick={() => authenticated ? router.push('/upload') : login()}
-            className="glass-button text-brand-dark px-8 py-3 rounded-full font-bold inline-flex items-center space-x-2 hover:bg-white/80 transition-all shadow-sm"
-          >
-            <span>Meet Sylon</span>
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" strokeLinecap="round" strokeLinejoin="round"></path>
-            </svg>
-          </button>
+          <p className="text-brand-dark/80 max-w-2xl mb-8">
+            Sylon learns from customer reviews, conversations and business data to help you make smarter decisions before they become expensive mistakes.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            <button
+              onClick={() => authenticated ? router.push('/upload') : login()}
+              className="glass-button text-brand-dark px-8 py-3 rounded-full font-bold inline-flex items-center space-x-2 hover:bg-white/80 transition-all shadow-sm"
+            >
+              <span>Try the Demo</span>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" strokeLinecap="round" strokeLinejoin="round"></path>
+              </svg>
+            </button>
+            <Link 
+              href="/chat" 
+              className="glass-button text-brand-dark px-8 py-3 rounded-full font-bold inline-flex items-center space-x-2 hover:bg-white/80 transition-all shadow-sm"
+            >
+              Watch Sylon Think
+            </Link>
+          </div>
         </div>
 
         {/* Features Grid */}

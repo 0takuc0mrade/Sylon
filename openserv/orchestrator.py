@@ -188,6 +188,14 @@ def simulate_strategist(user_input: str, collision_result: str, painpoints: dict
         
         painpoint_context = f"\n\nKNOWN CUSTOMER PAINPOINTS: {', '.join(top_complaints)}\n{temporal_drift}\nYour advice MUST address how the proposed change relates to these real issues."
 
+    memory_context = ""
+    try:
+        from openserv.persistence import persistence_service
+        # Use a placeholder business_id here, since we don't pass it directly to simulate_strategist right now.
+        # Actually, simulate_strategist doesn't have business_id. We'll need to pass memories from run_simulation.
+    except Exception:
+        pass
+
     log_demo("MULTI-AGENT", "Spawning CFO, CX, OPS concurrently")
     
     def call_cfo():
@@ -523,6 +531,16 @@ def run_simulation(user_input: str, business_id: str):
         all_collisions.append(f"### Baseline Persona\n{result}")
 
     combined = "\n\n---\n\n".join(all_collisions)
+
+    # INJECT REAL-TIME MEMORIES
+    try:
+        from openserv.persistence import persistence_service
+        memories = persistence_service.get_recent_memories(business_id, limit=20)
+        if memories:
+            memory_str = "\n".join([f"- [{m['created_at'][:10]}] {m['source'].upper()}: {m['text_content']} (Intent: {m['intent']})" for m in memories])
+            combined += f"\n\n--- RECENT BUSINESS MEMORIES (REAL-TIME DATA) ---\n{memory_str}\n\nUse these real memories to ground your decision."
+    except Exception as e:
+        print(f"[Memory] Failed to load memories: {e}")
 
     strategist_response = simulate_strategist(user_input, combined, painpoints)
     

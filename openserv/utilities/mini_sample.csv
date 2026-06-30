@@ -1,0 +1,12 @@
+text,source,rating
+"Good customer service but they rarely have Oraimo power banks.",review,5
+"Repair was quick.",review,4
+"I came for an Apple charger but it wasn't available.",review,2
+"Very helpful staff.",review,5
+"Prices are higher than nearby shops.",review,3
+"Customer: Good afternoon. Do you have Oraimo Power Bank? Owner: No. Customer: Thank you.",whatsapp,
+"Customer: How much is an iPhone 13 screen replacement? Owner: ₦85,000. Customer: Okay.",whatsapp,
+"Customer: Do you deliver? Owner: Not yet. Customer: Alright.",whatsapp,
+"Sales Record: Power Banks - Sold 8, Requested 29",sales,
+"Sales Record: Apple Chargers - Sold 5, Requested 18",sales,
+"Sales Record: Phone Cases - Sold 34, Requested 36",sales,
