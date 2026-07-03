@@ -11,7 +11,7 @@
 
 ---
 
-## 🥇 Global AI Hackathon with Qwen Cloud
+## Global AI Hackathon with Qwen Cloud
 **For the Judges:** Sylon is purpose-built to win the **Track 4 (Autopilot Agent)** and **Track 1 (MemoryAgent)** categories. Here is exactly how we hit the 4 judging criteria:
 
 1. **Technical Depth (The Superpower):** Sylon is not a chatbot; it is a highly concurrent Multi-Agent Decision Engine. When a user proposes a business change, Sylon spawns 3 distinct Qwen agents (CFO, CX, Ops) via the DashScope API to debate the financial and operational friction of the decision in real-time. The entire backend is orchestrated on **Alibaba Cloud Serverless App Engine (SAE)**.
@@ -19,19 +19,19 @@
 3. **Innovation & AI Creativity:** Sylon natively bypasses manual file uploads by syncing business intelligence dynamically. Sylon refuses to give strategic advice on stale data; it autonomously pulls fresh analytics before the Board of Directors simulates a pivot.
 4. **Presentation & Documentation:** Our Next.js frontend features a responsive "Ethereal Orb" visualizer mapping Qwen's thought process directly to the user in a glassmorphic aesthetic.
 
-## 🏆 The Problem: The Death of the Dashboard
+## The Problem: The Death of the Dashboard
 Modern business intelligence is fundamentally broken. Traditional platforms ingest millions of data points only to spit out static star ratings and sterile dashboards. They tell a business owner *what* happened, but they fail to explain *who* is angry, *why* their expectations shifted, and *how* a specific operational pivot will impact churn. 
 
 Dashboards do not solve problems. Agents do.
 
-## 🚀 The Solution: Sylon
+## The Solution: Sylon
 Sylon moves beyond collaborative filtering by treating customers as **evolving psychological entities**. 
 
 Built natively on **Qwen Cloud**, Sylon ingests raw, unstructured data and mathematically excavates distinct customer archetypes. It acts as an autonomous conversational strategist. When a business owner proposes a change (e.g., *"If I raise prices by 15%, what happens?"*), Sylon triggers a highly concurrent, Multi-Agent simulation powered by Qwen-Max to debate the outcome in real-time.
 
 ---
 
-## 🧠 Architecture: The "Board of Directors" Pipeline
+## Architecture: The "Board of Directors" Pipeline
 
 To achieve mathematical rigor without LLM hallucination, Sylon relies on a synchronized 4-Agent Pipeline executed via concurrent threading on Alibaba Cloud.
 
@@ -80,7 +80,7 @@ This entire debate is streamed live to the Next.js frontend, exposing the raw "t
 
 ---
 
-## 🛠 Tech Stack
+## Tech Stack
 
 **AI & Machine Learning:**
 *   **Qwen Cloud (DashScope API):** Native integration powering the Multi-Agent swarm with structured reasoning.
@@ -97,7 +97,7 @@ This entire debate is streamed live to the Next.js frontend, exposing the raw "t
 
 ---
 
-## 💻 Local Development
+## Local Development
 
 Sylon is fully containerized for instant deployment.
 
