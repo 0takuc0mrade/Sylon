@@ -77,19 +77,19 @@ def process_whatsapp_message(entry: Dict[str, Any]):
                         """, (memory_id, business_id, "whatsapp", formatted_content, created_at))
                         print(f"[Sylon Meta Ingest] Stored WhatsApp memory for {business_id}: {text_content}")
                         
-                        # --- WIRE THE EARS TO THE BRAIN ---
-                        try:
-                            print(f"[Sylon AI] Triggering Orchestrator for message from {sender_id}...")
-                            ai_reply = process_user_scenario(text_content, business_id=business_id)
-                            if ai_reply:
-                                tool_send_meta_message("whatsapp", sender_id, ai_reply)
-                                print(f"[Sylon Meta Egress] Successfully sent AI reply back to {sender_id}")
-                        except Exception as ai_e:
-                            print(f"[Sylon AI Error] Failed to process/send reply: {ai_e}")
-                        # ----------------------------------
-                        
                 except Exception as e:
                     print(f"[Sylon Meta Ingest Error] Failed to store memory: {e}")
+
+                # --- WIRE THE EARS TO THE BRAIN (OUTSIDE DB LOCK) ---
+                try:
+                    print(f"[Sylon AI] Triggering Orchestrator for message from {sender_id}...")
+                    ai_reply = process_user_scenario(text_content, business_id=business_id)
+                    if ai_reply:
+                        tool_send_meta_message("whatsapp", sender_id, ai_reply)
+                        print(f"[Sylon Meta Egress] Successfully sent AI reply back to {sender_id}")
+                except Exception as ai_e:
+                    print(f"[Sylon AI Error] Failed to process/send reply: {ai_e}")
+                # ----------------------------------
 
 
 @router.post("/")
