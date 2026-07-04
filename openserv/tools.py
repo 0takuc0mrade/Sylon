@@ -20,8 +20,8 @@ from agents.painpoint_extractor import (
 
 from openserv.integrations import send_meta_message, reply_to_google_review
 
-def tool_send_meta_message(platform: str, to_number: str, message_text: str) -> dict:
-    return send_meta_message(platform, to_number, message_text)
+def tool_send_meta_message(platform: str, to_number: str, message_text: str, business_id: str = None) -> dict:
+    return send_meta_message(platform, to_number, message_text, business_id=business_id)
 
 def tool_reply_google_review(review_name: str, reply_text: str) -> dict:
     return reply_to_google_review(review_name, reply_text)
@@ -36,17 +36,10 @@ def get_reviews():
             _REVIEWS = pd.read_csv('data/sampled_reviews.csv')
             _REVIEWS['date'] = pd.to_datetime(_REVIEWS['date'])
         except FileNotFoundError:
-            print("Warning: data/sampled_reviews.csv not found. Using mock data for demonstration.")
-            _REVIEWS = pd.DataFrame({
-                'review_id': ['mock_1', 'mock_2', 'mock_3'],
-                'user_id': ['test_user_1', 'test_user_1', 'test_user_2'],
-                'business_id': ['biz_1', 'biz_2', 'biz_1'],
-                'stars': [5.0, 2.0, 4.0],
-                'useful': [2, 0, 1],
-                'text': ['Great food and amazing service!', 'Terrible experience, waited an hour.', 'Good attribute but a bit loud.'],
-                'date': pd.to_datetime(['2023-01-01', '2023-06-01', '2023-12-01']),
-                'primary_category': ['Restaurant', 'Restaurant', 'Restaurant']
-            })
+            print("[Warning] No historical review data found. Returning empty dataset.")
+            _REVIEWS = pd.DataFrame(columns=[
+                'review_id', 'user_id', 'business_id', 'stars', 'useful', 'text', 'date', 'primary_category'
+            ])
     return _REVIEWS
 
 def tool_excavate_persona(user_id: str) -> dict:

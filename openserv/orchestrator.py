@@ -415,11 +415,7 @@ def get_local_persona():
             recent_rating = recent_signal.get('avg_rating', 0)
             top_words = recent_signal.get('top_words', [])
     except FileNotFoundError:
-        print("Warning: Pre-excavated persona not found. Using a mock persona.")
-        persona_narrative = "This user loves quiet, cheap places and hates loud noises."
-        drifts = []
-        recent_rating = 3.0
-        top_words = ["quiet", "cheap", "noise"]
+        raise ValueError("Insufficient historical data to excavate personas. Start chatting with customers to build memory.")
 
     return persona_narrative, drifts, recent_rating, top_words
 

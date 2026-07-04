@@ -59,6 +59,88 @@ class ChatResponse(BaseModel):
 async def root():
     return {"message": "Sylon API is running successfully."}
 
+class ActionApproveRequest(BaseModel):
+    edited_text: str | None = None
+    to_number: str | None = None
+
+@app.get("/business/action-items")
+async def get_action_items(business_id: str):
+    # In a real app, business_id would come from the JWT claims via Depends(get_current_user)
+    items = persistence_service.get_action_items(business_id)
+    return {"status": "success", "items": items}
+
+@app.post("/business/action-items/{memory_id}/approve")
+async def approve_action_item(memory_id: int, req: ActionApproveRequest):
+    # Fetch the draft from DB (in production, verify ownership)
+    conn = persistence_service.get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT business_id, insight FROM business_memories WHERE id = ?", (memory_id,))
+    row = cursor.fetchone()
+    conn.close()
+    
+    if not row:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Draft not found")
+        
+    business_id = row[0]
+    draft_text = row[1]
+    
+    # If the user edited the text in the UI, use that instead
+    final_text = req.edited_text if req.edited_text else draft_text
+    
+    # Send it via Meta!
+    if req.to_number:
+        from openserv.integrations import tool_send_meta_message
+        tool_send_meta_message(platform="whatsapp", to_number=req.to_number, message_text=final_text, business_id=business_id)
+    
+    # Resolve the item so it disappears from the inbox
+    persistence_service.resolve_action_item(memory_id)
+    
+    return {"status": "success", "message": "Draft approved and sent."}
+class MetaConnectRequest(BaseModel):
+    business_id: str
+    real_phone_id: str | None = None
+    real_access_token: str | None = None
+
+@app.post("/business/connect-meta")
+async def connect_meta(req: MetaConnectRequest):
+    """
+    Simulates the backend handling of a Meta Embedded Signup OAuth callback.
+    If the developer provides real tokens (for live testing), we save them instead.
+    """
+    import uuid
+    # Use real tokens if provided, otherwise mock them
+    simulated_access_token = req.real_access_token if req.real_access_token else f"EAAD{uuid.uuid4().hex}SylonDemoToken"
+    simulated_phone_id = req.real_phone_id if req.real_phone_id else f"100{str(uuid.uuid4().int)[:11]}"
+    
+    # Save securely to the businesses table
+    persistence_service.save_meta_tokens(
+        business_id=req.business_id,
+        phone_id=simulated_phone_id,
+        access_token=simulated_access_token
+    )
+    
+    return {
+        "status": "success",
+        "message": "WhatsApp Business Account successfully connected.",
+        "phone_id": simulated_phone_id
+    }
+class OwnerPhoneRequest(BaseModel):
+    business_id: str
+    owner_phone: str
+
+@app.post("/business/settings/owner-phone")
+async def set_owner_phone(req: OwnerPhoneRequest):
+    """Save the business owner's personal WhatsApp number."""
+    # Strip any non-numeric characters just in case, but keep the + if present
+    import re
+    cleaned_phone = re.sub(r'[^\d+]', '', req.owner_phone)
+    
+    persistence_service.set_owner_phone(req.business_id, cleaned_phone)
+    return {"status": "success", "message": "Owner phone saved successfully", "owner_phone": cleaned_phone}
+
+
+
 @app.get("/health")
 async def health():
     try:
@@ -428,6 +510,28 @@ async def delete_business(business_id: str, user: dict = Depends(get_current_use
     except Exception as e:
         print(f"[Server] Delete error: {e}")
         traceback.print_exc()
+        return {"status": "error", "message": str(e)}
+
+class MetaOAuthRequest(BaseModel):
+    business_id: str
+    meta_access_token: str
+    whatsapp_phone_id: str
+
+@app.post("/business/oauth/meta")
+async def save_meta_oauth_tokens(request: MetaOAuthRequest, user: dict = Depends(get_current_user)):
+    """
+    Saves the tokens retrieved from the Meta Embedded Signup (OAuth) flow directly to the specific business tenant.
+    """
+    try:
+        # First, ensure the business exists
+        persistence_service.upsert_business(
+            business_id=request.business_id, 
+            whatsapp_phone_id=request.whatsapp_phone_id, 
+            meta_access_token=request.meta_access_token
+        )
+        return {"status": "ok", "message": "Successfully linked WhatsApp to Sylon!"}
+    except Exception as e:
+        print(f"[Server] OAuth saving error: {e}")
         return {"status": "error", "message": str(e)}
 
 if __name__ == "__main__":

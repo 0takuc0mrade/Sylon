@@ -30,6 +30,9 @@ export default function Navbar() {
             <Link href="/chat" className={`whitespace-nowrap text-brand-dark dark:text-white/90 hover:text-brand-lightbrown transition-colors ${pathname === '/chat' ? 'font-bold !text-brand-brown' : ''}`}>
               Consult
             </Link>
+            <Link href="/inbox" className={`whitespace-nowrap text-brand-dark dark:text-white/90 hover:text-brand-lightbrown transition-colors ${pathname === '/inbox' ? 'font-bold !text-brand-brown' : ''}`}>
+              Inbox
+            </Link>
             <Link href="/insights" className={`whitespace-nowrap text-brand-dark dark:text-white/90 hover:text-brand-lightbrown transition-colors ${pathname === '/insights' ? 'font-bold !text-brand-brown' : ''}`}>
               Insights
             </Link>

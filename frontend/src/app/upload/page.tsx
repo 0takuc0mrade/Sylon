@@ -43,7 +43,18 @@ function UploadContent() {
   const [result, setResult] = useState<UploadResult | null>(null);
   const [isNavigating, setIsNavigating] = useState(false);
   const [isDataReady, setIsDataReady] = useState(false);
+  const [isMetaModalOpen, setIsMetaModalOpen] = useState(false);
+  const [metaConnecting, setMetaConnecting] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [advancedTokens, setAdvancedTokens] = useState({ phoneId: "", token: "" });
+  
+  // Proxy Routing State
+  const [ownerPhone, setOwnerPhone] = useState("");
+  const [ownerPhoneStatus, setOwnerPhoneStatus] = useState<"idle" | "saving" | "success" | "error">("idle");
+  
   const router = useRouter();
+  
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -140,7 +151,53 @@ function UploadContent() {
     }
   };
 
+  const handleMetaConnect = async () => {
+    setMetaConnecting(true);
+    try {
+      const payload = {
+        business_id: businessId,
+        real_phone_id: showAdvanced ? advancedTokens.phoneId : null,
+        real_access_token: showAdvanced ? advancedTokens.token : null
+      };
+      const res = await fetch(`${API_URL}/business/connect-meta`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        // Success! Hide modal and start the sample data sync automatically to demonstrate the UI
+        setIsMetaModalOpen(false);
+        handleSample();
+      }
+    } catch (error) {
+      console.error("Meta connection failed", error);
+    } finally {
+      setMetaConnecting(false);
+    }
+  };
 
+  const handleSaveOwnerPhone = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!ownerPhone) return;
+    
+    setOwnerPhoneStatus("saving");
+    try {
+      const res = await fetch(`${API_URL}/business/settings/owner-phone`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ business_id: businessId, owner_phone: ownerPhone })
+      });
+      if (res.ok) {
+        setOwnerPhoneStatus("success");
+        setTimeout(() => setOwnerPhoneStatus("idle"), 3000);
+      } else {
+        setOwnerPhoneStatus("error");
+      }
+    } catch (err) {
+      console.error(err);
+      setOwnerPhoneStatus("error");
+    }
+  };
 
   return (
     <div className="w-full max-w-4xl mx-auto p-4 md:p-8 flex flex-col flex-grow animate-in fade-in duration-500">
@@ -152,7 +209,7 @@ function UploadContent() {
       <div className="flex flex-col gap-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
           {/* WhatsApp Card */}
-          <div onClick={handleSample} className="glass-card rounded-3xl p-8 h-full cursor-pointer hover:bg-brand-lightbrown/10 hover:-translate-y-1.5 transition-all duration-300 flex flex-col items-center justify-center border border-brand-dark/10 text-center shadow-md hover:shadow-lg">
+          <div onClick={() => setIsMetaModalOpen(true)} className="glass-card rounded-3xl p-8 h-full cursor-pointer hover:bg-brand-lightbrown/10 hover:-translate-y-1.5 transition-all duration-300 flex flex-col items-center justify-center border border-brand-dark/10 text-center shadow-md hover:shadow-lg">
             <svg className="w-12 h-12 mb-4 text-[#25D366] drop-shadow-sm" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
             <h3 className="font-bold text-brand-dark text-lg">WhatsApp</h3>
             <p className="text-xs text-brand-dark/70 mt-1.5 opacity-80">Sync Chats & Voice Notes</p>
@@ -192,6 +249,47 @@ function UploadContent() {
 
       <div className="flex flex-col gap-8">
 
+
+        {/* Proxy Routing Settings Card */}
+        <div className="glass-card rounded-3xl p-6 md:p-8 border border-brand-dark/10">
+          <div className="flex items-start gap-4 mb-6">
+            <div className="w-10 h-10 rounded-full bg-brand-lightbrown/10 flex items-center justify-center flex-shrink-0">
+              <svg className="w-5 h-5 text-brand-brown" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 0 0 6 3.75v16.5a2.25 2.25 0 0 0 2.25 2.25h7.5A2.25 2.25 0 0 0 18 20.25V3.75a2.25 2.25 0 0 0-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" /></svg>
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-brand-dark dark:text-white mb-1">WhatsApp Approvals</h2>
+              <p className="text-brand-dark/70 dark:text-white/60 text-sm">
+                Enter your personal WhatsApp number. Sylon will send customer requests and draft replies directly to your phone for you to approve.
+              </p>
+            </div>
+          </div>
+          
+          <form onSubmit={handleSaveOwnerPhone} className="flex flex-col sm:flex-row gap-4">
+            <input
+              type="tel"
+              placeholder="+234 800 000 0000"
+              value={ownerPhone}
+              onChange={(e) => setOwnerPhone(e.target.value)}
+              className="flex-1 bg-white/50 dark:bg-black/20 border border-brand-dark/20 dark:border-white/10 rounded-xl px-4 py-3 text-brand-dark dark:text-white placeholder:text-brand-dark/40 focus:outline-none focus:ring-2 focus:ring-brand-lightbrown/50"
+            />
+            <button
+              type="submit"
+              disabled={!ownerPhone || ownerPhoneStatus === "saving"}
+              className="bg-brand-dark text-white hover:bg-brand-brown px-8 py-3 rounded-xl font-bold shadow-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[140px]"
+            >
+              {ownerPhoneStatus === "saving" ? (
+                <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+              ) : ownerPhoneStatus === "success" ? (
+                <span className="flex items-center gap-1"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg> Saved</span>
+              ) : (
+                "Save Number"
+              )}
+            </button>
+          </form>
+          {ownerPhoneStatus === "error" && (
+            <p className="text-red-500 text-sm mt-2">Failed to save phone number. Please try again.</p>
+          )}
+        </div>
 
         {/* Manual Fallback Card */}
         <div className="glass-card rounded-3xl p-6 md:p-8 border border-brand-dark/10">
@@ -299,6 +397,125 @@ function UploadContent() {
              <p className="text-red-600/80 dark:text-red-300/80">{result.message}</p>
           </div>
         )}
+      {isMetaModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-[#1C1E21] w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border border-black/10 dark:border-white/10">
+            {/* Meta Header */}
+            <div className="bg-[#F0F2F5] dark:bg-[#242526] p-4 flex items-center justify-between border-b border-[#CCD0D5] dark:border-[#3E4042]">
+              <div className="flex items-center gap-2">
+                <svg viewBox="0 0 36 36" className="w-8 h-8 text-brand-brown dark:text-brand-lightbrown" fill="currentColor">
+                  <path d="M15 35.8C6.5 34.3 0 26.9 0 18 0 8.1 8.1 0 18 0s18 8.1 18 18c0 8.9-6.5 16.3-15 17.8l-1.1-12.7h-3.9v-5.1h3.9V14c0-3.9 2.4-6 5.8-6 1.7 0 3.1.1 3.5.2v4l-2.4.1c-1.9 0-2.3.9-2.3 2.2v2.9h4.5l-1.3 5.1h-3.2v12.8" />
+                </svg>
+                <span className="font-semibold text-[#1C1E21] dark:text-[#E4E6EB] text-lg">Log in with Facebook</span>
+              </div>
+              <button 
+                onClick={() => setIsMetaModalOpen(false)}
+                className="text-[#606770] dark:text-[#B0B3B8] hover:bg-black/5 dark:hover:bg-white/10 p-2 rounded-full transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+            
+            {/* Modal Body */}
+            <div className="p-8 text-center space-y-6">
+              <div className="flex justify-center -space-x-4 mb-6">
+                <div className="w-16 h-16 rounded-full border-4 border-white dark:border-[#1C1E21] bg-[#25D366] flex items-center justify-center text-white shadow-md z-10">
+                  <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
+                </div>
+                <div className="w-16 h-16 rounded-full border-4 border-white dark:border-[#1C1E21] bg-brand-brown flex items-center justify-center text-white shadow-md relative">
+                  <span className="font-bold text-xl">S</span>
+                </div>
+              </div>
+              
+              <div>
+                <h3 className="text-xl font-bold text-[#1C1E21] dark:text-[#E4E6EB] mb-2">
+                  Connect Sylon AI
+                </h3>
+                <p className="text-[#606770] dark:text-[#B0B3B8] text-sm leading-relaxed">
+                  Sylon is requesting permission to access your WhatsApp Business Account, read incoming messages, and reply automatically.
+                </p>
+              </div>
+              
+              <div className="bg-[#F0F2F5] dark:bg-[#242526] rounded-lg p-4 text-left border border-[#CCD0D5] dark:border-[#3E4042]">
+                <p className="text-[#606770] dark:text-[#B0B3B8] text-xs font-semibold uppercase tracking-wider mb-2">Permissions requested:</p>
+                <ul className="text-sm text-[#1C1E21] dark:text-[#E4E6EB] space-y-2">
+                  <li className="flex items-center gap-2">
+                    <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"/></svg>
+                    Read WhatsApp messages
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"/></svg>
+                    Send messages on behalf of your business
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"/></svg>
+                    Manage WhatsApp profile settings
+                  </li>
+                </ul>
+              </div>
+
+              {/* Developer / Advanced Mode */}
+              <div className="text-left">
+                <button 
+                  onClick={() => setShowAdvanced(!showAdvanced)}
+                  className="text-xs font-semibold text-brand-brown dark:text-brand-lightbrown hover:underline"
+                >
+                  {showAdvanced ? "Hide Developer Settings" : "Developer: Connect Real WhatsApp API"}
+                </button>
+                
+                {showAdvanced && (
+                  <div className="mt-4 p-4 bg-gray-100 dark:bg-black/30 rounded-lg border border-gray-200 dark:border-white/10 space-y-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">WhatsApp Phone Number ID</label>
+                      <input 
+                        type="text" 
+                        value={advancedTokens.phoneId}
+                        onChange={(e) => setAdvancedTokens({...advancedTokens, phoneId: e.target.value})}
+                        className="w-full text-sm p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-black text-black dark:text-white"
+                        placeholder="e.g. 10423984..."
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Meta Permanent Access Token</label>
+                      <input 
+                        type="password" 
+                        value={advancedTokens.token}
+                        onChange={(e) => setAdvancedTokens({...advancedTokens, token: e.target.value})}
+                        className="w-full text-sm p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-black text-black dark:text-white"
+                        placeholder="EAAD..."
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="pt-2">
+                <button
+                  onClick={handleMetaConnect}
+                  disabled={metaConnecting}
+                  className="w-full bg-brand-brown hover:bg-brand-dark text-white font-bold py-3 px-4 rounded-lg shadow-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
+                >
+                  {metaConnecting ? (
+                    <>
+                      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Authenticating...
+                    </>
+                  ) : (
+                    "Continue as Business Owner"
+                  )}
+                </button>
+                <p className="text-xs text-[#606770] dark:text-[#B0B3B8] mt-4">
+                  By clicking continue, you agree to Sylon's Terms of Service and Meta's Platform Data Policy.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       </div>
   );
 }

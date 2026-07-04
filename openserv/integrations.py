@@ -2,13 +2,30 @@ import os
 import requests
 import json
 
-def send_meta_message(platform: str, to_number: str, message_text: str) -> dict:
+def send_meta_message(platform: str, to_number: str, message_text: str, business_id: str = None) -> dict:
     """
     Sends an outgoing message via the Meta Graph API (WhatsApp, Instagram, Facebook).
+    Supports multi-tenancy by fetching the business's specific Meta tokens from the database.
     """
-    # Fallback to demo defaults if env vars are missing
-    access_token = os.environ.get("META_ACCESS_TOKEN", "mock_access_token")
-    phone_id = os.environ.get("WHATSAPP_PHONE_NUMBER_ID", "mock_phone_id")
+    access_token = None
+    phone_id = None
+    
+    if business_id:
+        from openserv.persistence import persistence_service
+        tokens = persistence_service.get_business_meta_tokens(business_id)
+        if tokens:
+            access_token = tokens["meta_access_token"]
+            phone_id = tokens["whatsapp_phone_id"]
+            
+    # Fallback to env vars if DB doesn't have it (for backward compatibility during migration)
+    if not access_token:
+        access_token = os.environ.get("META_ACCESS_TOKEN")
+    if not phone_id:
+        phone_id = os.environ.get("WHATSAPP_PHONE_NUMBER_ID")
+        
+    if not access_token or not phone_id:
+        raise Exception(f"Missing OAuth credentials for business_id: {business_id}. Cannot send WhatsApp message.")
+        
     api_version = "v25.0"
     
     url = f"https://graph.facebook.com/{api_version}/{phone_id}/messages"

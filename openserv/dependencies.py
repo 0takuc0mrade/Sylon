@@ -28,9 +28,7 @@ async def get_current_user(authorization: Optional[str] = Header(None)) -> dict:
     if not token:
         raise HTTPException(status_code=401, detail="Empty token")
     
-    if token == "mock_token":
-        return {"sub": "did:privy:mock_user", "email": "demo@sylon.ai"}
-        
+
     try:
         claims = verify_privy_token(token)
         return claims

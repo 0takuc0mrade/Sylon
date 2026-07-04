@@ -46,10 +46,29 @@ class PersistenceService:
                 state TEXT,
                 location TEXT,
                 metadata_json TEXT,
+                whatsapp_phone_id TEXT,
+                meta_access_token TEXT,
+                owner_phone TEXT,
                 created_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL
             )
             """)
+
+            # Safe migrations for existing demo data
+            try:
+                conn.execute("ALTER TABLE businesses ADD COLUMN whatsapp_phone_id TEXT")
+            except Exception:
+                pass
+                
+            try:
+                conn.execute("ALTER TABLE businesses ADD COLUMN meta_access_token TEXT")
+            except Exception:
+                pass
+
+            try:
+                conn.execute("ALTER TABLE businesses ADD COLUMN owner_phone TEXT")
+            except Exception:
+                pass
 
             conn.execute("""
             CREATE TABLE IF NOT EXISTS business_memories (
@@ -167,7 +186,8 @@ class PersistenceService:
         return datetime.utcnow().isoformat()
 
     def upsert_business(self, business_id: str, name: str = None, description: str = None, 
-                        categories: list = None, location: dict = None, metadata: dict = None):
+                        categories: list = None, location: dict = None, metadata: dict = None,
+                        whatsapp_phone_id: str = None, meta_access_token: str = None):
         with self.get_connection() as conn:
             cursor = conn.execute("SELECT business_id FROM businesses WHERE business_id = ?", (business_id,))
             exists = cursor.fetchone() is not None
@@ -189,15 +209,74 @@ class PersistenceService:
                         state = COALESCE(?, state),
                         location = COALESCE(?, location),
                         metadata_json = COALESCE(?, metadata_json),
+                        whatsapp_phone_id = COALESCE(?, whatsapp_phone_id),
+                        meta_access_token = COALESCE(?, meta_access_token),
                         updated_at = ?
                     WHERE business_id = ?
-                """, (name, description, cat_str, city, state, loc_str, meta_str, now, business_id))
+                """, (name, description, cat_str, city, state, loc_str, meta_str, whatsapp_phone_id, meta_access_token, now, business_id))
             else:
                 conn.execute("""
-                    INSERT INTO businesses (business_id, name, description, categories, city, state, location, metadata_json, created_at, updated_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (business_id, name, description, cat_str, city, state, loc_str, meta_str, now, now))
+                    INSERT INTO businesses (business_id, name, description, categories, city, state, location, metadata_json, whatsapp_phone_id, meta_access_token, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (business_id, name, description, cat_str, city, state, loc_str, meta_str, whatsapp_phone_id, meta_access_token, now, now))
 
+    def get_business_profile(self, business_id: str) -> dict:
+        """Retrieve the business profile context for the AI Decision Engine"""
+        with self.get_connection() as conn:
+            cursor = conn.execute("SELECT name, description, categories, metadata_json FROM businesses WHERE business_id = ?", (business_id,))
+            row = cursor.fetchone()
+            if row:
+                import json
+                try:
+                    metadata = json.loads(row[3]) if row[3] else {}
+                except:
+                    metadata = {}
+                return {
+                    "name": row[0],
+                    "description": row[1],
+                    "categories": row[2],
+                    "policies": metadata.get("policies", "No specific policies defined.")
+                }
+            return None
+
+    def get_business_by_phone_id(self, phone_id: str):
+        """Lookup business_id based on the Meta whatsapp_phone_id"""
+        with self.get_connection() as conn:
+            cursor = conn.execute("SELECT business_id FROM businesses WHERE whatsapp_phone_id = ?", (phone_id,))
+            row = cursor.fetchone()
+            return row[0] if row else None
+
+    def get_business_meta_tokens(self, business_id: str):
+        """Retrieve meta_access_token and whatsapp_phone_id for outbound APIs"""
+        with self.get_connection() as conn:
+            cursor = conn.execute("SELECT whatsapp_phone_id, meta_access_token FROM businesses WHERE business_id = ?", (business_id,))
+            row = cursor.fetchone()
+            if row:
+                return {"whatsapp_phone_id": row[0], "meta_access_token": row[1]}
+            return None
+
+    def save_meta_tokens(self, business_id: str, phone_id: str, access_token: str):
+        """Save the Meta tokens generated from the Embedded Signup flow."""
+        with self.get_connection() as conn:
+            conn.execute(
+                "UPDATE businesses SET whatsapp_phone_id = ?, meta_access_token = ? WHERE business_id = ?",
+                (phone_id, access_token, business_id)
+            )
+
+    def set_owner_phone(self, business_id: str, phone: str):
+        """Save the business owner's personal WhatsApp number for proxy loop routing."""
+        with self.get_connection() as conn:
+            conn.execute(
+                "UPDATE businesses SET owner_phone = ? WHERE business_id = ?",
+                (phone, business_id)
+            )
+
+    def get_owner_phone(self, business_id: str):
+        """Retrieve the business owner's personal WhatsApp number."""
+        with self.get_connection() as conn:
+            cursor = conn.execute("SELECT owner_phone FROM businesses WHERE business_id = ?", (business_id,))
+            row = cursor.fetchone()
+            return row[0] if row else None
     def create_review_batch(self, batch_id: str, business_id: str, source_type: str, review_count: int, checksum: str = None, metadata: dict = None):
         with self.get_connection() as conn:
             conn.execute("""
@@ -280,6 +359,28 @@ class PersistenceService:
                 (business_id, limit)
             ).fetchall()
             return [dict(r) for r in rows]
+    def get_action_items(self, business_id: str) -> list:
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT memory_id as id, business_id, text_content as interaction_text, intent as insight, created_at as timestamp, source 
+            FROM business_memories 
+            WHERE business_id = ? AND source IN ('draft_reply', 'escalation')
+            ORDER BY created_at DESC
+        ''', (business_id,))
+        items = [{"id": row[0], "business_id": row[1], "interaction_text": row[2], "insight": row[3], "timestamp": row[4], "source": row[5]} for row in cursor.fetchall()]
+        conn.close()
+        return items
+
+    def resolve_action_item(self, memory_id: str):
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        # Mark it as resolved so it doesn't show up in the inbox anymore, but keep the history
+        cursor.execute("UPDATE business_memories SET source = source || '_resolved' WHERE memory_id = ?", (memory_id,))
+        conn.commit()
+        conn.close()
+        conn.close()
+
 
     def get_business_dashboard_data(self, business_id: str) -> dict:
         with self.get_connection() as conn:
