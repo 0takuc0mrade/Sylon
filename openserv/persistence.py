@@ -1,27 +1,54 @@
 import sqlite3
 import os
 import json
+import logging
 from datetime import datetime
 from contextlib import contextmanager
 
+try:
+    import psycopg2
+    from psycopg2.extras import RealDictCursor
+except ImportError:
+    psycopg2 = None
+
+logger = logging.getLogger('sylon.persistence')
+
 class PersistenceService:
     def __init__(self):
-        self.db_path = os.environ.get("SYLON_DB_PATH", "data/sylon.db")
-        db_dir = os.path.dirname(self.db_path)
-        if db_dir:
-            os.makedirs(db_dir, exist_ok=True)
+        # Alibaba Cloud RDS takes precedence for production deployment
+        self.rds_url = os.environ.get("ALIBABA_RDS_URL")
+        self.use_rds = bool(self.rds_url and psycopg2)
+        
+        if self.use_rds:
+            logger.info("Connecting to Alibaba Cloud RDS (PostgreSQL)...")
+        else:
+            logger.info("ALIBABA_RDS_URL not found or psycopg2 missing. Falling back to local SQLite.")
+            self.db_path = os.environ.get("SYLON_DB_PATH", "data/sylon.db")
+            db_dir = os.path.dirname(self.db_path)
+            if db_dir:
+                os.makedirs(db_dir, exist_ok=True)
+            
         self.init_db()
 
     @contextmanager
     def get_connection(self):
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
-        conn.execute("PRAGMA foreign_keys = ON")
-        try:
-            yield conn
-        finally:
-            conn.commit()
-            conn.close()
+        """Yields a database connection. Transparently handles Alibaba RDS (Postgres) or Local SQLite."""
+        if self.use_rds:
+            conn = psycopg2.connect(self.rds_url)
+            try:
+                yield conn
+            finally:
+                conn.commit()
+                conn.close()
+        else:
+            conn = sqlite3.connect(self.db_path)
+            conn.row_factory = sqlite3.Row
+            conn.execute("PRAGMA foreign_keys = ON")
+            try:
+                yield conn
+            finally:
+                conn.commit()
+                conn.close()
 
     def get_all_businesses(self) -> list:
         with self.get_connection() as conn:
@@ -366,26 +393,23 @@ class PersistenceService:
             ).fetchall()
             return [dict(r) for r in rows]
     def get_action_items(self, business_id: str) -> list:
-        conn = self.get_connection()
-        cursor = conn.cursor()
-        cursor.execute('''
-            SELECT memory_id as id, business_id, text_content as interaction_text, intent as insight, created_at as timestamp, source, reasoning_trace 
-            FROM business_memories 
-            WHERE business_id = ? AND source IN ('draft_reply', 'escalation')
-            ORDER BY created_at DESC
-        ''', (business_id,))
-        items = [{"id": row[0], "business_id": row[1], "interaction_text": row[2], "insight": row[3], "timestamp": row[4], "source": row[5], "reasoning_trace": row[6]} for row in cursor.fetchall()]
-        conn.close()
-        return items
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT memory_id as id, business_id, text_content as interaction_text, intent as insight, created_at as timestamp, source, reasoning_trace 
+                FROM business_memories 
+                WHERE business_id = ? AND source IN ('draft_reply', 'escalation')
+                ORDER BY created_at DESC
+            ''', (business_id,))
+            items = [{"id": row[0], "business_id": row[1], "interaction_text": row[2], "insight": row[3], "timestamp": row[4], "source": row[5], "reasoning_trace": row[6]} for row in cursor.fetchall()]
+            return items
 
     def resolve_action_item(self, memory_id: str):
-        conn = self.get_connection()
-        cursor = conn.cursor()
-        # Mark it as resolved so it doesn't show up in the inbox anymore, but keep the history
-        cursor.execute("UPDATE business_memories SET source = source || '_resolved' WHERE memory_id = ?", (memory_id,))
-        conn.commit()
-        conn.close()
-        conn.close()
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            # Mark it as resolved so it doesn't show up in the inbox anymore, but keep the history
+            cursor.execute("UPDATE business_memories SET source = source || '_resolved' WHERE memory_id = ?", (memory_id,))
+            conn.commit()
 
 
     def get_business_dashboard_data(self, business_id: str) -> dict:
