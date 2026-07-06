@@ -105,13 +105,13 @@ export default function Insights() {
       </header>
 
       <div className="w-full">
-        <div className="grid grid-cols-3 gap-3 md:gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
           
           {/* Left Column: Signals & Timeline */}
-          <div className="col-span-2 flex flex-col gap-3 md:gap-8">
+          <div className="col-span-1 lg:col-span-2 flex flex-col gap-4 md:gap-8">
             
             {/* Customer Signals */}
-            <div className="grid grid-cols-4 gap-2 md:gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
               <div className="glass-card p-2 md:p-5 rounded-xl md:rounded-2xl flex flex-col justify-center border border-brand-dark/10 shadow-sm">
               <div className="text-[8px] md:text-xs font-bold text-brand-dark/60 uppercase tracking-wider mb-1 md:mb-2 flex flex-col xl:flex-row items-center md:items-start gap-1 md:gap-2 text-center md:text-left"><span className="text-sm md:text-base">📈</span> <span className="leading-tight">Demand Signals</span></div>
               <div className="text-lg md:text-3xl font-bold text-brand-dark text-center md:text-left">{data.signals.demand}</div>
@@ -174,7 +174,7 @@ export default function Insights() {
         <div className="col-span-1 flex flex-col gap-3 md:gap-6">
           
           {/* Daily Summary */}
-          <div className="bg-brand-dark rounded-xl md:rounded-3xl p-4 md:p-6 text-white shadow-lg relative overflow-hidden">
+          <div className="bg-[#2a1c17] dark:bg-black/40 rounded-xl md:rounded-3xl p-4 md:p-6 text-white shadow-lg relative overflow-hidden border border-white/5">
             <div className="absolute -right-5 -top-5 md:-right-10 md:-top-10 w-16 h-16 md:w-32 md:h-32 bg-brand-brown/30 rounded-full blur-xl md:blur-2xl"></div>
             <h2 className="text-[9px] md:text-sm font-bold uppercase tracking-wider text-white/60 mb-2 md:mb-4">Latest Summary</h2>
             <div className="text-xl md:text-3xl font-bold mb-1">Today</div>

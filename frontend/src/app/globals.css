@@ -33,8 +33,8 @@
     --brand-lightbrown: #ffcba4;
     --brand-dark: #f5ece9;
     --brand-glow: #ff5722;
-    --bg-base: #120c0a; /* Obsidian brown */
-    --bg-glow: radial-gradient(ellipse at 50% 40%, #2a1c17 0%, #1a100d 40%, #0d0705 100%);
+    --bg-base: #1f1411; /* Warm dark brown */
+    --bg-glow: radial-gradient(ellipse at 50% 40%, #3a271f 0%, #261914 40%, #160e0a 100%);
 
     /* Orb specific variables */
     --orb-dome-active: inset 0 0 100px rgba(255,100,50,0.6);
