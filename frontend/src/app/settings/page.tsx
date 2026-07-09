@@ -13,7 +13,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     // Attempt to load the business ID from local storage
-    const storedBizId = localStorage.getItem('sylon_business_id') || 'demo_biz';
+    const storedBizId = localStorage.getItem('morlen_business_id') || 'demo_biz';
     setBusinessId(storedBizId);
 
     // Initialize Facebook SDK if available (Requires actual App ID and Config ID from Meta Dashboard)
@@ -77,7 +77,7 @@ export default function SettingsPage() {
       <div className="max-w-2xl mx-auto space-y-8">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-white mb-2">Platform Settings</h1>
-          <p className="text-zinc-400">Manage your Multi-Tenant Sylon integrations.</p>
+          <p className="text-zinc-400">Manage your Multi-Tenant Morlen integrations.</p>
         </div>
 
         {status && (

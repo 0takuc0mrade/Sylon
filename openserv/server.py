@@ -22,7 +22,7 @@ from openserv.dependencies import get_current_user, get_optional_user
 from fastapi.middleware.cors import CORSMiddleware
 from openserv.routers.meta import router as meta_router
 
-app = FastAPI(title="Sylon OpenServ Webhook", description="FastAPI webhook endpoint for ElevenLabs and Meta")
+app = FastAPI(title="Morlen OpenServ Webhook", description="FastAPI webhook endpoint for ElevenLabs and Meta")
 
 app.include_router(meta_router)
 
@@ -57,7 +57,7 @@ class ChatResponse(BaseModel):
 
 @app.get("/")
 async def root():
-    return {"message": "Sylon API is running successfully."}
+    return {"message": "Morlen API is running successfully."}
 
 class ActionApproveRequest(BaseModel):
     edited_text: str | None = None
@@ -110,7 +110,7 @@ async def connect_meta(req: MetaConnectRequest):
     """
     import uuid
     # Use real tokens if provided, otherwise mock them
-    simulated_access_token = req.real_access_token if req.real_access_token else f"EAAD{uuid.uuid4().hex}SylonDemoToken"
+    simulated_access_token = req.real_access_token if req.real_access_token else f"EAAD{uuid.uuid4().hex}MorlenDemoToken"
     simulated_phone_id = req.real_phone_id if req.real_phone_id else f"100{str(uuid.uuid4().int)[:11]}"
     
     # Save securely to the businesses table
@@ -153,7 +153,7 @@ async def health():
 
     return {
         "status": "ok" if database_status == "ok" else "degraded",
-        "service": "sylon-api",
+        "service": "morlen-api",
         "persistence": "sqlite",
         "database": database_status,
     }
@@ -252,7 +252,7 @@ async def demo_chat_endpoint(request: DemoChatRequest):
                 # First message!
                 persistence_service.upsert_business(request.session_id, name="Pending Demo Business", description="")
                 return {
-                    "response": "👋 Welcome to Sylon! I'm your AI Business Operator. To set up your workspace, what is the name of your business?",
+                    "response": "👋 Welcome to Morlen! I'm your AI Business Operator. To set up your workspace, what is the name of your business?",
                     "status": "onboarding"
                 }
             
@@ -276,7 +276,7 @@ async def demo_chat_endpoint(request: DemoChatRequest):
                 with persistence_service.get_connection() as conn:
                     conn.execute("UPDATE businesses SET policies = ? WHERE id = ?", (policies, request.session_id))
                 return {
-                    "response": "Perfect! Your workspace is ready. ✅\n\nNow, let's switch gears. I am now acting as Sylon answering your customers. You can pretend to be a customer messaging your business right now!",
+                    "response": "Perfect! Your workspace is ready. ✅\n\nNow, let's switch gears. I am now acting as Morlen answering your customers. You can pretend to be a customer messaging your business right now!",
                     "status": "ready"
                 }
             else:
@@ -477,7 +477,7 @@ async def upload_reviews(background_tasks: BackgroundTasks, user: dict = Depends
         ingestion_payload = {}
         
         if file.filename.endswith(".csv"):
-            tmp_path = f"/tmp/sylon_upload_{business_id}.csv"
+            tmp_path = f"/tmp/morlen_upload_{business_id}.csv"
             with open(tmp_path, "w") as f:
                 f.write(text)
             ingestion_payload = {"csv_path": tmp_path, "delete_after": True}
@@ -653,7 +653,7 @@ async def save_meta_oauth_tokens(request: MetaOAuthRequest, user: dict = Depends
             whatsapp_phone_id=request.whatsapp_phone_id, 
             meta_access_token=request.meta_access_token
         )
-        return {"status": "ok", "message": "Successfully linked WhatsApp to Sylon!"}
+        return {"status": "ok", "message": "Successfully linked WhatsApp to Morlen!"}
     except Exception as e:
         print(f"[Server] OAuth saving error: {e}")
         return {"status": "error", "message": str(e)}
@@ -688,7 +688,7 @@ async def join_waitlist(req: WaitlistRequest, background_tasks: BackgroundTasks)
         # Send Email Notification in the background
         def send_email_notification():
             resend_api_key = os.environ.get("RESEND_API_KEY")
-            notification_email = os.environ.get("WAITLIST_NOTIFICATION_EMAIL", "hello@sylon.ai")
+            notification_email = os.environ.get("WAITLIST_NOTIFICATION_EMAIL", "hello@morlen.ai")
             if resend_api_key:
                 import requests
                 try:
@@ -696,7 +696,7 @@ async def join_waitlist(req: WaitlistRequest, background_tasks: BackgroundTasks)
                         "https://api.resend.com/emails",
                         headers={"Authorization": f"Bearer {resend_api_key}", "Content-Type": "application/json"},
                         json={
-                            "from": "Sylon Waitlist <onboarding@resend.dev>",
+                            "from": "Morlen Waitlist <onboarding@resend.dev>",
                             "to": [notification_email],
                             "subject": f"🚀 New Waitlist Signup: {req.business_name}",
                             "html": f"""

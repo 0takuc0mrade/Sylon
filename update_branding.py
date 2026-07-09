@@ -1,7 +1,7 @@
 import sys
 
 new_css = """    :root {
-      /* SYLON BRAND AESTHETIC */
+      /* MORLEN BRAND AESTHETIC */
       --bg-gradient: radial-gradient(circle at 50% 0%, #1A1525 0%, #0A0A0F 100%);
       --bg-solid: #0A0A0F;
       
@@ -37,7 +37,7 @@ new_css = """    :root {
       -moz-osx-font-smoothing: grayscale;
     }
 
-    /* Sylon Brand Orb Glow */
+    /* Morlen Brand Orb Glow */
     body::before {
       content: "";
       position: fixed;
@@ -270,8 +270,8 @@ new_css = """    :root {
       line-height: 1.5;
     }
     
-    /* SYLON LOGO WATERMARK */
-    .sylon-watermark {
+    /* MORLEN LOGO WATERMARK */
+    .morlen-watermark {
       position: fixed;
       bottom: 3rem;
       right: 4rem;
@@ -290,7 +290,7 @@ new_css = """    :root {
 slide_6_replacement = """<!-- SLIDE 6: Retention -->
     <section class="slide">
       <header>
-         <div class="slide-kicker">Why businesses keep using Sylon</div>
+         <div class="slide-kicker">Why businesses keep using Morlen</div>
       </header>
       <main class="layout-center" style="padding-top: 2rem;">
         <div class="anim-seq" style="display: flex; align-items: center; justify-content: center; gap: 1rem; width: 100%; max-width: 1400px; margin-top: 2rem;">
@@ -355,8 +355,8 @@ slide_6_pattern = re.compile(r'<!-- SLIDE 6: Retention -->.*?</section>', re.DOT
 html = slide_6_pattern.sub(slide_6_replacement, html)
 
 # Inject the watermark logo right before the closing body tag
-watermark = '\n  <div class="sylon-watermark">SYLON</div>\n'
-if 'sylon-watermark' not in html:
+watermark = '\n  <div class="morlen-watermark">MORLEN</div>\n'
+if 'morlen-watermark' not in html:
     html = html.replace('</body>', watermark + '</body>')
 
 with open('/Users/ikhaisoshuare/Cascade/presentation.html', 'w') as f:

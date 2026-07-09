@@ -1,7 +1,7 @@
 import sqlite3
 import os
 
-db_path = os.environ.get("SYLON_DB_PATH", "data/sylon.db")
+db_path = os.environ.get("MORLEN_DB_PATH", "data/morlen.db")
 
 if not os.path.exists(db_path):
     print(f"Database not found at {db_path}. Please seed it first.")
@@ -10,7 +10,7 @@ if not os.path.exists(db_path):
 conn = sqlite3.connect(db_path)
 conn.row_factory = sqlite3.Row
 
-print(" Sylon SQLite DB Inspector")
+print(" Morlen SQLite DB Inspector")
 
 tables = ["businesses", "review_batches", "reviews", "painpoint_snapshots", "personas", "collision_logs", "recommendation_logs"]
 

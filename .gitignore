@@ -268,11 +268,11 @@ pinggy2.log
 
 # Presentation and Pitch Deck Assets
 presentation.html
-Sylon_Pitch_Deck*
+Morlen_Pitch_Deck*
 convert.py
 process_logo.py
 record_deck.py
-sylon_logo_transparent.png
+morlen_logo_transparent.png
 
 # Frontend Environment
 frontend/.env.local

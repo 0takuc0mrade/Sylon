@@ -11,7 +11,7 @@ from agents.embeddings import precompute_embeddings
 
 def main():
     print("=" * 60)
-    print("  SYLON EMBEDDING PRECOMPUTATION")
+    print("  MORLEN EMBEDDING PRECOMPUTATION")
     print("  Model: all-MiniLM-L6-v2 (CPU, zero API credits)")
     print("=" * 60)
     

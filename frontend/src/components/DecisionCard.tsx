@@ -28,7 +28,7 @@ export default function DecisionCard({ content, timestamp }: { content: string, 
         </div>
         <div className="flex-1">
           <h4 className="font-bold text-sm text-brand-dark dark:text-brand-lightbrown tracking-wide uppercase">Scenario Simulation</h4>
-          <p className="text-xs text-brand-dark/70 dark:text-gray-400 font-medium">Sylon Strategic Insight</p>
+          <p className="text-xs text-brand-dark/70 dark:text-gray-400 font-medium">Morlen Strategic Insight</p>
         </div>
         {timestamp && (
           <div className="text-[10px] text-brand-dark/50 dark:text-gray-500 font-semibold self-start mt-1">
@@ -40,7 +40,7 @@ export default function DecisionCard({ content, timestamp }: { content: string, 
       {/* Content Body */}
       <div className="p-5 sm:p-6 bg-white/50 dark:bg-gray-900/50 backdrop-blur-md">
         <div className="text-brand-dark dark:text-gray-200 text-sm sm:text-base font-medium">
-          <MarkdownText text={content.replace(/SCENARIO SIMULATION\nSylon (Mathematical Projection|Strategic Insight)\n\n?/gi, '')} />
+          <MarkdownText text={content.replace(/SCENARIO SIMULATION\nMorlen (Mathematical Projection|Strategic Insight)\n\n?/gi, '')} />
         </div>
       </div>
 

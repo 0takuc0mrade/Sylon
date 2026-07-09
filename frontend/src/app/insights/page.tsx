@@ -33,7 +33,7 @@ export default function Insights() {
 
   useEffect(() => {
     const fetchDashboard = async () => {
-      const businessId = localStorage.getItem("sylon_business_id");
+      const businessId = localStorage.getItem("morlen_business_id");
       if (!businessId) {
         setError("No business data found. Please ingest data first.");
         setLoading(false);
@@ -68,7 +68,7 @@ export default function Insights() {
   if (loading) {
     return (
       <div className="max-w-6xl mx-auto p-4 md:p-8 flex items-center justify-center min-h-[calc(100dvh-120px)] animate-in fade-in">
-        <div className="text-xl font-bold text-brand-dark dark:text-white animate-pulse">Syncing with Sylon Database...</div>
+        <div className="text-xl font-bold text-brand-dark dark:text-white animate-pulse">Syncing with Morlen Database...</div>
       </div>
     );
   }
@@ -200,7 +200,7 @@ export default function Insights() {
             <h2 className="text-sm md:text-lg font-bold text-brand-dark mb-2 md:mb-4 flex items-center gap-1 md:gap-2">
               <span>🔮</span> Pattern Discovery
             </h2>
-            <p className="text-[9px] md:text-xs font-bold text-brand-dark/50 uppercase mb-2 md:mb-4">Sylon Noticed...</p>
+            <p className="text-[9px] md:text-xs font-bold text-brand-dark/50 uppercase mb-2 md:mb-4">Morlen Noticed...</p>
             <ul className="space-y-2 md:space-y-4">
               <li className="flex items-start gap-1.5 md:gap-3">
                 <div className="text-xs md:text-lg mt-0.5">⚠️</div>

@@ -50,7 +50,7 @@ export default function EtherealOrb({ onTranscription, isMobile }: { onTranscrip
       if (onTranscription && message.message) {
         const text = message.message;
         // The default greeting from the system prompt ruins the chat flow, so we filter it out if it appears
-        if (text.includes("I'm Sylon, your business strategist. Tell me what you're thinking")) return;
+        if (text.includes("I'm Morlen, your business strategist. Tell me what you're thinking")) return;
 
         // Ensure robust source mapping (ElevenLabs might use 'ai', 'agent', etc.)
         const role = message.source === 'user' ? 'user' : 'assistant';
@@ -62,9 +62,9 @@ export default function EtherealOrb({ onTranscription, isMobile }: { onTranscrip
       // Silently handle to prevent UI crash
     },
     clientTools: {
-      get_sylon_strategy: async (parameters: any) => {
+      get_morlen_strategy: async (parameters: any) => {
         try {
-          const businessId = localStorage.getItem('sylon_business_id');
+          const businessId = localStorage.getItem('morlen_business_id');
           if (!businessId) return "Tell the user they need to upload sample data first.";
           
           const token = await getAccessToken();
@@ -76,7 +76,7 @@ export default function EtherealOrb({ onTranscription, isMobile }: { onTranscrip
             headers['Authorization'] = `Bearer ${token}`;
           }
           
-          // Call our backend Sylon orchestrator!
+          // Call our backend Morlen orchestrator!
           const res = await fetch('/api/chat', {
             method: 'POST',
             headers,
@@ -86,7 +86,7 @@ export default function EtherealOrb({ onTranscription, isMobile }: { onTranscrip
             })
           });
           const data = await res.json();
-          console.log("Sylon Response to Voice Agent:", data.response);
+          console.log("Morlen Response to Voice Agent:", data.response);
           return data.response; // This string goes straight into the Voice Agent's brain!
         } catch (err) {
           console.error("Client tool error:", err);
@@ -352,12 +352,12 @@ export default function EtherealOrb({ onTranscription, isMobile }: { onTranscrip
         {isVoiceOffline ? (
            <span className="flex items-center gap-3 text-white/80 font-semibold text-xs text-center leading-tight">
              <span className="w-2.5 h-2.5 rounded-full bg-red-400/80 shadow-[0_0_8px_rgba(248,113,113,0.5)]"></span>
-             Voice agent offline. Please engage Sylon via Text Chat.
+             Voice agent offline. Please engage Morlen via Text Chat.
            </span>
         ) : status === 'connected' ? (
            <span className="flex items-center gap-3">
              <span className="w-3 h-3 rounded-full bg-green-400 animate-pulse shadow-[0_0_8px_rgba(74,222,128,0.8)]"></span>
-             {isSpeaking ? 'Sylon is speaking...' : 'Sylon is listening...'}
+             {isSpeaking ? 'Morlen is speaking...' : 'Morlen is listening...'}
            </span>
         ) : status === 'connecting' ? (
            <span className="flex items-center gap-3">

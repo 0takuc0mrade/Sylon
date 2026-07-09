@@ -94,7 +94,7 @@ export default function PitchDeck() {
         <div className={`absolute inset-0 flex flex-col items-center justify-center slide-0 ${currentSlide === 0 ? 'pointer-events-auto' : 'pointer-events-none'}`}>
           <div className="slide-content text-center max-w-5xl">
             <h1 className="text-7xl md:text-8xl font-black tracking-tight mb-8 text-transparent bg-clip-text bg-gradient-to-br from-white to-white/60">
-              Sylon
+              Morlen
             </h1>
             <p className="text-3xl md:text-4xl font-medium text-[#ffcba4] tracking-tight">
               Behavioral Intelligence for Better Business Decisions
@@ -148,7 +148,7 @@ export default function PitchDeck() {
         {/* SLIDE 2: How It Works */}
         <div className={`absolute inset-0 flex flex-col items-center justify-center slide-2 ${currentSlide === 2 ? 'pointer-events-auto' : 'pointer-events-none'}`}>
           <div className="slide-content text-center w-full max-w-7xl px-8">
-            <h2 className="text-5xl md:text-6xl font-bold mb-20 tracking-tight">How Sylon Works</h2>
+            <h2 className="text-5xl md:text-6xl font-bold mb-20 tracking-tight">How Morlen Works</h2>
             
             <div className="flex items-center justify-between w-full relative">
               <div className="absolute left-0 right-0 top-1/2 h-1 bg-white/5 -translate-y-1/2 z-0" />
@@ -235,7 +235,7 @@ export default function PitchDeck() {
         {/* SLIDE 5: Roadmap */}
         <div className={`absolute inset-0 flex flex-col items-center justify-center slide-5 ${currentSlide === 5 ? 'pointer-events-auto' : 'pointer-events-none'}`}>
           <div className="slide-content text-center w-full max-w-5xl">
-            <h2 className="text-5xl md:text-6xl font-bold mb-16 tracking-tight text-left">Where Sylon Goes Next</h2>
+            <h2 className="text-5xl md:text-6xl font-bold mb-16 tracking-tight text-left">Where Morlen Goes Next</h2>
             
             <div className="flex flex-col gap-8 text-left pl-8 border-l-2 border-white/10 relative">
               <div className="stagger-item relative">
@@ -270,7 +270,7 @@ export default function PitchDeck() {
             <h2 className="text-7xl font-bold text-white/20 stagger-item tracking-tight">Smarter businesses.</h2>
             
             <div className="mt-24 text-2xl font-black tracking-[0.3em] text-[#ff5722] stagger-item">
-              SYLON
+              MORLEN
             </div>
           </div>
         </div>

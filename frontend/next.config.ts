@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-const apiUrl = process.env.SYLON_API_URL || "https://sylon.onrender.com";
+const apiUrl = process.env.MORLEN_API_URL || "https://morlen.onrender.com";
 
 const nextConfig: NextConfig = {
   output: 'standalone',

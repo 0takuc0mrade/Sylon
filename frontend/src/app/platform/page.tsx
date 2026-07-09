@@ -26,10 +26,10 @@ export default function Platform() {
       <div className="absolute top-[10%] left-[10%] w-[80%] h-[80%] bg-brand-lightbrown/10 blur-[150px] rounded-full pointer-events-none z-[-1]" />
 
       <header ref={headerRef} className="mb-16 pt-12 text-center max-w-4xl mx-auto">
-        <div className="inline-block px-5 py-1.5 rounded-full bg-brand-lightbrown/10 border border-brand-brown/20 text-brand-brown text-sm font-bold mb-6 tracking-wide uppercase">Why Sylon?</div>
+        <div className="inline-block px-5 py-1.5 rounded-full bg-brand-lightbrown/10 border border-brand-brown/20 text-brand-brown text-sm font-bold mb-6 tracking-wide uppercase">Why Morlen?</div>
         <h1 className="page-heading text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">Behavioral Intelligence<br />That Actually Works.</h1>
         <p className="text-xl text-brand-dark/70 dark:text-white/60 font-medium leading-relaxed">
-          Regular AI gives you generic advice based on internet averages. Sylon reads the context driven reviews of your actual customers and simulates their reactions before you make a decision.
+          Regular AI gives you generic advice based on internet averages. Morlen reads the context driven reviews of your actual customers and simulates their reactions before you make a decision.
         </p>
       </header>
 
@@ -43,7 +43,7 @@ export default function Platform() {
           </div>
           <h2 className="text-3xl font-bold text-brand-dark dark:text-white mb-4">Grounded Reality</h2>
           <p className="text-brand-dark/70 dark:text-white/60 leading-relaxed text-lg">
-            Sylon is strictly grounded in your business's raw data using your actual reviews to excavate accurate customer archetypes.
+            Morlen is strictly grounded in your business's raw data using your actual reviews to excavate accurate customer archetypes.
           </p>
         </div>
 
@@ -56,7 +56,7 @@ export default function Platform() {
           </div>
           <h2 className="text-3xl font-bold text-brand-dark dark:text-white mb-4">Temporal Drift</h2>
           <p className="text-brand-dark/70 dark:text-white/60 leading-relaxed text-lg">
-            Customers aren't static. Sylon maps how their desires evolve over time, allowing you to catch shifts in sentiment before they impact revenue.
+            Customers aren't static. Morlen maps how their desires evolve over time, allowing you to catch shifts in sentiment before they impact revenue.
           </p>
         </div>
 
@@ -69,7 +69,7 @@ export default function Platform() {
           </div>
           <h2 className="text-3xl font-bold text-brand-dark dark:text-white mb-4">Live Simulation</h2>
           <p className="text-brand-dark/70 dark:text-white/60 leading-relaxed text-lg">
-            Consult the Sylon Oracle in real-time. Pitch an idea, and listen as Sylon simulates exactly how your key archetypes will react to the change.
+            Consult the Morlen Oracle in real-time. Pitch an idea, and listen as Morlen simulates exactly how your key archetypes will react to the change.
           </p>
         </div>
       </div>

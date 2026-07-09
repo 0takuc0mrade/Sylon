@@ -24,7 +24,7 @@ type ChatResponse = {
   board_debate?: any | null;
 };
 
-const BUSINESS_ID_STORAGE_KEY = 'sylon_business_id';
+const BUSINESS_ID_STORAGE_KEY = 'morlen_business_id';
 
 export default function Chat() {
   return (
@@ -71,7 +71,7 @@ function ChatContent() {
     const initChat = async () => {
       initializedFor.current = businessId;
       if (!businessId) {
-        setMessages([{ role: 'assistant', content: 'I am Sylon, your premium business strategist. Please ingest data first to unlock my full potential.' }]);
+        setMessages([{ role: 'assistant', content: 'I am Morlen, your premium business strategist. Please ingest data first to unlock my full potential.' }]);
         return;
       }
 
@@ -108,7 +108,7 @@ function ChatContent() {
           ]);
         }
       } catch {
-        setMessages([{ role: 'assistant', content: 'I am Sylon, your premium business strategist. How can I assist you?' }]);
+        setMessages([{ role: 'assistant', content: 'I am Morlen, your premium business strategist. How can I assist you?' }]);
       } finally {
         setLoading(false);
       }
@@ -194,7 +194,7 @@ function ChatContent() {
       });
       setBusinessId(null);
       localStorage.removeItem(BUSINESS_ID_STORAGE_KEY);
-      setMessages([{ role: 'assistant', content: 'I am Sylon, your premium business strategist. Session cleared. Please ingest new data to begin.' }]);
+      setMessages([{ role: 'assistant', content: 'I am Morlen, your premium business strategist. Session cleared. Please ingest new data to begin.' }]);
     } catch (err) {
       console.error("Failed to clear session:", err);
       alert("Failed to clear session.");
@@ -226,7 +226,7 @@ function ChatContent() {
       <div className="w-full md:w-[45%] flex flex-col flex-1 md:flex-initial min-h-[600px]">
         <header className="mb-4 md:mb-6 pt-14 md:pt-0 flex-shrink-0 flex justify-between items-start relative z-10">
           <div>
-            <h1 className="page-heading text-2xl sm:text-3xl md:text-4xl font-bold mb-1 md:mb-2">Sylon Cognitive Core</h1>
+            <h1 className="page-heading text-2xl sm:text-3xl md:text-4xl font-bold mb-1 md:mb-2">Morlen Cognitive Core</h1>
             <p className="page-subtitle font-medium text-sm md:text-base">Simulate changes, ask for recommendations, or discuss strategy.</p>
           </div>
         </header>
@@ -258,7 +258,7 @@ function ChatContent() {
                   {m.board_debate && <BoardDebateCard debate={m.board_debate} />}
                 </div>
                 <div className={`text-xs mt-1 font-semibold flex items-center gap-2 ${m.role === 'user' ? 'justify-end text-brand-dark dark:text-white/50' : 'justify-start text-brand-dark dark:text-white/50'}`}>
-                  <span>{m.role === 'user' ? 'You' : 'Sylon'}</span>
+                  <span>{m.role === 'user' ? 'You' : 'Morlen'}</span>
                   {m.timestamp && (
                     <span className="opacity-60 font-normal text-[10px]">
                       {new Date(m.timestamp.endsWith('Z') ? m.timestamp : m.timestamp + 'Z').toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

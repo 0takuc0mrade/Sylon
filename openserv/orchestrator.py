@@ -37,7 +37,7 @@ load_dotenv()
 import logging
 from datetime import datetime
 
-logger = logging.getLogger('sylon')
+logger = logging.getLogger('morlen')
 logger.setLevel(logging.INFO)
 if not logger.handlers:
     handler = logging.StreamHandler()
@@ -291,13 +291,13 @@ def direct_chat_strategist(user_input: str, business_id: str) -> str:
 The business owner said: "{user_input}"
 {context}
 This is a general question or greeting—NOT a business scenario to simulate.
-Respond conversationally as Sylon, a premium business strategist.
+Respond conversationally as Morlen, a premium business strategist.
 Briefly explain what you can do if they ask, or respond naturally to their greeting.
 Keep it to 2-3 sentences max."""
 
     return call_cerebras(
         prompt=prompt,
-        system_prompt="You are Sylon, a premium business strategist. Be conversational and precise.",
+        system_prompt="You are Morlen, a premium business strategist. Be conversational and precise.",
         temperature=0.7,
         max_tokens=400,
         model_override=QWEN_FAST_MODEL,
@@ -323,7 +323,7 @@ Keep it practical and specific. 3-5 concise sentences."""
 
     return call_cerebras(
         prompt=prompt,
-        system_prompt="You are Sylon, a premium business strategist. Be conversational, practical, and specific.",
+        system_prompt="You are Morlen, a premium business strategist. Be conversational, practical, and specific.",
         temperature=0.6,
         max_tokens=700,
         model_override=QWEN_FAST_MODEL,
@@ -441,7 +441,7 @@ def run_simulation(user_input: str, business_id: str):
             business_id=business_id,
             business_description=business_description,
             location=location,
-            persona_count=int(os.environ.get("SYLON_PERSONA_COUNT", "1")),
+            persona_count=int(os.environ.get("MORLEN_PERSONA_COUNT", "1")),
         )
 
         if personas:
@@ -466,7 +466,7 @@ def run_simulation(user_input: str, business_id: str):
                     print(f"  [Simulator] Collision failed for {persona['name']}: {e}")
 
     if not all_collisions:
-        persona_count = int(os.environ.get("SYLON_PERSONA_COUNT", "1"))
+        persona_count = int(os.environ.get("MORLEN_PERSONA_COUNT", "1"))
         print(f"[Archaeologist] Phase 1: Generating {persona_count} synthetic archetype(s)...")
         synthetic_personas = tool_generate_synthetic_personas(
             business_description=business_description,
@@ -653,7 +653,7 @@ Return strictly valid JSON with this exact shape:
 
     result = call_cerebras_json(
         prompt=prompt,
-        system_prompt="You are Sylon's decision comparison engine. Output valid JSON only, grounded in the supplied simulation results.",
+        system_prompt="You are Morlen's decision comparison engine. Output valid JSON only, grounded in the supplied simulation results.",
         temperature=0.3,
         max_tokens=1800,
         model_override=QWEN_REASONING_MODEL,
@@ -680,7 +680,7 @@ def run_scenario_comparison(user_input: str, business_id: str) -> dict:
         business_id=business_id,
         business_description=business_description,
         location=location,
-        persona_count=min(2, int(os.environ.get("SYLON_PERSONA_COUNT", "2"))),
+        persona_count=min(2, int(os.environ.get("MORLEN_PERSONA_COUNT", "2"))),
     )
 
     # [HACKATHON HOTFIX] Bypass massive LLM comparison loop to guarantee instant chat on free tier
@@ -834,7 +834,7 @@ def process_user_scenario(user_input: str, business_id: str = "default", descrip
 
 def main():
     import uuid
-    print("Sylon Strategist Initialization...")
+    print("Morlen Strategist Initialization...")
     print("Loaded local persona profile.")
     print("Type 'exit' to quit.\n")
     
@@ -846,7 +846,7 @@ def main():
             break
 
         final_response = process_user_scenario(user_input, business_id=cli_business_id)
-        print(f"Sylon: {final_response}\n")
+        print(f"Morlen: {final_response}\n")
 
 if __name__ == "__main__":
     main()

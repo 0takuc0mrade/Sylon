@@ -1,4 +1,4 @@
-# Local Embedding Engine for Sylon
+# Local Embedding Engine for Morlen
 # Uses sentence-transformers (all-MiniLM-L6-v2) for zero-cost, CPU-based embeddings.
 # Provides two-stage retrieval: fast embedding similarity and LLM behavioral reranking.
 

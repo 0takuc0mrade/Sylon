@@ -132,17 +132,17 @@ export default function Home() {
             ref={subTextRef}
             className="text-lg sm:text-xl md:text-2xl text-brand-dark mb-4 font-semibold opacity-0"
           >
-            You see a customer. Sylon sees a person.
+            You see a customer. Morlen sees a person.
           </p>
           <p className="text-brand-dark/80 max-w-2xl mb-8 text-sm sm:text-base">
-            Sylon learns from customer reviews, conversations and business data to help you make smarter decisions before they become expensive mistakes.
+            Morlen learns from customer reviews, conversations and business data to help you make smarter decisions before they become expensive mistakes.
           </p>
           <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto px-4 sm:px-0">
             <button
               onClick={() => {
                 if (typeof window !== 'undefined') {
-                  localStorage.setItem('sylon_demo_mode', 'true');
-                  localStorage.setItem('sylon_business_id', 'demo_fvv203o');
+                  localStorage.setItem('morlen_demo_mode', 'true');
+                  localStorage.setItem('morlen_business_id', 'demo_fvv203o');
                 }
                 router.push('/upload');
               }}
@@ -221,7 +221,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between text-xs text-brand-dark font-medium">
           {/* Logo */}
           <div className="mb-4 md:mb-0">
-            <span className="text-xl font-bold tracking-wider text-brand-brown">SYLON</span>
+            <span className="text-xl font-bold tracking-wider text-brand-brown">MORLEN</span>
           </div>
           {/* Footer Links */}
           <div className="flex space-x-6 mb-4 md:mb-0">
@@ -232,7 +232,7 @@ export default function Home() {
           </div>
           {/* Copyright */}
           <div>
-            © 2026 Sylon Behavioral Intelligence. All rights reserved.
+            © 2026 Morlen Behavioral Intelligence. All rights reserved.
           </div>
         </div>
       </footer>

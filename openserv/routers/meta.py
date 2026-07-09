@@ -88,7 +88,7 @@ def process_whatsapp_message(entry: dict):
                             VALUES (?, ?, ?, ?, ?)
                         """, (memory_id, business_id, "whatsapp_inbound", formatted_content, created_at))
                 except Exception as e:
-                    print(f"[Sylon Meta Ingest Error] Failed to store memory: {e}")
+                    print(f"[Morlen Meta Ingest Error] Failed to store memory: {e}")
 
                 # 2. Pipe it into the new Customer Decision Engine
                 try:

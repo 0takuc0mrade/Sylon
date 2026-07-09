@@ -17,7 +17,7 @@ export default function Dashboard() {
   }
 
   // Extract best available name
-  const displayName = user?.email?.address?.split("@")[0] || (user as any)?.google?.name || "Sylon User";
+  const displayName = user?.email?.address?.split("@")[0] || (user as any)?.google?.name || "Morlen User";
   const displayEmail = user?.email?.address || (user as any)?.google?.email || "No email provided";
 
   return (

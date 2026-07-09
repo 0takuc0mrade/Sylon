@@ -1,9 +1,9 @@
 # Alibaba Cloud Deployment & Architecture
 
-This document serves as proof of Sylon OS's integration with Alibaba Cloud services, as mandated by the Global AI Hackathon Series with Qwen Cloud.
+This document serves as proof of Morlen OS's integration with Alibaba Cloud services, as mandated by the Global AI Hackathon Series with Qwen Cloud.
 
 ## 1. Core Intelligence: Alibaba Cloud DashScope (Qwen API)
-Sylon OS is not a wrapper around standard LLMs. Our entire Multi-Agent Decision Engine is natively built on **Alibaba Cloud's DashScope API**, leveraging the advanced reasoning capabilities of `qwen-max` and `qwen-plus`. 
+Morlen OS is not a wrapper around standard LLMs. Our entire Multi-Agent Decision Engine is natively built on **Alibaba Cloud's DashScope API**, leveraging the advanced reasoning capabilities of `qwen-max` and `qwen-plus`. 
 
 The system utilizes highly concurrent, specialized agents (CFO, CX, Ops) that debate scenarios in real-time. This is achieved via our custom `llm_client.py` integration:
 
@@ -24,7 +24,7 @@ QWEN_REASONING_MODEL = "qwen-max"
 ```
 
 ## 2. Persistence Layer: Alibaba Cloud RDS Architecture
-Sylon OS is engineered for production enterprise use. Our persistent memory graph is designed to run on **Alibaba Cloud RDS (PostgreSQL)**. 
+Morlen OS is engineered for production enterprise use. Our persistent memory graph is designed to run on **Alibaba Cloud RDS (PostgreSQL)**. 
 
 Our `persistence.py` engine automatically detects the Alibaba RDS environment and initializes `psycopg2` to establish a secure connection for state management:
 

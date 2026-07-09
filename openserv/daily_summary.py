@@ -46,7 +46,7 @@ def generate_and_send_daily_summary():
         ])
         
         system_prompt = """
-        You are Sylon, an AI Business Operator. 
+        You are Morlen, an AI Business Operator. 
         Analyze the provided daily log of business interactions and generate a concise, professional evening summary for the business owner.
         
         Your summary MUST include:

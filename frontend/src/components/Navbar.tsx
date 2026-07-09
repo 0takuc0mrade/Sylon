@@ -20,7 +20,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto w-full flex items-center justify-between gap-4">
         {/* Logo */}
         <Link href="/" className="flex-shrink-0 hover:opacity-80 transition-opacity text-xl md:text-2xl font-bold tracking-wider text-brand-brown">
-          SYLON
+          MORLEN
         </Link>
 
         {/* Desktop Navigation */}

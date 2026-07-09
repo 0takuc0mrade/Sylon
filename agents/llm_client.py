@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 
 load_dotenv(os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env"))
 
-logger = logging.getLogger('sylon.llm')
+logger = logging.getLogger('morlen.llm')
 logger.setLevel(logging.INFO)
 if not logger.handlers:
     handler = logging.StreamHandler()
@@ -18,6 +18,9 @@ try:
     from openai import OpenAI
 except ImportError:
     OpenAI = None
+
+import httpx
+from fastapi import HTTPException
 
 DASHSCOPE_API_KEY = os.environ.get("DASHSCOPE_API_KEY", "")
 
@@ -83,6 +86,37 @@ def call_llm(prompt: str, system_prompt: str = "You are a helpful assistant.", t
         logger.error(f"[QWEN] Call failed: {e}")
         raise e
 
+async def call_qwen_agent(agent_role: str, prompt: str, context: dict = None) -> dict:
+    dashscope_api_key = os.environ.get("DASHSCOPE_API_KEY", "")
+    url = os.environ.get("QWEN_BASE_URL", "https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions")
+    
+    headers = {
+        "Authorization": f"Bearer {dashscope_api_key}",
+        "Content-Type": "application/json"
+    }
+    
+    context_str = str(context) if context else "No context."
+    payload = {
+        "model": QWEN_FAST_MODEL if agent_role != "synthesizer" else QWEN_REASONING_MODEL,
+        "messages": [
+            {"role": "system", "content": f"You are the Morlen OS {agent_role.upper()} Agent."},
+            {"role": "user", "content": f"Context: {context_str}. Command: {prompt}"}
+        ],
+        "temperature": 0.7
+    }
+
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        try:
+            response = await client.post(url, json=payload, headers=headers)
+            if response.status_code != 200:
+                raise HTTPException(status_code=502, detail=f"Qwen API {agent_role} failed")
+            
+            data = response.json()
+            return data["choices"][0]["message"]["content"]
+        except Exception as e:
+            logger.error(f"[QWEN ASYNC] Call failed for {agent_role}: {e}")
+            raise e
+
 
 @retry_with_backoff
 def call_cerebras(prompt: str, system_prompt: str = None, model_override: str = None, **kwargs) -> str:
@@ -137,7 +171,7 @@ def call_cerebras_json(prompt: str, system_prompt: str = None, temperature: floa
 
 @retry_with_backoff
 def call_gemini_structured(prompt: str, response_schema=None) -> str:
-    if os.environ.get("SYLON_DEBUG_MODE") == "True":
+    if os.environ.get("MORLEN_DEBUG_MODE") == "True":
         return "CHAT"
 
     # Previously used Gemini, now routes to Qwen JSON and stringifies

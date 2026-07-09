@@ -3,7 +3,7 @@ import sys
 html_content = """<!-- SLIDE 1: Vision -->
     <section class="slide active">
       <div class="layout-center">
-        <h1 class="headline" style="font-size: 8rem; letter-spacing: -0.04em;">Sylon</h1>
+        <h1 class="headline" style="font-size: 8rem; letter-spacing: -0.04em;">Morlen</h1>
         <p class="subhead" style="font-size: 2.5rem; margin-top: 1rem; color: var(--text);">Behavioral Intelligence for Better Business Decisions</p>
         <div style="position: absolute; bottom: 4rem; width: 100%; text-align: center;">
             <p style="font-family: 'Inter', sans-serif; font-size: 1.4rem; color: var(--text-muted);">Transforming customer interactions into business intelligence.</p>
@@ -78,7 +78,7 @@ html_content = """<!-- SLIDE 1: Vision -->
     <!-- SLIDE 4: Solution -->
     <section class="slide">
       <header>
-         <div class="slide-kicker">Meet Sylon</div>
+         <div class="slide-kicker">Meet Morlen</div>
       </header>
       <main class="layout-center" style="padding-top: 4rem;">
         <div class="flow-diagram anim-seq" style="padding-top: 2rem; width: 100%; justify-content: space-between;">
@@ -92,7 +92,7 @@ Sales
 Business Notes</div>
           </div>
           <div class="flow-step" style="flex: 1;">
-            <div class="flow-title" style="color: var(--accent);">Sylon</div>
+            <div class="flow-title" style="color: var(--accent);">Morlen</div>
             <div class="flow-desc">Business Memory</div>
           </div>
           <div class="flow-step" style="flex: 1;">
@@ -109,7 +109,7 @@ Business Notes</div>
           </div>
         </div>
         <div style="position: absolute; bottom: 4rem; width: 100%; text-align: center;">
-            <p style="font-family: 'Inter', sans-serif; font-size: 1.8rem; color: var(--text-muted);">Sylon learns how a business behaves over time.</p>
+            <p style="font-family: 'Inter', sans-serif; font-size: 1.8rem; color: var(--text-muted);">Morlen learns how a business behaves over time.</p>
         </div>
       </main>
     </section>
@@ -121,20 +121,20 @@ Business Notes</div>
       </main>
     </section>
 
-    <!-- SLIDE 6: Why Sylon? -->
+    <!-- SLIDE 6: Why Morlen? -->
     <section class="slide">
       <header>
          <div class="slide-kicker">Competitive Advantage</div>
       </header>
       <main class="layout-center" style="align-items: flex-start; text-align: left; padding-top: 2rem;">
-        <h2 class="headline" style="font-size: 4rem; margin-bottom: 3rem;">Why Sylon Wins</h2>
+        <h2 class="headline" style="font-size: 4rem; margin-bottom: 3rem;">Why Morlen Wins</h2>
         <div class="anim-seq" style="width: 100%;">
           <table style="width: 100%; text-align: left; border-collapse: collapse; font-family: 'Inter', sans-serif; font-size: 1.3rem;">
             <thead>
               <tr style="border-bottom: 1px solid var(--border-highlight); color: var(--text);">
                 <th style="padding: 1.5rem 1rem; font-weight: 600;">Traditional CRM</th>
                 <th style="padding: 1.5rem 1rem; font-weight: 600;">ChatGPT</th>
-                <th style="padding: 1.5rem 1rem; font-weight: 600; color: var(--accent);">Sylon</th>
+                <th style="padding: 1.5rem 1rem; font-weight: 600; color: var(--accent);">Morlen</th>
               </tr>
             </thead>
             <tbody style="color: var(--text-muted);">
@@ -175,7 +175,7 @@ Business Notes</div>
       </header>
       <main class="layout-asymmetric" style="gap: 6rem; padding-top: 2rem;">
         <div>
-          <h2 class="headline" style="font-size: 4rem; line-height: 1.1;">How does Sylon<br/><em>make money?</em></h2>
+          <h2 class="headline" style="font-size: 4rem; line-height: 1.1;">How does Morlen<br/><em>make money?</em></h2>
           <div class="flow-diagram anim-seq" style="flex-direction: column; gap: 1.5rem; align-items: flex-start; padding-top: 3rem;">
              <div class="flow-step" style="width: 100%; text-align: left; padding: 1rem 2rem;"><div class="flow-title">Businesses</div></div>
              <div style="font-size: 1.5rem; color: var(--border-highlight); margin-left: 2rem;">↓</div>
@@ -355,8 +355,8 @@ Business Notes</div>
     <section class="slide" style="background: var(--bg-solid);">
       <main class="layout-center" style="text-align: center;">
         <h2 class="headline" style="font-size: 5rem; max-width: 1200px; margin-bottom: 3rem; line-height: 1.2;">Businesses already generate intelligence.</h2>
-        <h2 class="headline" style="font-size: 5rem; max-width: 1200px; color: var(--text-muted);">Sylon helps them use it.</h2>
-        <div style="margin-top: 6rem; font-family: 'Inter', sans-serif; font-weight: 600; font-size: 2rem; text-transform: uppercase; letter-spacing: 0.4em; color: var(--text); opacity: 0.9;">Sylon</div>
+        <h2 class="headline" style="font-size: 5rem; max-width: 1200px; color: var(--text-muted);">Morlen helps them use it.</h2>
+        <div style="margin-top: 6rem; font-family: 'Inter', sans-serif; font-weight: 600; font-size: 2rem; text-transform: uppercase; letter-spacing: 0.4em; color: var(--text); opacity: 0.9;">Morlen</div>
       </main>
     </section>"""
 

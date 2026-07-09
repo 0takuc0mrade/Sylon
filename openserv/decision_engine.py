@@ -17,7 +17,7 @@ except ImportError:
     sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
     from agents.llm_client import call_llm_json, call_llm
 
-logger = logging.getLogger('sylon.decision_engine')
+logger = logging.getLogger('morlen.decision_engine')
 
 class DecisionEngineOutput(BaseModel):
     intent: str = Field(description="The primary intent of the customer's message (e.g., pricing_inquiry, complaint, negotiation, casual)")
@@ -52,7 +52,7 @@ def analyze_intent_and_risk(message: str, context: str) -> dict:
     """Step 2 & 3: Run the Intent and Risk analyzer via structured LLM output"""
     
     system_prompt = """
-You are the Sylon AI Decision Engine for a business.
+You are the Morlen AI Decision Engine for a business.
 Your job is NOT to reply to the user. Your job is to classify the user's message and decide what the AI should do next based on risk, confidence, and business rules.
 
 DECISION LOGIC:
@@ -164,7 +164,7 @@ def process_customer_message(text_content: str, business_id: str, sender_id: str
         # PROXY LOOP: Alert the owner on their personal WhatsApp (Owner always gets this on WhatsApp if available)
         owner_phone = persistence_service.get_owner_phone(business_id)
         if owner_phone:
-            proxy_msg = f"📝 *DRAFT READY*\nCustomer: {sender_name} (+{sender_id})\n\nSylon suggests:\n\"{draft_reply}\"\n\n_Reply 'approve' to send, or type your own response to rewrite._"
+            proxy_msg = f"📝 *DRAFT READY*\nCustomer: {sender_name} (+{sender_id})\n\nMorlen suggests:\n\"{draft_reply}\"\n\n_Reply 'approve' to send, or type your own response to rewrite._"
             tool_send_meta_message("whatsapp", owner_phone, proxy_msg, business_id=business_id)
             
         result_payload["reply"] = "I need to check with the team on this. One moment."

@@ -446,7 +446,7 @@ def handle_cold_start(business_ca, top_n=5, preferred_category=None, source_doma
 def generate_recommendations(query: str, painpoints: dict, personas: list, business_context: dict) -> str:
     """Generates strategic business recommendations based on pain points and personas."""
     prompt = f"""
-    You are Sylon's strategic recommendation engine.
+    You are Morlen's strategic recommendation engine.
     The business owner asks: "{query}"
     
     Business Context: {business_context}
@@ -499,7 +499,7 @@ if __name__ == "__main__":
         print(f"Trajectory: {result['trajectory']:+.2f}")
         print(result['analysis'])
 
-    print("\n SYLON'S RECOMMENDATIONS ")
+    print("\n MORLEN'S RECOMMENDATIONS ")
 
     business_pool = pd.read_csv(os.path.join(ROOT, 'data', 'business_categories.csv'))
     if 'stars' not in business_pool.columns:

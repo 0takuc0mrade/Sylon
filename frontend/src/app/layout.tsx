@@ -5,7 +5,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import PrivyProviderWrapper from "@/components/PrivyProviderWrapper";
 
 export const metadata: Metadata = {
-  title: "Sylon Strategist",
+  title: "Morlen Strategist",
   description: "Premium Business Intelligence Orchestrator",
 };
 

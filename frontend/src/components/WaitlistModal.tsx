@@ -124,7 +124,7 @@ export default function WaitlistModal({ isOpen, onClose }: WaitlistModalProps) {
                 <Store className="w-4 h-4 text-brand-brown" />
              </div>
             <h2 className="text-xl font-bold text-brand-dark dark:text-white">
-              {step === 6 ? "Welcome to Sylon" : "Join the Waitlist"}
+              {step === 6 ? "Welcome to Morlen" : "Join the Waitlist"}
             </h2>
           </div>
           <button 
@@ -167,7 +167,7 @@ export default function WaitlistModal({ isOpen, onClose }: WaitlistModalProps) {
                   <label className="block text-xs font-bold uppercase tracking-wider text-brand-dark/50 dark:text-white/50 mb-1.5 transition-colors group-focus-within:text-brand-brown">Business Name</label>
                   <input type="text" 
                     className="w-full px-4 py-3 rounded-xl border border-brand-dark/10 dark:border-white/10 bg-black/5 dark:bg-white/5 focus:bg-transparent focus:ring-2 focus:ring-brand-brown focus:border-brand-brown outline-none transition-all placeholder:text-brand-dark/30 dark:placeholder:text-white/30"
-                    placeholder="Sylon Cafe"
+                    placeholder="Morlen Cafe"
                     value={formData.businessName}
                     onChange={(e) => setFormData({...formData, businessName: e.target.value})}
                   />
@@ -334,7 +334,7 @@ export default function WaitlistModal({ isOpen, onClose }: WaitlistModalProps) {
               <div>
                 <h3 className="text-3xl font-black text-brand-dark dark:text-white mb-3 tracking-tight">You're on the list.</h3>
                 <p className="text-brand-dark/70 dark:text-white/70 max-w-sm mx-auto leading-relaxed">
-                  We're excited to have you onboard. You'll be among the first businesses invited for Early Access to Sylon.
+                  We're excited to have you onboard. You'll be among the first businesses invited for Early Access to Morlen.
                 </p>
               </div>
               

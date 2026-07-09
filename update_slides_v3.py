@@ -44,7 +44,7 @@ html_content = """<!-- SLIDE 1: Vision -->
         <h2 class="headline" style="font-size: 4.5rem; max-width: 1000px; margin-bottom: 4rem; line-height: 1.2;">What if every customer interaction made your business smarter?</h2>
         
         <div class="anim-seq" style="margin-top: 4rem; border-top: 1px solid var(--border-highlight); padding-top: 4rem;">
-           <div style="font-family: 'Inter', sans-serif; font-weight: 600; font-size: 3rem; text-transform: uppercase; letter-spacing: 0.4em; color: var(--text); opacity: 0.9; margin-bottom: 2rem;">Meet Sylon</div>
+           <div style="font-family: 'Inter', sans-serif; font-weight: 600; font-size: 3rem; text-transform: uppercase; letter-spacing: 0.4em; color: var(--text); opacity: 0.9; margin-bottom: 2rem;">Meet Morlen</div>
            <p style="font-family: 'Inter', sans-serif; font-size: 1.6rem; color: var(--text-muted); max-width: 800px; margin: 0 auto; line-height: 1.6;">
               Every business already has customer data. The businesses that win over the next decade will be the ones that learn from it faster.
            </p>
@@ -55,7 +55,7 @@ html_content = """<!-- SLIDE 1: Vision -->
     <!-- SLIDE 4: Solution -->
     <section class="slide">
       <header>
-         <div class="slide-kicker">How Sylon Thinks</div>
+         <div class="slide-kicker">How Morlen Thinks</div>
       </header>
       <main class="layout-center" style="align-items: flex-start; padding-top: 2rem;">
         <h2 class="headline" style="font-size: 3.5rem; margin-bottom: 3rem;">Reasoning, not just processing.</h2>
@@ -86,7 +86,7 @@ html_content = """<!-- SLIDE 1: Vision -->
     <!-- SLIDE 6: Retention -->
     <section class="slide">
       <header>
-         <div class="slide-kicker">Why businesses keep using Sylon</div>
+         <div class="slide-kicker">Why businesses keep using Morlen</div>
       </header>
       <main class="layout-center" style="padding-top: 4rem;">
         <div class="flow-diagram anim-seq" style="padding-top: 2rem; width: 100%; justify-content: space-between;">

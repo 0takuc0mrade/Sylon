@@ -6,7 +6,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const { ready, authenticated, login } = usePrivy();
   let isDemoMode = false;
   if (typeof window !== "undefined") {
-    isDemoMode = localStorage.getItem("sylon_demo_mode") === "true";
+    isDemoMode = localStorage.getItem("morlen_demo_mode") === "true";
   }
 
   if (!ready) {
@@ -47,7 +47,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
               Sign in to continue
             </h2>
             <p className="text-brand-dark/70 dark:text-white/60 font-medium">
-              Authenticate to access Sylon&apos;s business intelligence tools.
+              Authenticate to access Morlen&apos;s business intelligence tools.
             </p>
           </div>
           <button

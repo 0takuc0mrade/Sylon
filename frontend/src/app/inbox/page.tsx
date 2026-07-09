@@ -29,7 +29,7 @@ export default function Inbox() {
   useEffect(() => {
     let isDemoMode = false;
     if (typeof window !== "undefined") {
-      isDemoMode = localStorage.getItem("sylon_demo_mode") === "true";
+      isDemoMode = localStorage.getItem("morlen_demo_mode") === "true";
     }
     if (authenticated || isDemoMode) {
       fetchItems();
@@ -40,7 +40,7 @@ export default function Inbox() {
 
   const fetchItems = async () => {
     try {
-      const bizId = localStorage.getItem('sylon_business_id') || DEFAULT_BUSINESS_ID;
+      const bizId = localStorage.getItem('morlen_business_id') || DEFAULT_BUSINESS_ID;
       const res = await fetch(`/api/business/action-items?business_id=${bizId}`);
       const data = await res.json();
       if (data.status === 'success') {
@@ -106,7 +106,7 @@ export default function Inbox() {
           ) : items.length === 0 ? (
             <div className="rounded-3xl border border-dashed border-white/20 p-12 text-center space-y-4">
               <CheckCircle2 className="w-12 h-12 text-green-500/50 mx-auto" />
-              <p className="text-white/60 text-lg">Inbox Zero. Sylon is handling everything else automatically.</p>
+              <p className="text-white/60 text-lg">Inbox Zero. Morlen is handling everything else automatically.</p>
             </div>
           ) : (
             <div className="space-y-4">

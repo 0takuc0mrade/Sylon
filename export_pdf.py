@@ -34,7 +34,7 @@ def run():
         
         # Save as PDF
         if screenshots:
-            pdf_path = "/Users/ikhaisoshuare/Cascade/Sylon_Pitch_Deck_Final.pdf"
+            pdf_path = "/Users/ikhaisoshuare/Cascade/Morlen_Pitch_Deck_Final.pdf"
             # Ensure images are in RGB format for PDF saving
             rgb_screenshots = [img.convert('RGB') for img in screenshots]
             

@@ -11,7 +11,27 @@ try:
 except ImportError:
     psycopg2 = None
 
-logger = logging.getLogger('sylon.persistence')
+logger = logging.getLogger('morlen.persistence')
+
+class PsycopgWrapper:
+    def __init__(self, conn):
+        self.conn = conn
+    def execute(self, query, vars=None):
+        # We use RealDictCursor so rows behave like sqlite3.Row dictionaries
+        from psycopg2.extras import RealDictCursor
+        cursor = self.conn.cursor(cursor_factory=RealDictCursor)
+        # SQLite uses ? for parameters, psycopg2 uses %s. 
+        # For a quick hackathon patch, we can replace ? with %s for Postgres.
+        query = query.replace("?", "%s")
+        if vars:
+            cursor.execute(query, vars)
+        else:
+            cursor.execute(query)
+        return cursor
+    def commit(self):
+        self.conn.commit()
+    def close(self):
+        self.conn.close()
 
 class PersistenceService:
     def __init__(self):
@@ -23,7 +43,7 @@ class PersistenceService:
             logger.info("Connecting to Alibaba Cloud RDS (PostgreSQL)...")
         else:
             logger.info("ALIBABA_RDS_URL not found or psycopg2 missing. Falling back to local SQLite.")
-            self.db_path = os.environ.get("SYLON_DB_PATH", "data/sylon.db")
+            self.db_path = os.environ.get("MORLEN_DB_PATH", "data/morlen.db")
             db_dir = os.path.dirname(self.db_path)
             if db_dir:
                 os.makedirs(db_dir, exist_ok=True)
@@ -34,7 +54,8 @@ class PersistenceService:
     def get_connection(self):
         """Yields a database connection. Transparently handles Alibaba RDS (Postgres) or Local SQLite."""
         if self.use_rds:
-            conn = psycopg2.connect(self.rds_url)
+            raw_conn = psycopg2.connect(self.rds_url)
+            conn = PsycopgWrapper(raw_conn)
             try:
                 yield conn
             finally:
@@ -52,13 +73,12 @@ class PersistenceService:
 
     def get_all_businesses(self) -> list:
         with self.get_connection() as conn:
-            c = conn.cursor()
-            c.execute('''
+            cursor = conn.execute('''
                 SELECT business_id, created_at
                 FROM businesses
                 ORDER BY created_at DESC
             ''')
-            rows = c.fetchall()
+            rows = cursor.fetchall()
             return [{"business_id": row[0], "created_at": row[1]} for row in rows]
 
     def init_db(self):
@@ -78,6 +98,23 @@ class PersistenceService:
                 owner_phone TEXT,
                 created_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL
+            )
+            """)
+            
+            # Ensure the specific tables for the new patch exist
+            conn.execute("""
+            CREATE TABLE IF NOT EXISTS inventory (
+                sku VARCHAR(255) PRIMARY KEY,
+                quantity INT NOT NULL,
+                price_cents INT NOT NULL
+            )
+            """)
+            
+            conn.execute("""
+            CREATE TABLE IF NOT EXISTS customer_state (
+                customer_id VARCHAR(255) PRIMARY KEY,
+                behavioral_metrics TEXT NOT NULL,
+                last_interaction TEXT NOT NULL
             )
             """)
 
@@ -119,33 +156,32 @@ class PersistenceService:
             CREATE TABLE IF NOT EXISTS review_batches (
                 batch_id TEXT PRIMARY KEY,
                 business_id TEXT NOT NULL,
-                source_type TEXT,
-                review_count INTEGER NOT NULL,
+                source_type TEXT NOT NULL,
+                review_count INTEGER,
                 checksum TEXT,
-                status TEXT NOT NULL,
-                created_at TEXT NOT NULL,
                 metadata_json TEXT,
+                created_at TEXT NOT NULL,
                 FOREIGN KEY (business_id) REFERENCES businesses(business_id)
             )
             """)
 
             conn.execute("""
-            CREATE TABLE IF NOT EXISTS reviews (
+            CREATE TABLE IF NOT EXISTS customer_reviews (
                 review_id TEXT PRIMARY KEY,
+                batch_id TEXT NOT NULL,
                 business_id TEXT NOT NULL,
-                batch_id TEXT,
-                author_id TEXT,
-                rating REAL,
-                review_date TEXT,
-                text TEXT NOT NULL,
-                source TEXT,
-                ingested_at TEXT NOT NULL,
-                text_hash TEXT,
-                FOREIGN KEY (business_id) REFERENCES businesses(business_id),
-                FOREIGN KEY (batch_id) REFERENCES review_batches(batch_id)
+                author_name TEXT,
+                rating INTEGER,
+                text_content TEXT,
+                sentiment_score REAL,
+                source_url TEXT,
+                published_at TEXT,
+                created_at TEXT NOT NULL,
+                FOREIGN KEY (batch_id) REFERENCES review_batches(batch_id),
+                FOREIGN KEY (business_id) REFERENCES businesses(business_id)
             )
             """)
-
+            
             conn.execute("""
             CREATE TABLE IF NOT EXISTS painpoint_snapshots (
                 snapshot_id TEXT PRIMARY KEY,
@@ -155,10 +191,8 @@ class PersistenceService:
                 praise_json TEXT,
                 trends_json TEXT,
                 full_payload_json TEXT,
-                model TEXT,
                 created_at TEXT NOT NULL,
-                FOREIGN KEY (business_id) REFERENCES businesses(business_id),
-                FOREIGN KEY (batch_id) REFERENCES review_batches(batch_id)
+                FOREIGN KEY (business_id) REFERENCES businesses(business_id)
             )
             """)
 
@@ -166,52 +200,52 @@ class PersistenceService:
             CREATE TABLE IF NOT EXISTS personas (
                 persona_id TEXT PRIMARY KEY,
                 business_id TEXT NOT NULL,
-                name TEXT,
-                source TEXT,
-                narrative TEXT,
-                drifts_json TEXT,
-                avg_rating REAL,
-                top_words_json TEXT,
-                grounding_quotes_json TEXT,
-                review_count INTEGER,
-                full_payload_json TEXT,
-                model TEXT,
+                name TEXT NOT NULL,
+                source TEXT NOT NULL,
+                narrative TEXT NOT NULL,
+                traits_json TEXT,
                 created_at TEXT NOT NULL,
                 FOREIGN KEY (business_id) REFERENCES businesses(business_id)
             )
             """)
-
+            
             conn.execute("""
             CREATE TABLE IF NOT EXISTS collision_logs (
                 log_id TEXT PRIMARY KEY,
                 business_id TEXT NOT NULL,
                 scenario TEXT NOT NULL,
-                source_mode TEXT,
-                persona_ids_json TEXT,
-                collision_analysis TEXT,
-                strategist_response TEXT,
-                predicted_rating REAL,
-                early_warning TEXT,
-                model TEXT,
+                source_mode TEXT NOT NULL,
+                final_decision TEXT NOT NULL,
+                agent_context_json TEXT,
                 created_at TEXT NOT NULL,
-                metadata_json TEXT,
                 FOREIGN KEY (business_id) REFERENCES businesses(business_id)
             )
             """)
 
             conn.execute("""
             CREATE TABLE IF NOT EXISTS recommendation_logs (
-                recommendation_id TEXT PRIMARY KEY,
+                log_id TEXT PRIMARY KEY,
                 business_id TEXT NOT NULL,
                 query TEXT NOT NULL,
-                raw_recommendations TEXT,
-                final_response TEXT,
-                persona_ids_json TEXT,
-                painpoint_snapshot_id TEXT,
-                model TEXT,
+                raw_recommendations TEXT NOT NULL,
+                accepted_actions_json TEXT,
                 created_at TEXT NOT NULL,
-                metadata_json TEXT,
                 FOREIGN KEY (business_id) REFERENCES businesses(business_id)
+            )
+            """)
+
+            conn.execute("""
+            CREATE TABLE IF NOT EXISTS waitlist (
+                entry_id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                business_name TEXT NOT NULL,
+                email TEXT NOT NULL,
+                whatsapp TEXT NOT NULL,
+                category TEXT NOT NULL,
+                channels TEXT NOT NULL,
+                challenge TEXT NOT NULL,
+                volume TEXT NOT NULL,
+                created_at TEXT NOT NULL
             )
             """)
 

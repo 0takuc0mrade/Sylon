@@ -2,10 +2,10 @@
 apiVersion: sae.alibabacloud.com/v1alpha1
 kind: Application
 metadata:
-  name: sylon-orchestrator
+  name: morlen-orchestrator
   namespace: default
 spec:
-  image: registry.cn-hangzhou.aliyuncs.com/sylon/sylon-orchestrator:latest
+  image: registry.cn-hangzhou.aliyuncs.com/morlen/morlen-orchestrator:latest
   cpu: 2000
   memory: 4096
   replicas: 2

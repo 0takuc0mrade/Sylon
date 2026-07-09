@@ -19,7 +19,7 @@ type UploadResult = {
   [key: string]: unknown;
 };
 
-const BUSINESS_ID_STORAGE_KEY = 'sylon_business_id';
+const BUSINESS_ID_STORAGE_KEY = 'morlen_business_id';
 const COMPARISON_DEMO_PROMPT = 'Generator diesel costs just spiked 20% overnight. Compare these survival options: raise prices by 15%, close the kitchen 2 hours earlier, or reduce menu size. Which is safest?';
 
 export default function Upload() {
@@ -226,7 +226,7 @@ function UploadContent() {
     <div className="w-full max-w-4xl mx-auto p-4 md:p-8 flex flex-col flex-grow animate-in fade-in duration-500">
       <header className="mb-8 pt-8 text-center">
         <h1 className="page-heading text-3xl md:text-4xl font-bold mb-2">Connect Business Data</h1>
-        <p className="page-subtitle font-medium">Connect your platforms to build your Business Memory and ground Sylon's advice.</p>
+        <p className="page-subtitle font-medium">Connect your platforms to build your Business Memory and ground Morlen's advice.</p>
       </header>
 
       <div className="flex flex-col gap-8">
@@ -278,7 +278,7 @@ function UploadContent() {
                 Just want to explore?
               </h2>
               <p className="text-brand-dark/70 dark:text-white/60 text-sm max-w-lg">
-                Load our curated sample dataset to see Sylon in action instantly. This dataset contains example interactions designed to showcase the multi-agent decision engine.
+                Load our curated sample dataset to see Morlen in action instantly. This dataset contains example interactions designed to showcase the multi-agent decision engine.
               </p>
             </div>
             <button
@@ -308,7 +308,7 @@ function UploadContent() {
             <div>
               <h2 className="text-xl font-bold text-brand-dark dark:text-white mb-1">WhatsApp Approvals</h2>
               <p className="text-brand-dark/70 dark:text-white/60 text-sm">
-                Enter your personal WhatsApp number. Sylon will send customer requests and draft replies directly to your phone for you to approve.
+                Enter your personal WhatsApp number. Morlen will send customer requests and draft replies directly to your phone for you to approve.
               </p>
             </div>
           </div>
@@ -384,7 +384,7 @@ function UploadContent() {
               <div className="flex-1">
                 <h3 className="text-xl font-bold text-brand-dark dark:text-white mb-2">Demo Dataset Connected</h3>
                 <p className="text-brand-dark/80 dark:text-white/70 mb-6 leading-relaxed">
-                  Your WhatsApp interactions have been securely loaded. Sylon is extracting signals and patterns into the Business Memory.
+                  Your WhatsApp interactions have been securely loaded. Morlen is extracting signals and patterns into the Business Memory.
                 </p>
                 <div className="flex flex-col sm:flex-row justify-start gap-3">
                   <button 
@@ -478,17 +478,17 @@ function UploadContent() {
               
               <div>
                 <h3 className="text-xl font-bold text-[#1C1E21] dark:text-[#E4E6EB] mb-2">
-                  Connect Sylon AI
+                  Connect Morlen AI
                 </h3>
                 <p className="text-[#606770] dark:text-[#B0B3B8] text-sm leading-relaxed">
-                  Sylon is requesting permission to access your WhatsApp Business Account, read incoming messages, and reply automatically.
+                  Morlen is requesting permission to access your WhatsApp Business Account, read incoming messages, and reply automatically.
                 </p>
               </div>
               
               <div className="bg-[#F0F2F5] dark:bg-[#242526] rounded-lg p-4 text-left border border-[#CCD0D5] dark:border-[#3E4042]">
                 <h4 className="text-[#1C1E21] dark:text-[#E4E6EB] font-bold text-sm mb-1">Human Proxy Setup</h4>
                 <p className="text-[#606770] dark:text-[#B0B3B8] text-xs mb-3 leading-relaxed">
-                  Sylon will send drafts and escalations directly to your personal WhatsApp for approval before responding to customers.
+                  Morlen will send drafts and escalations directly to your personal WhatsApp for approval before responding to customers.
                 </p>
                 <input 
                   type="tel" 
@@ -571,7 +571,7 @@ function UploadContent() {
                   )}
                 </button>
                 <p className="text-xs text-[#606770] dark:text-[#B0B3B8] mt-4">
-                  By clicking continue, you agree to Sylon's Terms of Service and Meta's Platform Data Policy.
+                  By clicking continue, you agree to Morlen's Terms of Service and Meta's Platform Data Policy.
                 </p>
               </div>
             </div>

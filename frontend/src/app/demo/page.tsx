@@ -21,13 +21,13 @@ export default function DemoChat() {
 
   useEffect(() => {
     // Generate a unique session ID for this demo
-    const stored = sessionStorage.getItem('sylon_demo_session');
+    const stored = sessionStorage.getItem('morlen_demo_session');
     if (stored) {
       setSessionId(stored);
       // We could fetch history here, but for the demo we'll just start fresh or rely on state
     } else {
       const newSession = 'demo_' + Math.random().toString(36).substring(2, 9);
-      sessionStorage.setItem('sylon_demo_session', newSession);
+      sessionStorage.setItem('morlen_demo_session', newSession);
       setSessionId(newSession);
       
       // Trigger initial onboarding message
@@ -64,7 +64,7 @@ export default function DemoChat() {
 
   const handleReset = () => {
     const newSession = 'demo_' + Math.random().toString(36).substring(2, 9);
-    sessionStorage.setItem('sylon_demo_session', newSession);
+    sessionStorage.setItem('morlen_demo_session', newSession);
     setSessionId(newSession);
     setMessages([]);
     setMode('onboarding');
@@ -121,7 +121,7 @@ export default function DemoChat() {
           </div>
           <div>
             <h1 className="font-bold text-lg leading-tight flex items-center gap-2">
-              Sylon {mode === 'onboarding' ? 'Setup' : 'Live Agent'}
+              Morlen {mode === 'onboarding' ? 'Setup' : 'Live Agent'}
               {mode === 'customer' && <span className="flex h-2 w-2 relative"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span></span>}
             </h1>
             <p className="text-xs text-brand-dark/60 dark:text-white/60">
@@ -146,7 +146,7 @@ export default function DemoChat() {
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center h-full opacity-50 mt-20">
               <Sparkles className="w-8 h-8 mb-4 text-brand-lightbrown animate-pulse" />
-              <p>Initializing Sylon Intelligence...</p>
+              <p>Initializing Morlen Intelligence...</p>
             </div>
           )}
 
@@ -162,7 +162,7 @@ export default function DemoChat() {
                   <div className="flex items-center gap-1.5 mb-2 opacity-60">
                     {mode === 'onboarding' ? <Store className="w-3.5 h-3.5" /> : <Sparkles className="w-3.5 h-3.5" />}
                     <span className="text-[10px] font-bold uppercase tracking-wider">
-                      {mode === 'onboarding' ? 'Sylon Onboarding' : 'Sylon Agent'}
+                      {mode === 'onboarding' ? 'Morlen Onboarding' : 'Morlen Agent'}
                     </span>
                   </div>
                 )}
@@ -224,7 +224,7 @@ export default function DemoChat() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             disabled={loading}
-            placeholder={mode === 'onboarding' ? "Reply to Sylon..." : "Message your business as a customer..."}
+            placeholder={mode === 'onboarding' ? "Reply to Morlen..." : "Message your business as a customer..."}
             className="w-full bg-gray-100 dark:bg-black/50 border border-transparent focus:border-brand-brown/50 rounded-full py-4 pl-6 pr-14 outline-none text-sm md:text-base transition-all shadow-inner"
           />
           <button 
