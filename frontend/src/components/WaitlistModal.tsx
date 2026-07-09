@@ -185,7 +185,7 @@ export default function WaitlistModal({ isOpen, onClose }: WaitlistModalProps) {
                   <label className="block text-xs font-bold uppercase tracking-wider text-brand-dark/50 dark:text-white/50 mb-1.5 transition-colors group-focus-within:text-brand-brown">WhatsApp Number</label>
                   <input type="tel" 
                     className="w-full px-4 py-3 rounded-xl border border-brand-dark/10 dark:border-white/10 bg-black/5 dark:bg-white/5 focus:bg-transparent focus:ring-2 focus:ring-brand-brown focus:border-brand-brown outline-none transition-all placeholder:text-brand-dark/30 dark:placeholder:text-white/30"
-                    placeholder="+1 234 567 8900"
+                    placeholder="+234 800 000 0000"
                     value={formData.whatsapp}
                     onChange={(e) => setFormData({...formData, whatsapp: e.target.value})}
                   />
