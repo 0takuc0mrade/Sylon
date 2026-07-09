@@ -26,14 +26,22 @@ def send_meta_message(platform: str, to_number: str, message_text: str, business
     if not access_token or not phone_id:
         raise Exception(f"Missing OAuth credentials for business_id: {business_id}. Cannot send WhatsApp message.")
         
-    api_version = "v25.0"
+    d360_key = os.environ.get("D360_API_KEY")
     
-    url = f"https://graph.facebook.com/{api_version}/{phone_id}/messages"
-    
-    headers = {
-        "Authorization": f"Bearer {access_token}",
-        "Content-Type": "application/json"
-    }
+    if d360_key and platform.lower() == "whatsapp":
+        # Using Sandbox environment for Hackathon demo
+        url = "https://waba-sandbox.360dialog.io/v1/messages"
+        headers = {
+            "D360-API-KEY": d360_key,
+            "Content-Type": "application/json"
+        }
+    else:
+        api_version = "v25.0"
+        url = f"https://graph.facebook.com/{api_version}/{phone_id}/messages"
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json"
+        }
     
     data = {
         "messaging_product": platform.lower(),

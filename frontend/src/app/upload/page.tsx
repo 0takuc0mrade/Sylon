@@ -455,7 +455,7 @@ function UploadContent() {
                 <svg viewBox="0 0 36 36" className="w-8 h-8 text-brand-brown dark:text-brand-lightbrown" fill="currentColor">
                   <path d="M15 35.8C6.5 34.3 0 26.9 0 18 0 8.1 8.1 0 18 0s18 8.1 18 18c0 8.9-6.5 16.3-15 17.8l-1.1-12.7h-3.9v-5.1h3.9V14c0-3.9 2.4-6 5.8-6 1.7 0 3.1.1 3.5.2v4l-2.4.1c-1.9 0-2.3.9-2.3 2.2v2.9h4.5l-1.3 5.1h-3.2v12.8" />
                 </svg>
-                <span className="font-semibold text-[#1C1E21] dark:text-[#E4E6EB] text-lg">Log in with Facebook</span>
+                <span className="font-semibold text-[#1C1E21] dark:text-[#E4E6EB] text-lg">Connect Omnichannel (WhatsApp & Instagram)</span>
               </div>
               <button 
                 onClick={() => setIsMetaModalOpen(false)}
@@ -481,7 +481,7 @@ function UploadContent() {
                   Connect Morlen AI
                 </h3>
                 <p className="text-[#606770] dark:text-[#B0B3B8] text-sm leading-relaxed">
-                  Morlen is requesting permission to access your WhatsApp Business Account, read incoming messages, and reply automatically.
+                  Morlen is requesting permission to access your WhatsApp Business and Instagram Professional accounts.
                 </p>
               </div>
               
