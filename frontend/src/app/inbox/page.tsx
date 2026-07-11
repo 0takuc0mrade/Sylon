@@ -14,7 +14,8 @@ export default function Inbox() {
     if (!user) return;
     try {
       const businessId = localStorage.getItem('morlen_business_id') || `biz_${user.id}`;
-      const res = await fetch(`http://localhost:8080/business/action-items?business_id=${businessId}`);
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://sylon.onrender.com';
+      const res = await fetch(`${apiUrl}/business/action-items?business_id=${businessId}`);
       const data = await res.json();
       if (data.status === 'success') {
         setItems(data.items);
@@ -35,7 +36,8 @@ export default function Inbox() {
 
   const approveItem = async (memoryId: string) => {
     try {
-      const res = await fetch(`http://localhost:8080/business/action-items/${memoryId}/approve`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://sylon.onrender.com';
+      const res = await fetch(`${apiUrl}/business/action-items/${memoryId}/approve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({})

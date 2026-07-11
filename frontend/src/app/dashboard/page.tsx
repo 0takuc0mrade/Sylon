@@ -8,6 +8,7 @@ import {
   ChevronRight, Calendar, ArrowUpRight, BarChart2, ShieldCheck, Mail, MessageCircle, Globe, Camera, Loader2
 } from 'lucide-react';
 import Link from 'next/link';
+import MermaidGraph from '@/components/MermaidGraph';
 
 export default function Dashboard() {
   const { user, logout } = usePrivy();
@@ -20,7 +21,8 @@ export default function Dashboard() {
       if (!user) return;
       try {
         const businessId = localStorage.getItem('morlen_business_id') || `biz_${user.id}`;
-        const res = await fetch(`http://localhost:8080/api/intelligence/brief/${businessId}`);
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://sylon.onrender.com';
+        const res = await fetch(`${apiUrl}/api/intelligence/brief/${businessId}`);
         const data = await res.json();
         if (data.status === 'ok') {
           setBriefData(data.data);
@@ -33,6 +35,35 @@ export default function Dashboard() {
     }
     fetchBrief();
   }, [user]);
+
+  const generateMermaidDef = (topologicalGraph: any) => {
+    if (!topologicalGraph || !topologicalGraph.graph) return '';
+    let def = 'graph TD\n';
+    
+    // Add nodes with revenue data
+    topologicalGraph.graph.nodes.forEach((node: string, index: number) => {
+      const revenue = topologicalGraph.revenue_map?.[node] || 0;
+      const cleanNode = node.replace(/[^a-zA-Z0-9]/g, '_');
+      def += `    ${cleanNode}["${node}<br/>₦${revenue.toLocaleString()}"]\n`;
+      
+      // Style the first node in the optimal sequence (the bottleneck) differently
+      if (topologicalGraph.optimal_sequence && topologicalGraph.optimal_sequence[0] === node) {
+        def += `    style ${cleanNode} fill:#ff4444,stroke:#333,stroke-width:4px,color:#fff\n`;
+      } else {
+        def += `    style ${cleanNode} fill:#2a2a2a,stroke:#c4a47c,stroke-width:2px,color:#fff\n`;
+      }
+    });
+
+    // Add edges
+    if (topologicalGraph.graph.edges) {
+      topologicalGraph.graph.edges.forEach((edge: any) => {
+        const from = edge.blocked_by.replace(/[^a-zA-Z0-9]/g, '_');
+        const to = edge.sku.replace(/[^a-zA-Z0-9]/g, '_');
+        def += `    ${from} -->|Blocks| ${to}\n`;
+      });
+    }
+    return def;
+  };
 
   return (
     <AuthGuard>
@@ -153,6 +184,84 @@ export default function Dashboard() {
                       </div>
                     ))}
                   </div>
+
+                  {/* Dynamic Topological Graph */}
+                  {briefData.topological_graph && briefData.topological_graph.optimal_sequence && (
+                    <div className="mt-8 rounded-3xl bg-black/5 dark:bg-white/5 border border-brand-dark/10 dark:border-white/10 p-6 md:p-8 backdrop-blur-md shadow-xl">
+                      <div className="flex items-center justify-between mb-8">
+                        <h3 className="text-lg font-bold flex items-center gap-2">
+                          <BarChart2 className="w-5 h-5 text-brand-lightbrown" /> Topological Dependency Graph
+                        </h3>
+                        <span className="text-xs font-bold px-3 py-1 bg-brand-lightbrown/20 text-brand-lightbrown rounded-full">Kahn's Algorithm</span>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between p-4 bg-brand-lightbrown/10 rounded-2xl border border-brand-lightbrown/20">
+                          <div>
+                            <p className="text-xs text-brand-dark/60 dark:text-white/60 uppercase tracking-wider mb-1">Total Graph Blockage</p>
+                            <p className="text-2xl font-bold font-mono text-brand-lightbrown">₦{briefData.topological_graph.total_at_risk?.toLocaleString()}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-xs text-brand-dark/60 dark:text-white/60 uppercase tracking-wider mb-1">Optimal Unblock Sequence</p>
+                            <p className="text-lg font-bold text-brand-dark dark:text-white">{briefData.topological_graph.optimal_sequence.length} Steps</p>
+                          </div>
+                        </div>
+
+                        {/* Mermaid Visualization */}
+                        <div className="pt-4 border-t border-brand-dark/10 dark:border-white/10 overflow-hidden">
+                           <MermaidGraph graphDefinition={generateMermaidDef(briefData.topological_graph)} />
+                        </div>
+
+                        <div className="pt-4 border-t border-brand-dark/10 dark:border-white/10">
+                          <p className="text-xs font-bold text-brand-dark/50 dark:text-white/50 mb-3">MATHEMATICAL RESOLUTION PATH:</p>
+                          <div className="flex flex-col gap-2">
+                            {briefData.topological_graph.optimal_sequence.map((node: string, i: number) => (
+                              <div key={i} className="flex items-center gap-3">
+                                <div className="flex items-center justify-center w-6 h-6 rounded-full bg-brand-dark dark:bg-white text-white dark:text-brand-dark text-xs font-bold">
+                                  {i + 1}
+                                </div>
+                                <div className="flex-1 p-3 bg-white dark:bg-brand-dark border border-brand-dark/10 dark:border-white/10 rounded-xl flex justify-between items-center">
+                                  <span className="font-semibold text-sm">{node}</span>
+                                  <span className="text-xs font-mono bg-green-500/10 text-green-600 dark:text-green-400 px-2 py-1 rounded-md">
+                                    +₦{briefData.topological_graph.revenue_map[node]?.toLocaleString()}
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Autopilot Action */}
+                        {briefData.autopilot_action && (
+                          <div className="mt-6 pt-6 border-t border-brand-dark/10 dark:border-white/10">
+                            <h4 className="text-sm font-bold flex items-center gap-2 mb-3 text-brand-lightbrown">
+                              <ShieldCheck className="w-4 h-4" /> Track 4: Autopilot Agent Action
+                            </h4>
+                            <div className="p-4 bg-brand-dark text-white rounded-2xl font-mono text-sm shadow-xl">
+                              <div className="flex justify-between items-center mb-3 pb-3 border-b border-white/20">
+                                <div>
+                                  <span className="opacity-60 text-xs">ACTION: </span>
+                                  <span className="text-green-400 font-bold">{briefData.autopilot_action.action_type.toUpperCase()}</span>
+                                </div>
+                                <div>
+                                  <span className="opacity-60 text-xs">CONFIDENCE: </span>
+                                  <span className="text-yellow-400 font-bold">{(briefData.autopilot_action.confidence * 100).toFixed(1)}%</span>
+                                </div>
+                              </div>
+                              <p className="mb-2"><span className="opacity-60">TO:</span> {briefData.autopilot_action.recipient}</p>
+                              <p className="mb-4"><span className="opacity-60">SUBJECT:</span> {briefData.autopilot_action.subject}</p>
+                              <p className="whitespace-pre-wrap opacity-90 p-3 bg-white/5 rounded-lg border border-white/10">
+                                {briefData.autopilot_action.content}
+                              </p>
+                              <button className="mt-4 w-full py-2 bg-green-500 hover:bg-green-400 text-black font-bold rounded-xl transition-colors">
+                                Approve & Execute Autopilot Action
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Dynamic Timeline */}
                   {briefData.timeline && briefData.timeline.events && briefData.timeline.events.length > 0 && (

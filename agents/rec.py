@@ -10,7 +10,7 @@ import numpy as np
 import json
 from collections import defaultdict
 from dotenv import load_dotenv
-from agents.llm_client import call_cerebras
+from agents.alibaba_integration import call_cerebras
 
 load_dotenv(os.path.join(ROOT, '.env'))
 categories_path = os.path.join(ROOT, 'data', 'business_categories.csv')
@@ -361,7 +361,7 @@ def translate_cross_domain_persona(source_domain, source_narrative, target_domai
     return call_cerebras(prompt, temperature=0.6)
 
 def llm_behavioral_ranker(persona_narrative, candidates, top_n=5):
-    from agents.llm_client import call_cerebras_json
+    from agents.alibaba_integration import call_cerebras_json
     
     business_descriptions = ""
     for i, b in enumerate(candidates):

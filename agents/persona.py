@@ -11,7 +11,7 @@ if ROOT not in sys.path:
 from cerebras.cloud.sdk import Cerebras
 from dotenv import load_dotenv
 from collections import defaultdict
-from agents.llm_client import call_cerebras
+from agents.alibaba_integration import call_cerebras
 
 load_dotenv()
 

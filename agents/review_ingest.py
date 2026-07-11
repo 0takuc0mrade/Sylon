@@ -3,7 +3,7 @@ import json
 import csv
 import uuid
 from datetime import datetime, timezone
-from agents.llm_client import call_cerebras_json
+from agents.alibaba_integration import call_cerebras_json
 
 # storage
 DATA_ROOT = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "businesses")

@@ -2,7 +2,7 @@ import os
 import json
 import pandas as pd
 from dotenv import load_dotenv
-from agents.llm_client import call_cerebras
+from agents.alibaba_integration import call_cerebras
 
 load_dotenv()
 

@@ -7,7 +7,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
-from agents.llm_client import call_cerebras_json, call_cerebras
+from agents.alibaba_integration import call_cerebras_json, call_cerebras
 
 # constants
 CHUNK_SIZE = 25  # reviews per map batch

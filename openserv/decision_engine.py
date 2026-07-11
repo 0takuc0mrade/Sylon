@@ -10,12 +10,12 @@ from openserv.tools import tool_send_meta_message
 
 # We need the LLM clients. We'll use call_llm for generation, and call_gemini_structured for decision making if possible, or fallback to call_llm_json.
 try:
-    from agents.llm_client import call_llm_json, call_llm
+    from agents.alibaba_integration import call_llm_json, call_llm
 except ImportError:
     # Fallback if running from root
     import sys, os
     sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-    from agents.llm_client import call_llm_json, call_llm
+    from agents.alibaba_integration import call_llm_json, call_llm
 
 logger = logging.getLogger('morlen.decision_engine')
 

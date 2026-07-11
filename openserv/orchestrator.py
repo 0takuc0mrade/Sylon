@@ -20,7 +20,7 @@ sys.path.insert(0, ROOT)
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
-from agents.llm_client import call_llm, call_cerebras, call_cerebras_json, call_gemini_structured, retry_with_backoff, QWEN_FAST_MODEL, QWEN_REASONING_MODEL
+from agents.alibaba_integration import call_llm, call_cerebras, call_cerebras_json, call_gemini_structured, retry_with_backoff, QWEN_FAST_MODEL, QWEN_REASONING_MODEL
 from agents.persona_factory import get_personas_for_business
 from agents.review_ingest import get_review_count
 from agents.rec import generate_recommendations

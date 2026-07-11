@@ -97,7 +97,7 @@ def tool_extract_painpoints(business_id):
 # ==============================================================================
 
 def tool_draft_social_post(decision: str, audience_persona: str) -> dict:
-    from agents.llm_client import call_llm
+    from agents.alibaba_integration import call_llm
     prompt = f"""Draft a social media post explaining this business decision: '{decision}'.
 The target audience is '{audience_persona}'.
 Keep it authentic, engaging, and under 280 characters."""

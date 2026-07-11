@@ -184,8 +184,9 @@ export default function Home() {
         </div>
 
         {/* Features Grid */}
-        <div className="max-w-6xl mx-auto w-full grid grid-cols-1 md:grid-cols-3 gap-6 mb-24 px-4">
-          {/* Card 1 */}
+        {process.env.NEXT_PUBLIC_SITE_MODE !== 'public' && (
+          <div className="max-w-6xl mx-auto w-full grid grid-cols-1 md:grid-cols-3 gap-6 mb-24 px-4">
+            {/* Card 1 */}
           <div ref={card1Ref} className="glass-card rounded-3xl p-8 flex flex-col h-full min-h-[300px] relative overflow-hidden group opacity-0">
             <div className="text-sm text-brand-dark font-mono mb-4 font-semibold">/01</div>
             <h3 className="text-2xl font-bold mb-4 leading-tight text-brand-dark">Decision<br />Forecasting</h3>
@@ -229,7 +230,7 @@ export default function Home() {
             </div>
             <div className="absolute inset-0 bg-white/30 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
           </div>
-        </div>
+        )}
       </main>
 
       {/* Main Footer */}

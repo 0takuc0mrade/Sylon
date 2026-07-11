@@ -1,7 +1,7 @@
 import os
 import json
 import requests
-from agents.llm_client import call_llm_json
+from agents.alibaba_integration import call_llm_json
 from dotenv import load_dotenv
 
 load_dotenv()

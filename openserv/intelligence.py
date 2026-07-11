@@ -4,11 +4,11 @@ from datetime import datetime
 
 from openserv.persistence import persistence_service
 try:
-    from agents.llm_client import call_llm_json
+    from agents.alibaba_integration import call_llm_json
 except ImportError:
     import sys, os
     sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-    from agents.llm_client import call_llm_json
+    from agents.alibaba_integration import call_llm_json
 
 logger = logging.getLogger('morlen.intelligence')
 
@@ -55,66 +55,94 @@ def generate_executive_brief(business_id: str) -> dict:
         
     chat_history = "\n".join(context_lines)
     
-    # 4. Construct the Prompt for the Qwen/Gemini LLM
-    system_prompt = """
-    You are Morlen, an AI Chief of Staff and Business Operating Intelligence.
-    Your job is to read raw customer chat logs and extract revenue-generating insights based on hard evidence.
-    You must justify every recommendation with clear evidence points (e.g., number of requests, missed revenue, repeat customers).
-    
-    You must output ONLY valid JSON matching this schema:
-    {
-      "opportunities": [
-        {
-          "type": "restock | lead",
-          "title": "Short title (e.g. Restock Alert, Hot Leads)",
-          "product_or_metric": "Name of product or metric",
-          "value_metric": "e.g. ₦100,000 or 15 customers",
-          "metric_label": "e.g. Potential Recovered Revenue",
-          "evidence": [
-            "e.g. 8 requests in the last 30 days.",
-            "e.g. 5 customers left without buying."
-          ]
-        }
-      ],
-      "warnings": [
-        {
-          "type": "pricing | demand | churn",
-          "title": "Short title",
-          "description": "Detailed explanation of the warning.",
-          "evidence": [
-            "e.g. 4 customers complained about the new price.",
-            "e.g. Demand dropped 18%."
-          ]
-        }
-      ],
-      "timeline": {
-        "product": "The product with the most interesting trend",
-        "events": [
-          {
-            "day": "Day of week or chronological marker",
-            "description": "What happened",
-            "is_recommendation": boolean
-          }
-        ]
-      }
-    }
-    """
-    
-    prompt = f"""
-    BUSINESS: {business_name}
-    
-    RECENT CHAT LOGS:
-    {chat_history}
-    
-    Based ONLY on the chat logs above, identify the top revenue opportunities (e.g., highly requested items that are out of stock, customers ready to buy) and warnings (e.g., pricing complaints).
-    If there are no clear opportunities, state that the business is stable.
-    Calculate estimated revenue in Naira (₦) if applicable based on context clues.
-    """
-    
-    # 5. Execute LLM Call
+    # 4. Extract Knowledge Graph and Topological Sort
     try:
-        result = call_llm_json(prompt=prompt, system_prompt=system_prompt)
-        return result
+        from openserv.graph_engine import KnowledgeGraphExtractor, TopologicalRevenueSorter, AutopilotActionEngine
+        
+        # Build strict dependency graph from raw logs
+        graph_data = KnowledgeGraphExtractor.extract_graph(chat_history)
+        
+        # Apply Kahn's Algorithm to mathematically prove optimal restock sequence
+        sort_result = TopologicalRevenueSorter.calculate_optimal_path(graph_data)
+        
+        optimal_seq = sort_result.get("optimal_sequence", [])
+        total_risk = sort_result.get("total_at_risk", 0)
+        revenue_map = sort_result.get("revenue_map", {})
+        
+        autopilot_action = None
+        if optimal_seq:
+            primary_sku = optimal_seq[0]
+            autopilot_action = AutopilotActionEngine.generate_resolution_action(primary_sku, total_risk)
+        
+        # Format the deterministic mathematical output back into the Executive Brief schema
+        opportunities = []
+        if optimal_seq:
+            primary_sku = optimal_seq[0]
+            opportunities.append({
+                "type": "restock",
+                "title": f"Topological Priority: {primary_sku}",
+                "product_or_metric": primary_sku,
+                "value_metric": f"₦{revenue_map.get(primary_sku, 0):,}",
+                "metric_label": "Blocked Revenue Recoverable",
+                "evidence": [
+                    f"Kahn's Algorithm identified {primary_sku} as the primary dependency bottleneck.",
+                    f"Unblocking this SKU unlocks ₦{revenue_map.get(primary_sku, 0):,} in downstream revenue."
+                ]
+            })
+            
+            for sku in optimal_seq[1:3]:
+                opportunities.append({
+                    "type": "lead",
+                    "title": f"Secondary Unblock: {sku}",
+                    "product_or_metric": sku,
+                    "value_metric": f"₦{revenue_map.get(sku, 0):,}",
+                    "metric_label": "Cascading Revenue",
+                    "evidence": [f"Dependent on earlier graph resolution. Restock sequence priority."]
+                })
+        else:
+            opportunities.append({
+                "type": "lead",
+                "title": "System Stable",
+                "product_or_metric": "All SKUs",
+                "value_metric": "₦0",
+                "metric_label": "Blocked Revenue",
+                "evidence": ["No dependency blockages detected in the graph."]
+            })
+
+        warnings = []
+        if total_risk > 0:
+            warnings.append({
+                "type": "demand",
+                "title": "Supply Chain Cascade Failure",
+                "description": "Topological sort reveals compounding blockages.",
+                "evidence": [
+                    f"Total mathematical revenue at risk across the graph: ₦{total_risk:,}",
+                    f"Graph edges detected: {len(sort_result.get('graph', {}).get('edges', []))}"
+                ]
+            })
+            
+        return {
+            "opportunities": opportunities,
+            "warnings": warnings,
+            "timeline": {
+                "product": "Topological Analysis Complete",
+                "events": [
+                    {
+                        "day": "System Output",
+                        "description": f"Graph extraction mapped {len(graph_data.get('skus', []))} SKUs and {len(graph_data.get('dependencies', []))} dependencies.",
+                        "is_recommendation": False
+                    },
+                    {
+                        "day": "Kahn's Algorithm",
+                        "description": f"Mathematical sort completed. Optimal restock sequence generated: {', '.join(optimal_seq)}",
+                        "is_recommendation": True
+                    }
+                ]
+            },
+            "topological_graph": sort_result,  # Pass the raw graph data to the frontend for visualization
+            "autopilot_action": autopilot_action
+        }
+
     except Exception as e:
         logger.error(f"[Intelligence Engine] Failed to generate brief: {e}")
         return {
@@ -123,7 +151,7 @@ def generate_executive_brief(business_id: str) -> dict:
                 {
                     "type": "system_error",
                     "title": "Analysis Failed",
-                    "description": "The intelligence engine encountered an error while processing the latest signals."
+                    "description": "The graph engine encountered an error while processing the latest signals."
                 }
             ],
             "timeline": {

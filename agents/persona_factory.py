@@ -4,7 +4,7 @@ import json
 # pyrefly: ignore [missing-import]
 from dotenv import load_dotenv
 
-from agents.llm_client import call_cerebras_json, retry_with_backoff
+from agents.alibaba_integration import call_cerebras_json, retry_with_backoff
 from agents.review_ingest import load_reviews
 from agents.painpoint_extractor import (
     extract_painpoints,

@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 
 from openserv.persistence import persistence_service
 from openserv.tools import tool_send_meta_message
-from agents.llm_client import call_llm
+from agents.alibaba_integration import call_llm
 
 def generate_and_send_daily_summary():
     """
