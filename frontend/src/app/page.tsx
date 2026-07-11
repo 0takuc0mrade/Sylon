@@ -8,11 +8,13 @@ import { ConversationProvider } from "@elevenlabs/react";
 import EtherealOrb from "@/components/EtherealOrb";
 import { usePrivy } from "@privy-io/react-auth";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import ThemeToggle from "@/components/ThemeToggle";
+import WaitlistModal from "@/components/WaitlistModal";
 
 export default function Home() {
   const { login, authenticated, ready } = usePrivy();
+  const [isWaitlistOpen, setIsWaitlistOpen] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -121,9 +123,12 @@ export default function Home() {
         <div className="text-center max-w-4xl mx-auto mb-auto perspective-1000 px-2">
           <h1
             ref={heroTextRef}
-            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-brand-dark leading-tight drop-shadow-sm opacity-0"
+            className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-8 text-brand-dark leading-tight drop-shadow-sm opacity-0"
           >
-            Every customer interaction is a business signal.
+            <span className="block mb-2">Every conversation is</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-lightbrown to-brand-brown block">
+              a business decision.
+            </span>
           </h1>
         </div>
 
@@ -138,45 +143,43 @@ export default function Home() {
         <div className="text-center mt-auto mb-16 flex flex-col items-center px-4 w-full">
           <p
             ref={subTextRef}
-            className="text-lg sm:text-xl md:text-2xl text-brand-dark mb-4 font-semibold opacity-0"
+            className="text-lg sm:text-xl md:text-2xl text-brand-dark/70 max-w-2xl text-center mx-auto mb-12 font-medium opacity-0"
           >
-            You see a customer. Morlen sees a person.
-          </p>
-          <p className="text-brand-dark/80 max-w-2xl mb-8 text-sm sm:text-base">
-            Morlen learns from customer reviews, conversations and business data to help you make smarter decisions before they become expensive mistakes.
+            Run your business knowing nothing important slips through the cracks. Morlen analyzes every customer signal to tell you exactly where your revenue is hiding.
           </p>
           <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto px-4 sm:px-0">
-            <button
-              onClick={() => {
-                if (typeof window !== 'undefined') {
-                  localStorage.setItem('morlen_demo_mode', 'true');
-                  localStorage.setItem('morlen_business_id', 'demo_fvv203o');
-                }
-                router.push('/upload');
-              }}
-              className="glass-button text-brand-dark px-8 py-3.5 sm:py-3 rounded-full font-bold w-full sm:w-auto inline-flex items-center justify-center space-x-2 hover:bg-white/80 transition-all shadow-sm"
-            >
-              <span>Try Live Demo</span>
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" strokeLinecap="round" strokeLinejoin="round"></path>
-              </svg>
-            </button>
-            <button
-              onClick={() => {
-                if (authenticated) {
-                  if (typeof window !== 'undefined' && !localStorage.getItem('morlen_onboarded')) {
-                    router.push('/onboarding');
-                  } else {
-                    router.push('/dashboard');
-                  }
-                } else {
-                  login();
-                }
-              }}
-              className="text-white bg-brand-brown px-8 py-3.5 sm:py-3 rounded-full font-bold w-full sm:w-auto inline-flex items-center justify-center space-x-2 hover:opacity-90 transition-all shadow-sm"
-            >
-              {authenticated ? 'Go to Dashboard' : 'Sign In / Get Started'}
-            </button>
+            {process.env.NEXT_PUBLIC_SITE_MODE === 'public' ? (
+              <button
+                onClick={() => setIsWaitlistOpen(true)}
+                className="text-white bg-brand-brown px-8 py-3.5 sm:py-3 rounded-full font-bold w-full sm:w-auto inline-flex items-center justify-center space-x-2 hover:opacity-90 transition-all shadow-sm"
+              >
+                <span>Join Waitlist</span>
+              </button>
+            ) : (
+              <>
+                {authenticated ? (
+                  <button
+                    onClick={() => router.push('/upload')}
+                    className="text-white bg-gradient-to-r from-brand-brown to-brand-lightbrown px-8 py-3.5 sm:py-3 rounded-full font-bold w-full sm:w-auto inline-flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl hover:scale-105 transition-all"
+                  >
+                    <span>Ask Morlen</span>
+                    <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-.065 4.48 4.48 0 0 0 .978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z" />
+                    </svg>
+                  </button>
+                ) : (
+                  <button
+                    onClick={login}
+                    className="text-white bg-brand-brown px-8 py-3.5 sm:py-3 rounded-full font-bold w-full sm:w-auto inline-flex items-center justify-center space-x-2 hover:opacity-90 transition-all shadow-sm"
+                  >
+                    <span>Sign In to Morlen</span>
+                    <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" strokeLinecap="round" strokeLinejoin="round"></path>
+                    </svg>
+                  </button>
+                )}
+              </>
+            )}
           </div>
         </div>
 
@@ -238,6 +241,7 @@ export default function Home() {
           </div>
           {/* Footer Links */}
           <div className="flex space-x-6 mb-4 md:mb-0">
+            <Link href="/pricing" className="hover:text-brand-lightbrown transition-colors">Pricing</Link>
             <Link href="#" className="hover:text-brand-lightbrown transition-colors">Privacy Policy</Link>
             <Link href="#" className="hover:text-brand-lightbrown transition-colors">Terms of Service</Link>
             <Link href="#" className="hover:text-brand-lightbrown transition-colors">Security</Link>
@@ -249,6 +253,11 @@ export default function Home() {
           </div>
         </div>
       </footer>
+      
+      <WaitlistModal 
+        isOpen={isWaitlistOpen} 
+        onClose={() => setIsWaitlistOpen(false)} 
+      />
     </div>
   );
 }

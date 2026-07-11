@@ -28,6 +28,12 @@ export default function AuthButton() {
         >
           Dashboard
         </button>
+        <button
+          onClick={logout}
+          className="text-xs sm:text-sm font-bold text-brand-dark/70 dark:text-white/70 hover:text-red-500 transition-colors whitespace-nowrap px-2"
+        >
+          Sign Out
+        </button>
       </div>
     );
   }

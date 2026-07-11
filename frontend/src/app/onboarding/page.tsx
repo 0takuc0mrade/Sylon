@@ -43,7 +43,7 @@ export default function Onboarding() {
               <div className="space-y-2">
                 <h1 className="text-3xl font-bold text-brand-dark dark:text-white tracking-tight">Welcome to Morlen</h1>
                 <p className="text-brand-dark/70 dark:text-white/60 text-sm">
-                  Let's personalize your intelligence core. What is the name of your business?
+                  Let's personalize your AI Chief of Staff. What is the name of your business?
                 </p>
               </div>
 

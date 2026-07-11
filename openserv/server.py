@@ -167,18 +167,9 @@ async def chat_endpoint(request: ChatRequest, req: Request, user: dict = Depends
         import uuid
         business_id = request.business_id or f"biz_{uuid.uuid4().hex[:8]}"
 
-        # [PITCH OVERRIDE] Ensure exact board debate for the pitch demo
-        if "₦500,000 restocking accessories" in request.text:
-            strategist_result = {
-                "cfo": "Power banks produce the highest projected return.",
-                "cx": "Customers repeatedly requested unavailable products.",
-                "ops": "Supplier currently has stock available.",
-                "final": "Delay purchasing additional chargers. Prioritize Oraimo power banks and Apple chargers."
-            }
-        else:
-            strategist_result = await asyncio.to_thread(
-                process_user_scenario, request.text, business_id
-            )
+        strategist_result = await asyncio.to_thread(
+            process_user_scenario, request.text, business_id
+        )
 
         autopilot_actions = None
 
@@ -541,33 +532,42 @@ class SampleUploadRequest(BaseModel):
 
 
 @app.post("/business/upload-sample")
-async def upload_sample(background_tasks: BackgroundTasks, request: SampleUploadRequest):
+async def upload_sample(request: SampleUploadRequest):
     try:
         business_id = request.business_id
         
         # Clear out any old demo data so the dashboard is fresh!
         persistence_service.delete_business(business_id)
         
-        csv_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "utilities", "mini_sample.csv")
+        # Setup the Demo Business Profile
+        persistence_service.upsert_business(business_id, name="Lekki Luxury Perfumes")
         
-        from openserv.tools import tool_ingest_reviews, tool_extract_painpoints
+        from openserv.demo_data import DEMO_CHAT_LOGS
         import uuid
+        import time
         
-        batch_id = f"batch_{uuid.uuid4().hex[:8]}"
-        
-        ingestion_payload = {"csv_path": csv_path, "delete_after": False, "is_demo": True}
-        
-        # heavy AI processing to background task
-        background_tasks.add_task(process_and_persist_background, business_id, batch_id, ingestion_payload)
+        # Insert all chat logs into the Business Memory
+        for i, log in enumerate(DEMO_CHAT_LOGS):
+            memory_id = f"mem_{uuid.uuid4().hex[:8]}"
+            persistence_service.insert_memory(
+                memory_id=memory_id,
+                business_id=business_id,
+                source="whatsapp",
+                text_content=log["text"],
+                intent=log["intent"]
+            )
+            # small sleep to ensure varied timestamps if necessary, though insert_memory uses current time.
+            time.sleep(0.01)
 
         return {
-            "status": "processing",
-            "message": f"Sample dataset loaded successfully. AI extraction is running in the background.",
+            "status": "ok",
+            "message": f"Arabian Oud dataset loaded successfully. {len(DEMO_CHAT_LOGS)} signals captured.",
             "business_id": business_id
         }
 
     except Exception as e:
         print(f"[Server] Sample Upload error: {e}")
+        import traceback
         traceback.print_exc()
         return {"status": "error", "message": str(e)}
 
@@ -581,6 +581,17 @@ async def get_dashboard(business_id: str, user: dict = Depends(get_optional_user
         return {"status": "ok", "data": data}
     except Exception as e:
         print(f"[Server] Dashboard error: {e}")
+        traceback.print_exc()
+        return {"status": "error", "message": str(e)}
+
+@app.get("/api/intelligence/brief/{business_id}")
+async def get_executive_brief(business_id: str, user: dict = Depends(get_optional_user)):
+    try:
+        from openserv.intelligence import generate_executive_brief
+        data = await asyncio.to_thread(generate_executive_brief, business_id)
+        return {"status": "ok", "data": data}
+    except Exception as e:
+        print(f"[Server] Intelligence Engine error: {e}")
         traceback.print_exc()
         return {"status": "error", "message": str(e)}
 

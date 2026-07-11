@@ -44,6 +44,7 @@ function UploadContent() {
   const [isNavigating, setIsNavigating] = useState(false);
   const [isDataReady, setIsDataReady] = useState(false);
   const [isMetaModalOpen, setIsMetaModalOpen] = useState(false);
+  const [isConfidenceReviewOpen, setIsConfidenceReviewOpen] = useState(false);
   const [metaConnecting, setMetaConnecting] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [advancedTokens, setAdvancedTokens] = useState({ phoneId: "", token: "" });
@@ -169,34 +170,13 @@ function UploadContent() {
 
   // Handle Meta WhatsApp Connection
   const handleMetaConnect = async () => {
-    if (!ownerPhone.trim()) {
-      alert("Please enter your personal WhatsApp number for human proxy routing.");
-      return;
-    }
-    
     setMetaConnecting(true);
-    try {
-      const payload = {
-        business_id: businessId,
-        real_phone_id: showAdvanced ? advancedTokens.phoneId : null,
-        real_access_token: showAdvanced ? advancedTokens.token : null,
-        owner_phone: ownerPhone
-      };
-      const res = await fetch(`/api/business/connect-meta`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      if (res.ok) {
-        // Success! Hide modal and start the sample data sync automatically to demonstrate the UI
-        setIsMetaModalOpen(false);
-        handleSample();
-      }
-    } catch (error) {
-      console.error("Meta connection failed", error);
-    } finally {
+    // Simulate connection for the demo, skipping backend complexity
+    setTimeout(() => {
       setMetaConnecting(false);
-    }
+      setIsMetaModalOpen(false);
+      setIsConfidenceReviewOpen(true);
+    }, 1500);
   };
 
   const handleSaveOwnerPhone = async (e: React.FormEvent) => {
@@ -225,8 +205,8 @@ function UploadContent() {
   return (
     <div className="w-full max-w-4xl mx-auto p-4 md:p-8 flex flex-col flex-grow animate-in fade-in duration-500">
       <header className="mb-8 pt-8 text-center">
-        <h1 className="page-heading text-3xl md:text-4xl font-bold mb-2">Connect Business Data</h1>
-        <p className="page-subtitle font-medium">Connect your platforms to build your Business Memory and ground Morlen's advice.</p>
+        <h1 className="page-heading text-3xl md:text-4xl font-bold mb-2">Connect Integrations</h1>
+        <p className="page-subtitle font-medium max-w-2xl mx-auto">Select the channels where your customers talk to you. Morlen syncs business events in real-time to find hidden revenue opportunities.</p>
       </header>
 
       <div className="flex flex-col gap-8">
@@ -268,109 +248,7 @@ function UploadContent() {
             <p className="text-[7px] md:text-xs text-brand-dark/50 mt-0.5 md:mt-1.5">Text Input</p>
           </div>
         </div>
-        
-        {/* Sample Dataset Section */}
-        <div className="glass-card rounded-3xl p-6 md:p-8 border border-brand-brown/30 bg-brand-lightbrown/5 mt-4">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
-            <div>
-              <h2 className="text-xl font-bold text-brand-dark dark:text-white mb-2 flex items-center gap-2">
-                <svg className="w-6 h-6 text-brand-brown" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m5.231 13.481L15 17.25m-4.5-15H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9ZM9.75 14.25l1.039-1.039m0 0L12 12m-1.211 1.211L12 14.25M10.5 12l1.211 1.211" /></svg>
-                Just want to explore?
-              </h2>
-              <p className="text-brand-dark/70 dark:text-white/60 text-sm max-w-lg">
-                Load our curated sample dataset to see Morlen in action instantly. This dataset contains example interactions designed to showcase the multi-agent decision engine.
-              </p>
-            </div>
-            <button
-              onClick={handleSample}
-              disabled={loading}
-              className="w-full sm:w-auto bg-brand-brown hover:bg-brand-dark text-white font-bold py-3.5 px-6 rounded-xl shadow-md transition-colors flex items-center justify-center gap-2 whitespace-nowrap disabled:opacity-50"
-            >
-              {loading ? (
-                <>
-                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                  Processing...
-                </>
-              ) : (
-                "Load Sample Dataset"
-              )}
-            </button>
-          </div>
-        </div>
-      </div>
 
-      <div className="flex flex-col gap-8 mt-8">
-        <div className="glass-card rounded-3xl p-6 md:p-8 border border-brand-dark/10">
-          <div className="flex items-start gap-4 mb-6">
-            <div className="w-10 h-10 rounded-full bg-brand-lightbrown/10 flex items-center justify-center flex-shrink-0">
-              <svg className="w-5 h-5 text-brand-brown" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 0 0 6 3.75v16.5a2.25 2.25 0 0 0 2.25 2.25h7.5A2.25 2.25 0 0 0 18 20.25V3.75a2.25 2.25 0 0 0-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" /></svg>
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-brand-dark dark:text-white mb-1">WhatsApp Approvals</h2>
-              <p className="text-brand-dark/70 dark:text-white/60 text-sm">
-                Enter your personal WhatsApp number. Morlen will send customer requests and draft replies directly to your phone for you to approve.
-              </p>
-            </div>
-          </div>
-          
-          <form onSubmit={handleSaveOwnerPhone} className="flex flex-col sm:flex-row gap-4">
-            <input
-              type="tel"
-              placeholder="+234 800 000 0000"
-              value={ownerPhone}
-              onChange={(e) => setOwnerPhone(e.target.value)}
-              className="flex-1 bg-white/50 dark:bg-black/20 border border-brand-dark/20 dark:border-white/10 rounded-xl px-4 py-3 text-brand-dark dark:text-white placeholder:text-brand-dark/40 focus:outline-none focus:ring-2 focus:ring-brand-lightbrown/50"
-            />
-            <button
-              type="submit"
-              disabled={!ownerPhone || ownerPhoneStatus === "saving"}
-              className="bg-brand-dark text-white hover:bg-brand-brown px-8 py-3 rounded-xl font-bold shadow-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[140px]"
-            >
-              {ownerPhoneStatus === "saving" ? (
-                <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-              ) : ownerPhoneStatus === "success" ? (
-                <span className="flex items-center gap-1"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg> Saved</span>
-              ) : (
-                "Save Number"
-              )}
-            </button>
-          </form>
-          {ownerPhoneStatus === "error" && (
-            <p className="text-red-500 text-sm mt-2">Failed to save phone number. Please try again.</p>
-          )}
-        </div>
-
-        {/* Manual Fallback Card */}
-        <div className="glass-card rounded-3xl p-6 md:p-8 border border-brand-dark/10">
-          <h2 className="text-xl font-bold text-brand-dark dark:text-white mb-2">Manual File Upload (Advanced)</h2>
-          <p className="text-brand-dark/70 dark:text-white/60 text-sm mb-6">Alternatively, drop a CSV of legacy data here to manually ingest it into the memory engine.</p>
-          <form onSubmit={handleUpload} className="flex flex-col gap-6">
-            <div className="space-y-2 hidden">
-              <input type="hidden" value={businessId} />
-            </div>
-            <div className="space-y-2">
-              <div className="border-2 border-dashed border-brand-dark/30 dark:border-white/20 rounded-xl p-6 flex flex-col items-center justify-center bg-white/40 dark:bg-black/20 hover:bg-white/60 dark:hover:bg-black/40 transition-colors">
-                <input
-                  type="file"
-                  accept=".csv,.json"
-                  className="block w-full text-sm text-brand-dark dark:text-white/70 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-brand-lightbrown file:text-white hover:file:bg-brand-brown cursor-pointer transition-all"
-                  onChange={(e) => setFile(e.target.files?.[0] || null)}
-                  disabled={loading}
-                />
-              </div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-4">
-              <button
-                type="submit"
-                className="text-white bg-brand-brown hover:opacity-90 px-6 py-3 rounded-full transition-opacity shadow-md font-bold disabled:opacity-50 text-sm"
-                disabled={!file || loading}
-              >
-                {loading ? 'Processing...' : 'Upload File'}
-              </button>
-            </div>
-          </form>
-        </div>
       </div>
 
       {result && result.status === 'processing' && (
@@ -382,18 +260,18 @@ function UploadContent() {
                 </svg>
               </div>
               <div className="flex-1">
-                <h3 className="text-xl font-bold text-brand-dark dark:text-white mb-2">Demo Dataset Connected</h3>
+                <h3 className="text-xl font-bold text-brand-dark dark:text-white mb-2">Health Scan Complete</h3>
                 <p className="text-brand-dark/80 dark:text-white/70 mb-6 leading-relaxed">
-                  Your WhatsApp interactions have been securely loaded. Morlen is extracting signals and patterns into the Business Memory.
+                  We've successfully analyzed your customer interactions and extracted evidence-backed signals. Check your Executive Brief.
                 </p>
-                <div className="flex flex-col sm:flex-row justify-start gap-3">
+                <div className="flex justify-start mt-2">
                   <button 
                     onClick={() => {
                       setIsNavigating(true);
-                      router.push('/insights');
+                      router.push('/dashboard');
                     }}
                     disabled={isNavigating || !isDataReady}
-                    className="text-white bg-brand-brown hover:bg-brand-dark px-8 py-3.5 rounded-full font-bold shadow-md transition-all flex items-center space-x-3 disabled:opacity-80 disabled:cursor-wait disabled:hover:scale-100"
+                    className="w-full sm:w-auto text-white bg-brand-brown hover:bg-brand-dark px-10 py-4 rounded-xl font-bold shadow-lg transition-all flex items-center justify-center space-x-3 disabled:opacity-80 disabled:cursor-wait disabled:hover:scale-100"
                   >
                     {isNavigating ? (
                       <>
@@ -409,27 +287,16 @@ function UploadContent() {
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        <span>Synthesizing Behavioral Profiles (~30s)</span>
+                        <span>Synthesizing Evidence (~30s)</span>
                       </>
                     ) : (
                       <>
-                        <span>View Business Memory</span>
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <span className="text-lg">Go to Executive Brief</span>
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                           <path d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" strokeLinecap="round" strokeLinejoin="round"></path>
                         </svg>
                       </>
                     )}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsNavigating(true);
-                      router.push(`/chat`);
-                    }}
-                    disabled={isNavigating || !isDataReady}
-                    className="text-brand-brown bg-white/80 border-2 border-brand-lightbrown hover:bg-brand-lightbrown/10 px-8 py-3.5 rounded-full font-bold shadow-sm transition-all disabled:opacity-80 disabled:cursor-wait"
-                  >
-                    Go to Consult Board
                   </button>
                 </div>
               </div>
@@ -448,115 +315,49 @@ function UploadContent() {
         )}
       {isMetaModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-white dark:bg-[#1C1E21] w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border border-black/10 dark:border-white/10">
-            {/* Meta Header */}
-            <div className="bg-[#F0F2F5] dark:bg-[#242526] p-4 flex items-center justify-between border-b border-[#CCD0D5] dark:border-[#3E4042]">
-              <div className="flex items-center gap-2">
-                <svg viewBox="0 0 36 36" className="w-8 h-8 text-brand-brown dark:text-brand-lightbrown" fill="currentColor">
-                  <path d="M15 35.8C6.5 34.3 0 26.9 0 18 0 8.1 8.1 0 18 0s18 8.1 18 18c0 8.9-6.5 16.3-15 17.8l-1.1-12.7h-3.9v-5.1h3.9V14c0-3.9 2.4-6 5.8-6 1.7 0 3.1.1 3.5.2v4l-2.4.1c-1.9 0-2.3.9-2.3 2.2v2.9h4.5l-1.3 5.1h-3.2v12.8" />
-                </svg>
-                <span className="font-semibold text-[#1C1E21] dark:text-[#E4E6EB] text-lg">Connect Omnichannel (WhatsApp & Instagram)</span>
-              </div>
+          <div className="bg-white dark:bg-[#1C1E21] w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border border-black/10 dark:border-white/10 animate-in fade-in zoom-in-95 duration-200">
+            {/* Modal Body */}
+            <div className="p-8 text-center space-y-6 relative">
               <button 
                 onClick={() => setIsMetaModalOpen(false)}
-                className="text-[#606770] dark:text-[#B0B3B8] hover:bg-black/5 dark:hover:bg-white/10 p-2 rounded-full transition-colors"
+                className="absolute top-4 right-4 p-2 text-brand-dark/50 hover:bg-brand-dark/5 rounded-full transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/></svg>
               </button>
-            </div>
-            
-            {/* Modal Body */}
-            <div className="p-8 text-center space-y-6">
-              <div className="flex justify-center -space-x-4 mb-6">
-                <div className="w-16 h-16 rounded-full border-4 border-white dark:border-[#1C1E21] bg-[#25D366] flex items-center justify-center text-white shadow-md z-10">
-                  <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
-                </div>
-                <div className="w-16 h-16 rounded-full border-4 border-white dark:border-[#1C1E21] bg-brand-brown flex items-center justify-center text-white shadow-md relative">
-                  <span className="font-bold text-xl">S</span>
+              
+              <div className="flex justify-center mb-6 mt-4">
+                <div className="w-20 h-20 rounded-full bg-[#25D366]/10 flex items-center justify-center text-[#25D366]">
+                  <svg className="w-10 h-10" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
                 </div>
               </div>
               
-              <div>
-                <h3 className="text-xl font-bold text-[#1C1E21] dark:text-[#E4E6EB] mb-2">
-                  Connect Morlen AI
+              <div className="mb-8">
+                <h3 className="text-2xl font-bold text-[#1C1E21] dark:text-[#E4E6EB] mb-2">
+                  Connect WhatsApp
                 </h3>
                 <p className="text-[#606770] dark:text-[#B0B3B8] text-sm leading-relaxed">
-                  Morlen is requesting permission to access your WhatsApp Business and Instagram Professional accounts.
+                  Morlen securely syncs your business conversations to extract revenue opportunities. Personal data is never stored.
                 </p>
               </div>
               
-              <div className="bg-[#F0F2F5] dark:bg-[#242526] rounded-lg p-4 text-left border border-[#CCD0D5] dark:border-[#3E4042]">
-                <h4 className="text-[#1C1E21] dark:text-[#E4E6EB] font-bold text-sm mb-1">Human Proxy Setup</h4>
-                <p className="text-[#606770] dark:text-[#B0B3B8] text-xs mb-3 leading-relaxed">
-                  Morlen will send drafts and escalations directly to your personal WhatsApp for approval before responding to customers.
-                </p>
+              <div className="bg-[#F0F2F5] dark:bg-[#242526] rounded-xl p-5 text-left border border-[#CCD0D5] dark:border-[#3E4042] mb-6">
+                <h4 className="text-[#1C1E21] dark:text-[#E4E6EB] font-bold text-sm mb-2 flex items-center gap-2">
+                  WhatsApp Business Number
+                </h4>
                 <input 
                   type="tel" 
                   value={ownerPhone}
                   onChange={(e) => setOwnerPhone(e.target.value)}
-                  className="w-full text-sm p-3 rounded-lg border border-[#CCD0D5] dark:border-[#3E4042] bg-white dark:bg-[#1C1E21] text-black dark:text-white focus:ring-2 focus:ring-brand-brown outline-none"
-                  placeholder="Enter your personal WhatsApp (+1234...)"
+                  className="w-full text-base p-3.5 rounded-lg border border-[#CCD0D5] dark:border-[#3E4042] bg-white dark:bg-[#1C1E21] text-black dark:text-white focus:ring-2 focus:ring-[#25D366] outline-none transition-shadow"
+                  placeholder="e.g. +234 800 000 0000"
                 />
-              </div>
-
-              <div className="text-left mt-4">
-                <p className="text-[#606770] dark:text-[#B0B3B8] text-xs font-semibold uppercase tracking-wider mb-2">Permissions requested:</p>
-                <ul className="text-sm text-[#1C1E21] dark:text-[#E4E6EB] space-y-2">
-                  <li className="flex items-center gap-2">
-                    <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"/></svg>
-                    Read WhatsApp messages
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"/></svg>
-                    Send messages on behalf of your business
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"/></svg>
-                    Manage WhatsApp profile settings
-                  </li>
-                </ul>
-              </div>
-
-              {/* Developer / Advanced Mode */}
-              <div className="text-left">
-                <button 
-                  onClick={() => setShowAdvanced(!showAdvanced)}
-                  className="text-xs font-semibold text-brand-brown dark:text-brand-lightbrown hover:underline"
-                >
-                  {showAdvanced ? "Hide Developer Settings" : "Developer: Connect Real WhatsApp API"}
-                </button>
-                
-                {showAdvanced && (
-                  <div className="mt-4 p-4 bg-gray-100 dark:bg-black/30 rounded-lg border border-gray-200 dark:border-white/10 space-y-3">
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">WhatsApp Phone Number ID</label>
-                      <input 
-                        type="text" 
-                        value={advancedTokens.phoneId}
-                        onChange={(e) => setAdvancedTokens({...advancedTokens, phoneId: e.target.value})}
-                        className="w-full text-sm p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-black text-black dark:text-white"
-                        placeholder="e.g. 10423984..."
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Meta Permanent Access Token</label>
-                      <input 
-                        type="password" 
-                        value={advancedTokens.token}
-                        onChange={(e) => setAdvancedTokens({...advancedTokens, token: e.target.value})}
-                        className="w-full text-sm p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-black text-black dark:text-white"
-                        placeholder="EAAD..."
-                      />
-                    </div>
-                  </div>
-                )}
               </div>
 
               <div className="pt-2">
                 <button
                   onClick={handleMetaConnect}
                   disabled={metaConnecting}
-                  className="w-full bg-brand-brown hover:bg-brand-dark text-white font-bold py-3 px-4 rounded-lg shadow-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
+                  className="w-full bg-[#25D366] hover:bg-[#1DA851] text-white font-bold py-4 px-4 rounded-xl shadow-md transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
                 >
                   {metaConnecting ? (
                     <>
@@ -567,12 +368,111 @@ function UploadContent() {
                       Authenticating...
                     </>
                   ) : (
-                    "Continue as Business Owner"
+                    "Securely Connect WhatsApp"
                   )}
                 </button>
-                <p className="text-xs text-[#606770] dark:text-[#B0B3B8] mt-4">
-                  By clicking continue, you agree to Morlen's Terms of Service and Meta's Platform Data Policy.
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isConfidenceReviewOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-[#242526] w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="relative p-6 md:p-8">
+              <button 
+                onClick={() => setIsConfidenceReviewOpen(false)}
+                className="absolute top-4 right-4 p-2 text-brand-dark/50 hover:bg-brand-dark/5 rounded-full transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+              
+              <div className="text-center mb-6">
+                <div className="w-16 h-16 bg-brand-lightbrown/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-brand-brown" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                <h3 className="text-2xl font-bold text-brand-dark dark:text-white mb-2">
+                  Which contacts should Morlen analyze?
+                </h3>
+                <p className="text-brand-dark/70 dark:text-white/60 text-sm leading-relaxed max-w-md mx-auto">
+                  Morlen uses a Business Confidence score to separate customers from personal chats. You have the final say.
                 </p>
+              </div>
+              
+              <div className="bg-brand-lightbrown/5 border border-brand-dark/10 dark:border-white/10 rounded-xl overflow-hidden mb-6">
+                <div className="p-3 bg-brand-dark/5 dark:bg-white/5 border-b border-brand-dark/10 dark:border-white/10 flex justify-between items-center">
+                  <span className="text-xs font-bold text-brand-dark/70 dark:text-white/70 uppercase tracking-wider">Top Contacts Detected</span>
+                  <span className="text-xs font-semibold text-brand-brown">42 Signals found</span>
+                </div>
+                <div className="divide-y divide-brand-dark/5 dark:divide-white/5 max-h-[40vh] overflow-y-auto">
+                  
+                  {/* High Confidence */}
+                  <div className="p-4 flex items-start gap-3 bg-green-50/30 dark:bg-green-900/10">
+                    <input type="checkbox" defaultChecked className="mt-1 w-4 h-4 text-brand-brown rounded border-brand-dark/20 focus:ring-brand-brown" />
+                    <div className="flex-1">
+                      <div className="flex justify-between items-start mb-1">
+                        <span className="font-bold text-brand-dark dark:text-white text-sm">Sarah (Arabian Oud)</span>
+                        <span className="text-xs font-bold text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 px-2 py-0.5 rounded-full">98% Confidence</span>
+                      </div>
+                      <p className="text-xs text-brand-dark/60 dark:text-white/50">Signals: "How much?", Payment, Order placed</p>
+                    </div>
+                  </div>
+
+                  {/* High Confidence */}
+                  <div className="p-4 flex items-start gap-3 bg-green-50/30 dark:bg-green-900/10">
+                    <input type="checkbox" defaultChecked className="mt-1 w-4 h-4 text-brand-brown rounded border-brand-dark/20 focus:ring-brand-brown" />
+                    <div className="flex-1">
+                      <div className="flex justify-between items-start mb-1">
+                        <span className="font-bold text-brand-dark dark:text-white text-sm">Bliss Collections</span>
+                        <span className="text-xs font-bold text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 px-2 py-0.5 rounded-full">85% Confidence</span>
+                      </div>
+                      <p className="text-xs text-brand-dark/60 dark:text-white/50">Signals: Catalog share, New customer inquiry</p>
+                    </div>
+                  </div>
+
+                  {/* Low Confidence - Auto Excluded */}
+                  <div className="p-4 flex items-start gap-3 opacity-60">
+                    <input type="checkbox" className="mt-1 w-4 h-4 text-brand-brown rounded border-brand-dark/20 focus:ring-brand-brown" />
+                    <div className="flex-1">
+                      <div className="flex justify-between items-start mb-1">
+                        <span className="font-bold text-brand-dark dark:text-white text-sm line-through">Mom</span>
+                        <span className="text-xs font-bold text-brand-dark/40 dark:text-white/40 border border-brand-dark/20 dark:border-white/20 px-2 py-0.5 rounded-full">12% - Auto-excluded</span>
+                      </div>
+                      <p className="text-xs text-brand-dark/50 dark:text-white/40">Signals: "How is mummy?", Family name</p>
+                    </div>
+                  </div>
+
+                  {/* Low Confidence - Auto Excluded */}
+                  <div className="p-4 flex items-start gap-3 opacity-60">
+                    <input type="checkbox" className="mt-1 w-4 h-4 text-brand-brown rounded border-brand-dark/20 focus:ring-brand-brown" />
+                    <div className="flex-1">
+                      <div className="flex justify-between items-start mb-1">
+                        <span className="font-bold text-brand-dark dark:text-white text-sm line-through">Church Group</span>
+                        <span className="text-xs font-bold text-brand-dark/40 dark:text-white/40 border border-brand-dark/20 dark:border-white/20 px-2 py-0.5 rounded-full">5% - Auto-excluded</span>
+                      </div>
+                      <p className="text-xs text-brand-dark/50 dark:text-white/40">Signals: Casual chat, non-business hours</p>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+              <div className="text-center pt-2">
+                <button
+                  onClick={() => {
+                    setIsConfidenceReviewOpen(false);
+                    handleSample();
+                  }}
+                  className="w-full bg-brand-brown hover:bg-brand-dark text-white font-bold py-3.5 px-6 rounded-xl shadow-md transition-colors flex items-center justify-center gap-2"
+                >
+                  Confirm & Run Health Scan
+                </button>
+                <div className="mt-4">
+                  <a href="/privacy" target="_blank" className="text-xs text-brand-brown hover:underline font-medium">
+                    Read our Privacy Manifesto: Morlen doesn't read your life.
+                  </a>
+                </div>
               </div>
             </div>
           </div>

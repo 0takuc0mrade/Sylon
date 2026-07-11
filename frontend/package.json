@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:public": "NEXT_PUBLIC_SITE_MODE=public next dev -p 3001",
+    "dev:app": "NEXT_PUBLIC_SITE_MODE=app next dev -p 3000",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"

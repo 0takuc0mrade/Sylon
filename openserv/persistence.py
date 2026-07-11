@@ -83,9 +83,19 @@ class PersistenceService:
             rows = cursor.fetchall()
             return [{"business_id": row[0], "created_at": row[1]} for row in rows]
 
+    def _safe_ddl(self, conn, query):
+        try:
+            conn.execute(query)
+            if hasattr(conn, 'commit'):
+                conn.commit()
+        except Exception as e:
+            if hasattr(conn, 'rollback'):
+                conn.rollback()
+            logger.warning(f"DDL query ignored or failed: {e}")
+
     def init_db(self):
         with self.get_connection() as conn:
-            conn.execute("""
+            self._safe_ddl(conn, """
             CREATE TABLE IF NOT EXISTS businesses (
                 business_id TEXT PRIMARY KEY,
                 name TEXT,
@@ -103,8 +113,7 @@ class PersistenceService:
             )
             """)
             
-            # Ensure the specific tables for the new patch exist
-            conn.execute("""
+            self._safe_ddl(conn, """
             CREATE TABLE IF NOT EXISTS inventory (
                 sku VARCHAR(255) PRIMARY KEY,
                 quantity INT NOT NULL,
@@ -112,7 +121,7 @@ class PersistenceService:
             )
             """)
             
-            conn.execute("""
+            self._safe_ddl(conn, """
             CREATE TABLE IF NOT EXISTS customer_state (
                 customer_id VARCHAR(255) PRIMARY KEY,
                 behavioral_metrics TEXT NOT NULL,
@@ -120,18 +129,11 @@ class PersistenceService:
             )
             """)
 
-            if hasattr(conn, 'commit'):
-                conn.commit()
-
             # Safe migrations for existing demo data
             for col in ["whatsapp_phone_id", "meta_access_token", "owner_phone"]:
-                try:
-                    conn.execute(f"ALTER TABLE businesses ADD COLUMN {col} TEXT")
-                    if hasattr(conn, 'commit'): conn.commit()
-                except Exception:
-                    if hasattr(conn, 'rollback'): conn.rollback()
+                self._safe_ddl(conn, f"ALTER TABLE businesses ADD COLUMN {col} TEXT")
 
-            conn.execute("""
+            self._safe_ddl(conn, """
             CREATE TABLE IF NOT EXISTS business_memories (
                 memory_id TEXT PRIMARY KEY,
                 business_id TEXT NOT NULL,
@@ -143,15 +145,10 @@ class PersistenceService:
                 FOREIGN KEY (business_id) REFERENCES businesses(business_id)
             )
             """)
-            if hasattr(conn, 'commit'): conn.commit()
 
-            try:
-                conn.execute("ALTER TABLE business_memories ADD COLUMN reasoning_trace TEXT")
-                if hasattr(conn, 'commit'): conn.commit()
-            except Exception:
-                if hasattr(conn, 'rollback'): conn.rollback()
+            self._safe_ddl(conn, "ALTER TABLE business_memories ADD COLUMN reasoning_trace TEXT")
 
-            conn.execute("""
+            self._safe_ddl(conn, """
             CREATE TABLE IF NOT EXISTS review_batches (
                 batch_id TEXT PRIMARY KEY,
                 business_id TEXT NOT NULL,
@@ -164,7 +161,7 @@ class PersistenceService:
             )
             """)
 
-            conn.execute("""
+            self._safe_ddl(conn, """
             CREATE TABLE IF NOT EXISTS customer_reviews (
                 review_id TEXT PRIMARY KEY,
                 batch_id TEXT NOT NULL,
@@ -181,7 +178,7 @@ class PersistenceService:
             )
             """)
             
-            conn.execute("""
+            self._safe_ddl(conn, """
             CREATE TABLE IF NOT EXISTS painpoint_snapshots (
                 snapshot_id TEXT PRIMARY KEY,
                 business_id TEXT NOT NULL,
@@ -195,7 +192,7 @@ class PersistenceService:
             )
             """)
 
-            conn.execute("""
+            self._safe_ddl(conn, """
             CREATE TABLE IF NOT EXISTS personas (
                 persona_id TEXT PRIMARY KEY,
                 business_id TEXT NOT NULL,
@@ -208,7 +205,7 @@ class PersistenceService:
             )
             """)
             
-            conn.execute("""
+            self._safe_ddl(conn, """
             CREATE TABLE IF NOT EXISTS collision_logs (
                 log_id TEXT PRIMARY KEY,
                 business_id TEXT NOT NULL,
@@ -221,7 +218,7 @@ class PersistenceService:
             )
             """)
 
-            conn.execute("""
+            self._safe_ddl(conn, """
             CREATE TABLE IF NOT EXISTS recommendation_logs (
                 log_id TEXT PRIMARY KEY,
                 business_id TEXT NOT NULL,
@@ -233,7 +230,7 @@ class PersistenceService:
             )
             """)
 
-            conn.execute("""
+            self._safe_ddl(conn, """
             CREATE TABLE IF NOT EXISTS waitlist (
                 entry_id TEXT PRIMARY KEY,
                 name TEXT NOT NULL,
