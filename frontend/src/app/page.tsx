@@ -230,6 +230,7 @@ export default function Home() {
             </div>
             <div className="absolute inset-0 bg-white/30 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
           </div>
+          </div>
         )}
       </main>
 
